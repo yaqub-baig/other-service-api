@@ -1,7 +1,6 @@
 package com.service.other.service;
 
 import com.service.other.config.AuthClient;
-import com.service.other.apis.entity.*;
 import com.service.other.entity.*;
 import com.service.other.exception.AlreadyExistsException;
 import com.service.other.exception.ResourceNotFoundException;
