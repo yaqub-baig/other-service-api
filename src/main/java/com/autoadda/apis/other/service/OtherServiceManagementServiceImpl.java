@@ -3,6 +3,7 @@ package com.autoadda.apis.other.service;
 import com.autoadda.apis.other.entity.Location;
 import com.autoadda.apis.other.entity.MediaFile;
 import com.autoadda.apis.other.entity.OtherService;
+import com.autoadda.apis.other.entity.OtherServiceBridge;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.repository.MediaFileRepository;
@@ -29,7 +30,7 @@ public class OtherServiceManagementServiceImpl implements OtherServiceManagement
     private final LocationService locationService;
     private final MediaFileService mediaFileService;
     private final MediaFileRepository mediaFileRepository;
-
+    private  final OtherServiceBridgeManagementService otherServiceBridgeManagementService;
     private OtherService mapToEntity(OtherServiceRequest request) {
         OtherService otherService = new OtherService ( );
         otherService.setCompanyBrandName ( request.getCompanyBrandName ( ) );
@@ -44,7 +45,6 @@ public class OtherServiceManagementServiceImpl implements OtherServiceManagement
         otherService.setWorkingDays ( request.getWorkingDays ( ) );
         otherService.setWebSite ( request.getWebSite ( ) );
         otherService.setAccountStatus ( Status.PENDING ); // Default status
-        otherService.setServiceType ( request.getServiceType ( ) );
         otherService.setCompanyArabicName ( request.getCompanyArabicName ( ) );
         otherService.setCreatedAt ( LocalDateTime.now ( ) );
         return otherService;
@@ -63,7 +63,15 @@ public class OtherServiceManagementServiceImpl implements OtherServiceManagement
         Location location = locationService.createLocation ( otherServiceRequest.getCompanyLocation ( ) );
         otherService.setCompanyLocation ( location );
         otherService.setCompanyOwner ( Integer.parseInt ( autoAddaId ) );
-
+        List<OtherServiceBridge> garageServices = new ArrayList<> ( );
+        if ( otherServiceRequest.getGarageServiceIds ( ) != null && ! otherServiceRequest.getGarageServiceIds ( ).isEmpty ( ) ) {
+            otherServiceRequest.getGarageServiceIds ( ).forEach ( garageServiceId -> {
+                otherServiceBridgeManagementService
+                        .getOtherServiceBridgeById  ( garageServiceId )
+                        .map ( garageServices::add )
+                        .orElseThrow ( () -> new ResourceNotFoundException ( "garage service not found" ) );
+            } );
+        }
         // Handle company logo
         MediaFile logo = mediaFileRepository.findById ( otherServiceRequest.getLogoId ( ) ).orElseThrow ( () -> new EntityNotFoundException ( "Media file not found with id: " + otherServiceRequest.getLogoId ( ) ) );
         otherService.setCompanyLogo ( logo );
@@ -133,9 +141,6 @@ public class OtherServiceManagementServiceImpl implements OtherServiceManagement
 
 
         // Update other fields if provided
-        if ( request.getServiceType ( ) != null ) {
-            existing.setServiceType ( request.getServiceType ( ) );
-        }
         if ( request.getCompanyArabicName ( ) != null ) {
             existing.setCompanyArabicName ( request.getCompanyArabicName ( ) );
         }
@@ -242,15 +247,30 @@ public class OtherServiceManagementServiceImpl implements OtherServiceManagement
                 existing.getCompanyImages ( ).add ( mediaFile );
             } );
         }
+        handleGarageServices ( request, existing );
 
         return otherServiceRepository.save ( existing );
     }
+
+
+
 
     private void validateTradeLicenceNumber(String tradeLicenceNumber) {
         otherServiceRepository.findByTradeLicenceNumber(tradeLicenceNumber).ifPresent(otherService -> {
           throw new AlreadyExistsException ("Other service with trade licence number " + tradeLicenceNumber + " already exists");
         });
     }
+
+    private void handleGarageServices(OtherServiceRequest request, OtherService existing) {
+        if ( request.getGarageServiceIds ( ) != null && ! request.getGarageServiceIds ( ).isEmpty ( ) ) {
+            existing.getServices ( ).clear ( );
+            request.getGarageServiceIds ( ).forEach ( id -> {
+                otherServiceBridgeManagementService.getOtherServiceBridgeById  ( id )
+                        .map ( (OtherServiceBridge gs) -> existing.getServices ( ).add ( gs ) )
+                        .orElseThrow ( () -> new ResourceNotFoundException ( "Service not found" ) );
+            } );
+
+        }}
 
     @Override
     @Transactional

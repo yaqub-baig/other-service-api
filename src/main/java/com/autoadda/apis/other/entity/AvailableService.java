@@ -44,4 +44,7 @@ public class AvailableService {
 	@OneToMany(mappedBy = "availableService", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GarageService> garageLinks = new ArrayList<>();
 
+	@OneToMany(mappedBy = "availableService", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OtherServiceBridge> otherGarageLinks = new ArrayList<>();
+
 }

@@ -89,6 +89,10 @@ public class OtherService {
     @JoinColumn(name = "company_images")
     private List<MediaFile> companyImages = new ArrayList<> ( );
 
+    @OneToMany(mappedBy = "otherServiceGarage", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OtherServiceBridge> services = new ArrayList<> ( );
+
+
     @PrePersist
     public void prePersist() {
         isActive = true;
