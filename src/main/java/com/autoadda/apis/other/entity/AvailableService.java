@@ -3,6 +3,7 @@ package com.autoadda.apis.other.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,9 +43,11 @@ public class AvailableService {
 	private Double laborPrice;
 
 	@OneToMany(mappedBy = "availableService", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<GarageService> garageLinks = new ArrayList<>();
+	@JsonIgnore
+	private List<GarageService> garageLinks = new ArrayList<>();
 
 	@OneToMany(mappedBy = "availableService", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OtherServiceBridge> otherGarageLinks = new ArrayList<>();
+	@JsonIgnore
+	private List<OtherServiceBridge> otherGarageLinks = new ArrayList<>();
 
 }

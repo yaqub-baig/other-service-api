@@ -1,5 +1,7 @@
 package com.autoadda.apis.other.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;
@@ -22,6 +24,7 @@ public class OtherServiceBridge {
 
     @ManyToOne
     @JoinColumn(name = "other_garage_id")
+    @JsonBackReference("service-bridges")
     private OtherService otherServiceGarage;
 
     @ManyToOne

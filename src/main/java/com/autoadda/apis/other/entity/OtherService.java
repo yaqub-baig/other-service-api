@@ -1,6 +1,8 @@
 package com.autoadda.apis.other.entity;
 
 import com.autoadda.apis.other.util.Status;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -89,6 +91,7 @@ public class OtherService {
     @JoinColumn(name = "company_images")
     private List<MediaFile> companyImages = new ArrayList<> ( );
 
+    @JsonManagedReference("service-bridges")
     @OneToMany(mappedBy = "otherServiceGarage", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OtherServiceBridge> services = new ArrayList<> ( );
 
