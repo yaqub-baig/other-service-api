@@ -2,7 +2,7 @@ package com.autoadda.apis.other.service;
 
 import com.autoadda.apis.other.config.AuthClient;
 import com.autoadda.apis.other.entity.*;
-import com.service.other.entity.*;
+//import com.service.other.entity.*;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.repository.GarageRepository;
