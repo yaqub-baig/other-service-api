@@ -1,7 +1,7 @@
-package com.autoadda.apis.other.service;
+package com.autoadda.apis.other.service.os;
 
-import com.autoadda.apis.other.entity.OtherService;
-import com.autoadda.apis.other.request.OtherServiceRequest;
+import com.autoadda.apis.other.entity.os.OtherService;
+import com.autoadda.apis.other.request.os.OtherServiceRequest;
 import com.autoadda.apis.other.util.Status;
 
 import java.util.List;

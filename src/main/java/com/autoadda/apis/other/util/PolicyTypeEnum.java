@@ -1,4 +1,6 @@
 package com.autoadda.apis.other.util;
 
-public class PolicyTypeEnum {
+public enum PolicyTypeEnum {
+    THIRD_PARTY, COMPREHENSIVE
 }
+

@@ -1,8 +1,8 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.OtherService;
+import com.autoadda.apis.other.entity.os.OtherService;
 import com.autoadda.apis.other.request.OtherServiceRequest;
-import com.autoadda.apis.other.service.OtherServiceManagementService;
+import com.autoadda.apis.other.service.os.OtherServiceManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

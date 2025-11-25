@@ -1,4 +1,14 @@
 package com.autoadda.apis.other.repository.os;
 
-public class OsHolidayOverrideRepository {
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+import com.autoadda.apis.other.entity.os.OsHolidayOverride;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.autoadda.apis.other.entity.GarageHolidayOverride;
+
+public interface OsHolidayOverrideRepository extends JpaRepository<OsHolidayOverride, Integer> {
+    Optional<OsHolidayOverride> findByOtherServiceIdAndDate(Integer otherServiceId, LocalDate date);
 }
