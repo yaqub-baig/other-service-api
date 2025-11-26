@@ -34,7 +34,7 @@ import static java.lang.Boolean.TRUE;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public abstract class OtherServiceManagementServiceImpl implements OtherServiceManagementService {
+public class OtherServiceManagementServiceImpl implements OtherServiceManagementService {
 
     private final OtherServiceRepository otherServiceRepository;
     private final OsAvailableServiceRepository availableServiceRepository;

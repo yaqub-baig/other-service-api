@@ -5,6 +5,7 @@ import com.autoadda.apis.other.entity.os.OtherService;
 import com.autoadda.apis.other.request.os.OtherServiceRequest;
 import com.autoadda.apis.other.response.os.OsResponse;
 import com.autoadda.apis.other.util.Status;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
