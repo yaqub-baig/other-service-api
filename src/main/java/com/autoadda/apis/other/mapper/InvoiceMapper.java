@@ -3,10 +3,10 @@ package com.autoadda.apis.other.mapper;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.autoadda.apis.other.entity.os.OsAppointmentDetails;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import com.autoadda.apis.other.entity.AppointmentDetails;
 import com.autoadda.apis.other.entity.AppointmentInvoice;
 import com.autoadda.apis.other.entity.AppointmentInvoiceBreakDown;
 import com.autoadda.apis.other.entity.Garage;
@@ -27,10 +27,10 @@ public interface InvoiceMapper {
     @Mapping(target = "totalAmount", expression = "java(calculateNetAmount(request) + request.getTaxAmount())")
     @Mapping(target = "taxId", source = "request.taxId")
     @Mapping(target = "comments", source = "request.comments")
-    AppointmentInvoice toEntity(AppointmentInvoiceRequest request, Garage garage, AppointmentDetails appointment);
+    AppointmentInvoice toEntity(AppointmentInvoiceRequest request, Garage garage, OsAppointmentDetails appointment);
 
     // ✅ Wrapper for semantic clarity
-    default AppointmentInvoice toInvoice(AppointmentInvoiceRequest request, Garage garage, AppointmentDetails appointment) {
+    default AppointmentInvoice toInvoice(AppointmentInvoiceRequest request, Garage garage, OsAppointmentDetails appointment) {
         return toEntity(request, garage, appointment);
     }
 
@@ -44,10 +44,10 @@ public interface InvoiceMapper {
     @Mapping(target = "totalAmount", source = "service.amount")
     @Mapping(target = "service", source = "service.service")
     @Mapping(target = "comments", source = "service.comments")
-    AppointmentInvoiceBreakDown toBreakdown(ServiceInvoice service, AppointmentInvoice invoice, Garage garage, AppointmentDetails appointment);
+    AppointmentInvoiceBreakDown toBreakdown(ServiceInvoice service, AppointmentInvoice invoice, Garage garage, OsAppointmentDetails appointment);
 
     // ✅ Map all service lines into breakdowns
-    default List<AppointmentInvoiceBreakDown> toBreakdownList(AppointmentInvoiceRequest request, AppointmentInvoice invoice, Garage garage, AppointmentDetails appointment) {
+    default List<AppointmentInvoiceBreakDown> toBreakdownList(AppointmentInvoiceRequest request, AppointmentInvoice invoice, Garage garage, OsAppointmentDetails appointment) {
         return request.getService().stream()
                 .map(service -> toBreakdown(service, invoice, garage, appointment))
                 .collect(Collectors.toList());

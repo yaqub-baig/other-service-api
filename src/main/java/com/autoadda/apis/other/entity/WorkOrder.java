@@ -3,6 +3,7 @@ package com.autoadda.apis.other.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.autoadda.apis.other.entity.os.OsAppointmentDetails;
 import com.autoadda.apis.other.util.Status;
 
 import jakarta.persistence.CascadeType;
@@ -35,7 +36,7 @@ public class WorkOrder {
 	private Garage garage;
 
 	@OneToOne
-	private AppointmentDetails appointment;
+	private OsAppointmentDetails appointment;
 
 	@OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
 	private List<JobCard> jobCards;

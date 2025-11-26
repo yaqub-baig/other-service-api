@@ -2,6 +2,9 @@ package com.autoadda.apis.other.controller;
 
 import java.util.List;
 
+import com.autoadda.apis.other.entity.os.OsAppointmentDetails;
+import com.autoadda.apis.other.response.os.OsAppointmentDetailResponse;
+import com.autoadda.apis.other.service.os.OsAppointmentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,13 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.autoadda.apis.other.entity.AppointmentDetails;
 import com.autoadda.apis.other.exception.GarageNotFoundException;
-import com.autoadda.apis.other.request.AppointmentStatusRequest;
-import com.autoadda.apis.other.request.CustomerAppointmentRequest;
-import com.autoadda.apis.other.response.AppointmentResponse;
+import com.autoadda.apis.other.request.os.OsAppointmentStatusRequest;
+import com.autoadda.apis.other.request.os.OsCustomerAppointmentRequest;
+import com.autoadda.apis.other.response.os.OsAppointmentResponse;
 import com.autoadda.apis.other.response.GenericResponse;
-import com.autoadda.apis.other.service.AppointmentService;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
@@ -28,11 +29,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AppointmentController {
 
-	private final AppointmentService appointmentService;
+	private final OsAppointmentService appointmentService;
 
 	@PostMapping
-	public ResponseEntity<GenericResponse> createCustomerAppointment(@RequestBody CustomerAppointmentRequest request) {
-		AppointmentDetails appointment = appointmentService.createCustomerAppointment(request);
+	public ResponseEntity<GenericResponse> createCustomerAppointment(@RequestBody OsCustomerAppointmentRequest request) {
+		OsAppointmentDetails appointment = appointmentService.createCustomerAppointment(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(GenericResponse.success(appointment));
 	}
 
@@ -46,19 +47,19 @@ public class AppointmentController {
 	@GetMapping("/garage/{garageId}")
 	public ResponseEntity<GenericResponse> getGarageAppointments(@PathVariable Integer garageId,
 			@RequestParam(required = false) String status) throws GarageNotFoundException {
-		List<AppointmentDetails> appointments = appointmentService.getAppointmentsByGarage(garageId, status);
+		List<OsAppointmentDetailResponse> appointments = appointmentService.getAppointmentsByGarage(garageId, status);
 		return ResponseEntity.ok(GenericResponse.success(appointments));
 	}
 
 	@PutMapping("/status")
-	public ResponseEntity<GenericResponse> updateAppointmentStatus(@RequestBody AppointmentStatusRequest request) {
-		AppointmentDetails updated = appointmentService.updateAppointmentStatus(request);
+	public ResponseEntity<GenericResponse> updateAppointmentStatus(@RequestBody OsAppointmentStatusRequest request) {
+		OsAppointmentDetails updated = appointmentService.updateAppointmentStatus(request);
 		return ResponseEntity.ok(GenericResponse.success("Appointment status updated"));
 	}
 
 	@GetMapping("/{appointmentId}")
 	public ResponseEntity<GenericResponse> getAppointmentDetails(@PathVariable Integer appointmentId) {
-		AppointmentResponse response = appointmentService.getAppointmentsDetails(appointmentId);
+		OsAppointmentResponse response = appointmentService.getAppointmentsDetails(appointmentId);
 		return ResponseEntity.ok(GenericResponse.success(response));
 	}
 }

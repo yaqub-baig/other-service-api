@@ -2,6 +2,7 @@ package com.autoadda.apis.other.entity;
 
 import java.time.LocalDate;
 
+import com.autoadda.apis.other.entity.os.OsAppointmentDetails;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -52,6 +53,6 @@ public class AppointmentInvoice {
 	
 	@OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "appointment_id", referencedColumnName = "id")
-    private AppointmentDetails appointment;
+    private OsAppointmentDetails appointment;
 	
 }

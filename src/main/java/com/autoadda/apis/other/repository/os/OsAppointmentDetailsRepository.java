@@ -13,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.autoadda.apis.other.entity.AppointmentDetails;
 import com.autoadda.apis.other.util.Status;
 
 import jakarta.persistence.LockModeType;

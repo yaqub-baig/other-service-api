@@ -2,7 +2,6 @@ package com.autoadda.apis.other.response;
 
 import java.util.List;
 
-import com.autoadda.apis.other.entity.AppointmentDetails;
 import com.autoadda.apis.other.entity.AppointmentServices;
 import com.autoadda.apis.other.entity.JobCard;
 

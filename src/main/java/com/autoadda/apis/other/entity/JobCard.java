@@ -3,6 +3,7 @@ package com.autoadda.apis.other.entity;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import com.autoadda.apis.other.entity.os.OsAppointmentDetails;
 import com.autoadda.apis.other.util.Status;
 
 import jakarta.persistence.*;
@@ -51,7 +52,7 @@ public class JobCard {
 
 	@ManyToOne
 	@JoinColumn(name = "appointment_id", referencedColumnName = "id")
-	private AppointmentDetails appointment;
+	private OsAppointmentDetails appointment;
 
 	@ManyToOne
 	@JoinColumn(name = "appointment_service_id", referencedColumnName = "id")

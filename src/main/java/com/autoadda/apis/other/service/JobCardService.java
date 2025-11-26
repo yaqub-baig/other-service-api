@@ -3,18 +3,18 @@ package com.autoadda.apis.other.service;
 import java.time.LocalTime;
 import java.util.List;
 
+import com.autoadda.apis.other.entity.os.OsAppointmentDetails;
+import com.autoadda.apis.other.repository.os.OsAppointmentDetailsRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.autoadda.apis.other.entity.AppointmentDetails;
 import com.autoadda.apis.other.entity.AppointmentServices;
 import com.autoadda.apis.other.entity.Garage;
 import com.autoadda.apis.other.entity.JobCard;
 import com.autoadda.apis.other.entity.JobCardStatusActivity;
 import com.autoadda.apis.other.entity.Technician;
 import com.autoadda.apis.other.exception.MemberNotFoundException;
-import com.autoadda.apis.other.repository.AppointmentDetailsRepository;
 import com.autoadda.apis.other.repository.AppointmentServiceRepository;
 import com.autoadda.apis.other.repository.GarageRepository;
 import com.autoadda.apis.other.repository.JobCardRepository;
@@ -37,13 +37,13 @@ public class JobCardService {
 	private final AppointmentServiceRepository appointmentServiceRepo;
 	private final GarageRepository garageRepo;
 	private final TechnicianRepository technicianRepo;
-	private final AppointmentDetailsRepository appointmentRepo;
+	private final OsAppointmentDetailsRepository appointmentRepo;
 
 	private final BusinessValidator validator;
 
 	@Transactional
 	public JobCard assignTechnicianToService(AssignServiceRequest request) {
-		AppointmentDetails appointment = appointmentRepo.findById(request.getAppointmentId())
+		OsAppointmentDetails appointment = appointmentRepo.findById(request.getAppointmentId())
 				.orElseThrow(() -> new RuntimeException("Appointment not found"));
 
 		AppointmentServices service = appointmentServiceRepo.findById(request.getServiceId())
