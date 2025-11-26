@@ -5,10 +5,11 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "vehicle-api", url = "https://vehicle-api-zq5p.onrender.com/api/v1")
+@FeignClient(name = "vehicle-api", url = "https://vehicle.devuzair.site/api/v1")
 public interface VehicleClient {
-    @GetMapping("/vehicles/isc/{vehicleId}")
-    public VehicleDetailResponse getVehicleDetailsByIdResponse(
-            @PathVariable Integer vehicleId);
 
+    @GetMapping("/vehicles/isc/{vehicleId}")
+    VehicleDetailResponse getVehicleDetailsByIdResponse(
+            @PathVariable("vehicleId") Integer vehicleId
+    );
 }

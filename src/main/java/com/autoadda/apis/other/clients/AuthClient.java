@@ -8,18 +8,23 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "identity-api", url = "https://identity-api-wbad.onrender.com/api/v1")
+@FeignClient(name = "identity-api", url = "https://identity.devuzair.site/api/v1")
 public interface AuthClient {
 
     @GetMapping("/auth/{id}")
-    UserResponse getUser(@PathVariable Integer id);
+    UserResponse getUser(@PathVariable("id") Integer id);
 
     @PutMapping("/auth/update/role/{id}")
-    GenericResponse updateRole(@PathVariable Integer id, @RequestParam ERole role);
+    GenericResponse updateRole(
+            @PathVariable("id") Integer id,
+            @RequestParam("role") ERole role
+    );
 
     @GetMapping("/auth/byNumber/{phoneNumber}")
-    ResponseEntity<UserResponse> getUserDetails(@PathVariable String phoneNumber);
+    ResponseEntity<UserResponse> getUserDetails(
+            @PathVariable("phoneNumber") String phoneNumber
+    );
 
     @PostMapping("/auth/send-sms")
-    public GenericResponse sendSms(@RequestBody SmsRequest request);
+    GenericResponse sendSms(@RequestBody SmsRequest request);
 }
