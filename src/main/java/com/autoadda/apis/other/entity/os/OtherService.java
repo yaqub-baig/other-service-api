@@ -73,10 +73,9 @@ public class OtherService {
     @Column(name = "service_type")
     private String serviceType;
 
-    @ManyToOne
-    @JoinColumn(name = "service_id")
-    @JsonIgnore
-    private OtherServiceBridge  osService;
+    @JsonManagedReference("service-bridges")
+    @OneToMany(mappedBy = "otherServiceGarage", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OtherServiceBridge> services = new ArrayList<> ( );
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -99,9 +98,6 @@ public class OtherService {
     @JoinColumn(name = "company_images")
     private List<MediaFile> companyImages = new ArrayList<> ( );
 
-    @JsonManagedReference("service-bridges")
-    @OneToMany(mappedBy = "otherServiceGarage", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OtherServiceBridge> services = new ArrayList<> ( );
 
 
     @PrePersist

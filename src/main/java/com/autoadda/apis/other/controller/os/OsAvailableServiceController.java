@@ -1,12 +1,8 @@
 package com.autoadda.apis.other.controller.os;
 
 import com.autoadda.apis.other.entity.os.OsAvailableService;
-import com.autoadda.apis.other.request.os.OsAssignServiceRequest;
 import com.autoadda.apis.other.response.os.OsGenericResponse;
-import com.autoadda.apis.other.response.os.OsJobCardResponse;
 import com.autoadda.apis.other.service.os.OsAvailableServiceService;
-
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +30,7 @@ public class OsAvailableServiceController {
         OsAvailableService osAvailableService = service.create(request);
         return ResponseEntity.ok(OsGenericResponse.success("OS Available service created", osAvailableService));
     }
+
     // Get one service by ID
     @GetMapping("/{id}")
     public ResponseEntity<OsAvailableService> getById(@PathVariable Integer id) {
