@@ -2,11 +2,11 @@ package com.autoadda.apis.other.test;
 
 //✅ Import JUnit 5 assertions
 
-import com.service.other.entity.Garage;
-import com.service.other.repository.GarageRepository;
-import com.service.other.request.GarageRequest;
-import com.service.other.service.GarageManagementService;
-import com.service.other.util.Status;
+import com.autoadda.apis.other.entity.Garage;
+import com.autoadda.apis.other.repository.GarageRepository;
+import com.autoadda.apis.other.request.GarageRequest;
+import com.autoadda.apis.other.service.GarageManagementService;
+import com.autoadda.apis.other.util.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

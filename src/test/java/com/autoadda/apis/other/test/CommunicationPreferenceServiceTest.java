@@ -16,10 +16,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.service.other.entity.CommunicationPreference;
-import com.service.other.repository.CommunicationPreferenceRepository;
-import com.service.other.request.CommunicationPreferenceRequest;
-import com.service.other.service.CommunicationPreferenceService;
+import com.autoadda.apis.other.entity.CommunicationPreference;
+import com.autoadda.apis.other.repository.CommunicationPreferenceRepository;
+import com.autoadda.apis.other.request.CommunicationPreferenceRequest;
+import com.autoadda.apis.other.service.CommunicationPreferenceService;
 
 @ExtendWith(MockitoExtension.class)
 public class CommunicationPreferenceServiceTest {

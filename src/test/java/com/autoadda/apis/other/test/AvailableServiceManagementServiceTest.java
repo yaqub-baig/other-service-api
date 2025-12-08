@@ -23,10 +23,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.service.other.entity.AvailableService;
-import com.service.other.repository.AvailableServiceRepository;
-import com.service.other.request.AvailableServiceRequest;
-import com.service.other.service.AvailableServiceManagementService;
+import com.autoadda.apis.other.entity.AvailableService;
+import com.autoadda.apis.other.repository.AvailableServiceRepository;
+import com.autoadda.apis.other.request.AvailableServiceRequest;
+import com.autoadda.apis.other.service.AvailableServiceManagementService;
 
 @ExtendWith(MockitoExtension.class)
 public class AvailableServiceManagementServiceTest {

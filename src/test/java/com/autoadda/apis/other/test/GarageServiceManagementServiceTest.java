@@ -18,11 +18,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.service.other.entity.AvailableService;
-import com.service.other.entity.Garage;
-import com.service.other.entity.GarageService;
-import com.service.other.repository.GarageServiceRepository;
-import com.service.other.service.GarageServiceManagementService;
+import com.autoadda.apis.other.entity.AvailableService;
+import com.autoadda.apis.other.entity.Garage;
+import com.autoadda.apis.other.entity.GarageService;
+import com.autoadda.apis.other.repository.GarageServiceRepository;
+import com.autoadda.apis.other.service.GarageServiceManagementService;
 
 @ExtendWith(MockitoExtension.class)
 class GarageServiceManagementServiceTest {

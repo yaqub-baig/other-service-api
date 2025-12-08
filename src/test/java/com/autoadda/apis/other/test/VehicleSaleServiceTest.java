@@ -15,22 +15,22 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.service.other.entity.Customer;
-import com.service.other.entity.Garage;
-import com.service.other.entity.VehicleDetails;
-import com.service.other.entity.VehicleListing;
-import com.service.other.entity.VehicleOwner;
-import com.service.other.entity.VehicleSale;
-import com.service.other.entity.VehicleSaleInvoice;
-import com.service.other.repository.VehicleDetailsRepository;
-import com.service.other.repository.VehicleListingRepository;
-import com.service.other.repository.VehicleOwnerRepository;
-import com.service.other.repository.VehicleSaleInvoiceRepository;
-import com.service.other.repository.VehicleSaleRepository;
-import com.service.other.request.VehicleListingRequest;
-import com.service.other.request.VehicleSaleRequest;
-import com.service.other.service.VehicleSaleService;
-import com.service.other.util.Status;
+import com.autoadda.apis.other.entity.Customer;
+import com.autoadda.apis.other.entity.Garage;
+import com.autoadda.apis.other.entity.VehicleDetails;
+import com.autoadda.apis.other.entity.VehicleListing;
+import com.autoadda.apis.other.entity.VehicleOwner;
+import com.autoadda.apis.other.entity.VehicleSale;
+import com.autoadda.apis.other.entity.VehicleSaleInvoice;
+import com.autoadda.apis.other.repository.VehicleDetailsRepository;
+import com.autoadda.apis.other.repository.VehicleListingRepository;
+import com.autoadda.apis.other.repository.VehicleOwnerRepository;
+import com.autoadda.apis.other.repository.VehicleSaleInvoiceRepository;
+import com.autoadda.apis.other.repository.VehicleSaleRepository;
+import com.autoadda.apis.other.request.VehicleListingRequest;
+import com.autoadda.apis.other.request.VehicleSaleRequest;
+import com.autoadda.apis.other.service.VehicleSaleService;
+import com.autoadda.apis.other.util.Status;
 
 import jakarta.persistence.EntityNotFoundException;
 

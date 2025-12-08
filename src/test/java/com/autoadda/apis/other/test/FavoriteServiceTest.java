@@ -16,12 +16,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.service.other.entity.GarageFavorite;
-import com.service.other.entity.VehicleFavorite;
-import com.service.other.repository.GarageFavoriteRepository;
-import com.service.other.repository.VehicleFavoriteRepository;
-import com.service.other.service.GarageFavoriteService;
-import com.service.other.service.VehicleFavoriteService;
+import com.autoadda.apis.other.entity.GarageFavorite;
+import com.autoadda.apis.other.entity.VehicleFavorite;
+import com.autoadda.apis.other.repository.GarageFavoriteRepository;
+import com.autoadda.apis.other.repository.VehicleFavoriteRepository;
+import com.autoadda.apis.other.service.GarageFavoriteService;
+import com.autoadda.apis.other.service.VehicleFavoriteService;
 
 @ExtendWith(MockitoExtension.class)
 class FavoriteServiceTest {

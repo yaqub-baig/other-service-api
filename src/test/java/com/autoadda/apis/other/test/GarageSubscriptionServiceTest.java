@@ -16,11 +16,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.service.other.entity.Garage;
-import com.service.other.entity.GarageSubscription;
-import com.service.other.repository.GarageRepository;
-import com.service.other.repository.GarageSubscriptionRepository;
-import com.service.other.service.GarageSubscriptionService;
+import com.autoadda.apis.other.entity.Garage;
+import com.autoadda.apis.other.entity.GarageSubscription;
+import com.autoadda.apis.other.repository.GarageRepository;
+import com.autoadda.apis.other.repository.GarageSubscriptionRepository;
+import com.autoadda.apis.other.service.GarageSubscriptionService;
 
 import jakarta.persistence.EntityNotFoundException;
 

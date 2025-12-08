@@ -19,12 +19,12 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.service.other.entity.InsuranceClaim;
-import com.service.other.entity.InsuranceClaimDocument;
-import com.service.other.repository.InsuranceClaimDocumentRepository;
-import com.service.other.repository.InsuranceClaimRepository;
-import com.service.other.service.InsuranceClaimService;
-import com.service.other.util.Status;
+import com.autoadda.apis.other.entity.InsuranceClaim;
+import com.autoadda.apis.other.entity.InsuranceClaimDocument;
+import com.autoadda.apis.other.repository.InsuranceClaimDocumentRepository;
+import com.autoadda.apis.other.repository.InsuranceClaimRepository;
+import com.autoadda.apis.other.service.InsuranceClaimService;
+import com.autoadda.apis.other.util.Status;
 
 @ExtendWith(MockitoExtension.class)
 class InsuranceClaimServiceTest {
