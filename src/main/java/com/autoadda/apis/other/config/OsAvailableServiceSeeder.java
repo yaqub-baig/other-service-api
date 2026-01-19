@@ -1,7 +1,7 @@
 package com.autoadda.apis.other.config;
 
-import com.autoadda.apis.other.entity.os.OsAvailableService;
-import com.autoadda.apis.other.repository.os.OsAvailableServiceRepository;
+import com.autoadda.apis.other.entity.OsAvailableService;
+import com.autoadda.apis.other.repository.OsAvailableServiceRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

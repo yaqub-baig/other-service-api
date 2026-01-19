@@ -1,25 +1,11 @@
 package com.autoadda.apis.other.entity;
 
+import com.autoadda.apis.other.util.Status;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.util.Date;
 import java.util.List;
-
-import com.autoadda.apis.other.util.Status;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
@@ -59,9 +45,6 @@ public class Technician {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @ManyToOne
-    @JoinColumn(name = "garage_id")
-    private Garage garage;
 	
 	@Column(name = "profile_img")
 	private String profileImg;

@@ -15,7 +15,6 @@ public interface TechnicianRepository extends JpaRepository<Technician, Integer>
 
 	Optional<Technician> findByMobileNumber(String phone);
 
-	List<Technician> findByGarage_Id(Integer garageId);
 
 	List<Technician> findBySkillSetContaining(String skill); // if skillSet is stored as a list
 
