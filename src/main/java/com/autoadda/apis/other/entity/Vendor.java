@@ -15,7 +15,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-public class OtherService {
+public class Vendor {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
@@ -42,7 +42,7 @@ public class OtherService {
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = " mobile_number")
+    @Column(name = "mobile_number")
     private String mobileNumber;
 
     @Column(name = "trade_licence_number", unique = true)
@@ -70,9 +70,9 @@ public class OtherService {
     @Column(name = "service_type")
     private String serviceType;
 
-    @JsonManagedReference("service-bridges")
-    @OneToMany(mappedBy = "otherServiceGarage", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OtherServiceBridge> services = new ArrayList<> ( );
+    @JsonManagedReference("vendor-services")
+    @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VendorServiceBridge> services = new ArrayList<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

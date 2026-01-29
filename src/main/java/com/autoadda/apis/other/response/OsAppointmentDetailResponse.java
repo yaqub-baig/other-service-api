@@ -24,10 +24,10 @@ public class OsAppointmentDetailResponse {
     private LocalTime deliveryTime;
     private Status status;
     private String comments;
-    private OsResponse otherService;
-    private String selectedOsServiceIds;
-    private List<AvailableServiceResponse> osServicesResponse;
-    private String otherServiceSubscriptionPlanId;
+    private OsResponse vendor;
+    private String selectedServiceIds;
+    private List<AvailableServiceResponse> servicesResponse;
+    private String subscriptionPlanId;
     private Integer customerId;
     private Integer vehicleId;
     private OsAppointmentSlotResponse slot;

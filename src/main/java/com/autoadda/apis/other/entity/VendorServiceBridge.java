@@ -7,11 +7,11 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "other_service_bridge")
+@Table(name = "vendor_service_bridge")
 @Data
 @Getter
 @Setter
-public class OtherServiceBridge {
+public class VendorServiceBridge {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -22,12 +22,11 @@ public class OtherServiceBridge {
     private Boolean isActive;
 
     @ManyToOne
-    @JoinColumn(name = "other_garage_id")
-    @JsonBackReference("service-bridges")
-    private OtherService otherServiceGarage;
+    @JoinColumn(name = "vendor_id")
+    @JsonBackReference("vendor-services")
+    private Vendor vendor;
 
     @ManyToOne
-    @JoinColumn(name = "service_id")
-    private OsAvailableService availableService;
-
+    @JoinColumn(name = "service_category_id")
+    private ServiceCategory serviceCategory;
 }

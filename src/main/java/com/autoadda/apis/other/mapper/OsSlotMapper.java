@@ -8,18 +8,18 @@ import org.springframework.stereotype.Component;
 public class OsSlotMapper {
 
     public OsAppointmentSlotResponse toResponse(OsAppointmentSlot slot) {
-        OsAppointmentSlotResponse osResponse = new OsAppointmentSlotResponse ( );
-        osResponse.setId ( slot.getId ( ) );
-        osResponse.setSlotDate ( slot.getSlotDate ( ) );
-        osResponse.setStartTime ( slot.getStartTime ( ) );
-        osResponse.setEndTime ( slot.getEndTime ( ) );
-        osResponse.setMaxBookings ( slot.getMaxBookings ( ) );
-        osResponse.setCurrentBookings ( slot.getCurrentBookings ( ) );
-        osResponse.setAvailableBookings ( slot.getAvailableBookings ( ) );
-        osResponse.setAvailable ( slot.isAvailable ( ) );
-        osResponse.setOtherServiceId ( slot.getOtherService ( ).getId ( ) );
-        return osResponse;
+        OsAppointmentSlotResponse response = new OsAppointmentSlotResponse();
+        response.setId(slot.getId());
+        response.setSlotDate(slot.getSlotDate());
+        response.setStartTime(slot.getStartTime());
+        response.setEndTime(slot.getEndTime());
+        response.setMaxBookings(slot.getMaxBookings());
+        response.setCurrentBookings(slot.getCurrentBookings());
+        response.setAvailableBookings(slot.getAvailableBookings());
+        response.setAvailable(slot.isAvailable());
+        if (slot.getVendor() != null) {
+            response.setVendorId(slot.getVendor().getId());
+        }
+        return response;
     }
-
 }
-

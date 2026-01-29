@@ -1,6 +1,6 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.OsAppointmentDetails;
+import com.autoadda.apis.other.entity.Booking;
 
 import com.autoadda.apis.other.exception.OtherServiceNotFoundException;
 
@@ -10,7 +10,7 @@ import com.autoadda.apis.other.request.OsCustomerAppointmentRequest;
 import com.autoadda.apis.other.response.OsAppointmentResponse;
 import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
 import com.autoadda.apis.other.response.OsGenericResponse;
-import com.autoadda.apis.other.service.OsAppointmentService;
+import com.autoadda.apis.other.service.BookingService;
 import com.autoadda.apis.other.service.OsAppointmentSlotService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -28,15 +28,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/os-appointments")
 @RequiredArgsConstructor
-public class OsAppointmentController {
-    private final OsAppointmentService appointmentService;
+public class BookingController {
+    private final BookingService appointmentService;
     private final OsAppointmentSlotService appointmentSlotService;
 
 
 
     @PostMapping
     public ResponseEntity<OsGenericResponse> createCustomerAppointment(@RequestBody OsCustomerAppointmentRequest request) {
-        OsAppointmentDetails appointment = appointmentService.createCustomerAppointment ( request );
+        Booking appointment = appointmentService.createCustomerAppointment ( request );
         return ResponseEntity.status ( HttpStatus.CREATED ).body ( OsGenericResponse.success ( appointment ) );
     }
 
@@ -63,7 +63,7 @@ public class OsAppointmentController {
 
     @PutMapping("/status")
     public ResponseEntity<OsGenericResponse> updateAppointmentStatus(@RequestBody OsAppointmentStatusRequest request) {
-        OsAppointmentDetails updated = appointmentService.updateAppointmentStatus ( request );
+        Booking updated = appointmentService.updateAppointmentStatus ( request );
         return ResponseEntity.ok ( OsGenericResponse.success ( updated ) );
     }
 
@@ -99,11 +99,11 @@ public class OsAppointmentController {
     }
 
     @PutMapping("/edit/appointment")
-    public ResponseEntity<OsAppointmentDetails> editAppointment(@RequestParam(required = false) Integer otherServiceId,
-                                             @RequestParam(required = false) Integer vehicleId,
-                                             @RequestParam Integer appointmentId,
-                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time,
-                                             @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId) {
+    public ResponseEntity<Booking> editAppointment(@RequestParam(required = false) Integer otherServiceId,
+                                                   @RequestParam(required = false) Integer vehicleId,
+                                                   @RequestParam Integer appointmentId,
+                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time,
+                                                   @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId) {
         return appointmentSlotService.editBooking ( otherServiceId, vehicleId, appointmentId, time, autoAddaId );
     }
 

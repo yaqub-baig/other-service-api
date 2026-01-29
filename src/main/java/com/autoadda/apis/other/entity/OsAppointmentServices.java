@@ -36,8 +36,8 @@ public class OsAppointmentServices {
     private Integer appointmentId;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "os_service_id", referencedColumnName = "id")
-    private OsService osService;
+    @JoinColumn(name = "vendor_service_id", referencedColumnName = "id")
+    private VendorService vendorService;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "technician_id", referencedColumnName = "id")

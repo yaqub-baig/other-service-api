@@ -1,36 +1,37 @@
 package com.autoadda.apis.other.util;
 
 
-import com.autoadda.apis.other.entity.OtherService;
+import com.autoadda.apis.other.entity.Vendor;
 import com.autoadda.apis.other.exception.MemberNotFoundException;
 import com.autoadda.apis.other.exception.OtherServiceNotFoundException;
 import com.autoadda.apis.other.repository.TechnicianRepository;
-import com.autoadda.apis.other.repository.OtherServiceRepository;
+import com.autoadda.apis.other.repository.VendorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class BusinessValidator {
 
+    @Autowired
+    private TechnicianRepository technicianRepository;
 
     @Autowired
-    private TechnicianRepository garageTechnicianRepository;
-
-
-    @Autowired
-    private OtherServiceRepository otherServiceRepository;
-
+    private VendorRepository vendorRepository;
 
     public void validateTechnician(Integer technicianId) throws MemberNotFoundException {
-
-        if (!garageTechnicianRepository.findById(technicianId).isPresent()) {
-            throw new MemberNotFoundException("technician not exist");
+        if (!technicianRepository.findById(technicianId).isPresent()) {
+            throw new MemberNotFoundException("Technician not found");
         }
     }
 
+    public Vendor validateAndGetVendor(Integer vendorId) {
+        return vendorRepository.findById(vendorId)
+                .orElseThrow(() -> new OtherServiceNotFoundException("Vendor not found"));
+    }
 
-    public OtherService validateAndGetOtherService(Integer otherServiceId) {
-        return otherServiceRepository.findById(otherServiceId)
-                .orElseThrow(() -> new OtherServiceNotFoundException("Other Service not found"));
+    // Legacy method for backward compatibility
+    @Deprecated
+    public Vendor validateAndGetOtherService(Integer vendorId) {
+        return validateAndGetVendor(vendorId);
     }
 }

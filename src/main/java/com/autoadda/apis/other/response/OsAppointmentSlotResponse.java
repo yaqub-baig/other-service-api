@@ -20,6 +20,6 @@ public class OsAppointmentSlotResponse {
     private Integer currentBookings;
     private Integer availableBookings;
     private boolean available;
-    private Integer otherServiceId;
+    private Integer vendorId;
 
 }

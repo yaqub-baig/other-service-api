@@ -27,8 +27,8 @@ public class OsBreakTime {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "other_service_id", referencedColumnName = "id")
-    private OtherService otherService;
+    @JoinColumn(name = "vendor_id", referencedColumnName = "id")
+    private Vendor vendor;
 
     @Enumerated(EnumType.STRING)
     private DayOfWeek dayOfWeek;

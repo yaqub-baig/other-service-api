@@ -14,7 +14,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OsAppointmentDetails {
+public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,8 +45,8 @@ public class OsAppointmentDetails {
     private LocalDate insert_tms;
 
     @ManyToOne
-    @JoinColumn(name = "other_service_id")
-    private OtherService otherService;
+    @JoinColumn(name = "vendor_id")
+    private Vendor vendor;
 
     @Column(name = "selected_other_service")
     private String selectedOtherServiceIds;

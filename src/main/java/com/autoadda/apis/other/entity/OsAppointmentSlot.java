@@ -22,8 +22,8 @@ public class OsAppointmentSlot {
     private LocalTime endTime;
     private Integer maxBookings;
     @ManyToOne
-    @JoinColumn(name = "otherServiceId")
-    private OtherService otherService;
+    @JoinColumn(name = "vendor_id")
+    private Vendor vendor;
     private Integer currentBookings;
     public boolean isAvailable() {
         return currentBookings < maxBookings;

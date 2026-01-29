@@ -42,8 +42,8 @@ public class OsJobCard {
     private LocalDateTime completedAt;
 
     @ManyToOne
-    @JoinColumn(name = "other_service_id", referencedColumnName = "id")
-    private OtherService otherService;
+    @JoinColumn(name = "vendor_id", referencedColumnName = "id")
+    private Vendor vendor;
 
     @ManyToOne
     @JoinColumn(name = "technician_id", referencedColumnName = "id")

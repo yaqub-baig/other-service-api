@@ -20,7 +20,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OsService {
+public class VendorService {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,11 +31,11 @@ public class OsService {
     private Boolean isActive;
 
     @ManyToOne
-    @JoinColumn(name = "otherServiceId")
-    private OtherService otherService;
+    @JoinColumn(name = "vendor_id")
+    private Vendor vendor;
 
     @ManyToOne
-    @JoinColumn(name = "service_id")
+    @JoinColumn(name = "service_category_id")
     @JsonIgnore
-    private OsAvailableService availableService;
+    private ServiceCategory serviceCategory;
 }

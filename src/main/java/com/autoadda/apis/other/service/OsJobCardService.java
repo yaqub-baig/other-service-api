@@ -26,21 +26,21 @@ public class OsJobCardService {
     private final OsJobCardRepository osJobCardRepository;
     private final OsJobcardStatusActivityRepository jobcardStatusActivityRepo;
     private final OsAppointmentServiceRepository appointmentServiceRepo;
-    private final OtherServiceRepository otherService;
+    private final VendorRepository otherService;
     private final TechnicianRepository technicianRepo;
-    private final OsAppointmentDetailsRepository appointmentRepo;
+    private final BookingRepository appointmentRepo;
     private final OsJobCardMapper jobCardMapper;
     private final BusinessValidator validator;
 
     @Transactional
     public OsJobCardResponse assignTechnicianToService(OsAssignServiceRequest request) {
-        OsAppointmentDetails appointment = appointmentRepo.findById(request.getAppointmentId())
+        Booking appointment = appointmentRepo.findById(request.getAppointmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
 
         OsAppointmentServices service = appointmentServiceRepo.findById(request.getServiceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
-        OtherService otherService1 = otherService.findById(request.getOtherServiceId())
+        Vendor otherService1 = otherService.findById(request.getOtherServiceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Garage not found"));
 
         Technician technician = technicianRepo.findById(request.getTechnicianId())
@@ -48,7 +48,7 @@ public class OsJobCardService {
 
         OsJobCard jobCard = OsJobCard.builder()
                 .osAppointmentId(appointment.getId())
-                .otherService(otherService1)
+                .vendor(otherService1)
                 .technician(technician)
                 .service(service)
                 .status(Status.ASSIGNED)
@@ -128,11 +128,11 @@ public class OsJobCardService {
      * @return a list of JobCards for the specified garage
      */
     @Transactional(readOnly = true)
-    public List<OsJobCard> getGarageJobCards(Integer otherServiceId, Status status) {
+    public List<OsJobCard> getVendorJobCards(Integer vendorId, Status status) {
         if (status == null || StringUtils.isBlank(status.toString()))
-            return osJobCardRepository.findByOtherServiceId(otherServiceId);
+            return osJobCardRepository.findByVendorId(vendorId);
         else
-            return osJobCardRepository.findByOtherServiceIdAndStatus(otherServiceId, status);
+            return osJobCardRepository.findByVendorIdAndStatus(vendorId, status);
     }
 
     /**

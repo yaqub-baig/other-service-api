@@ -19,7 +19,7 @@ public class WorkOrder {
     private Integer id;
 
     @OneToOne
-    private OsAppointmentDetails appointment;
+    private Booking appointment;
 
     @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
     private List<OsJobCard> jobCards;

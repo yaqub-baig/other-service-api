@@ -15,8 +15,7 @@ import java.util.Optional;
 @Repository
 public interface OsSlotRepository extends JpaRepository<OsAppointmentSlot, Integer> {
 
-    List<OsAppointmentSlot> findByOtherServiceIdAndSlotDateGreaterThanEqual(Integer otherServiceId, LocalDate date);
-
+    List<OsAppointmentSlot> findByVendorIdAndSlotDateGreaterThanEqual(Integer vendorId, LocalDate date);
 
     // Find slots within a time range
     List<OsAppointmentSlot> findByStartTimeBetween(LocalTime startTime, LocalTime endTime);
@@ -39,24 +38,26 @@ public interface OsSlotRepository extends JpaRepository<OsAppointmentSlot, Integ
 
     Optional<OsAppointmentSlot> findBySlotDateAndStartTime(LocalDate date, LocalTime currentTime);
 
-    List<OsAppointmentSlot> findByOtherServiceIdAndSlotDate(Integer otherServiceId, LocalDate date);
+    List<OsAppointmentSlot> findByVendorIdAndSlotDate(Integer vendorId, LocalDate date);
 
-    @Query("SELECT s FROM OsAppointmentSlot s WHERE s.otherService.id = :otherServiceId AND s.slotDate= :slotDate AND s.startTime = :time AND s.currentBookings < s.maxBookings")
-    Optional<OsAppointmentSlot> findByOtherServiceAndStartTime(@Param("otherServiceId") Integer otherServiceId, @Param("slotDate") LocalDate date, @Param("time") LocalTime time);
-    @Query("SELECT s FROM OsAppointmentSlot s WHERE s.otherService.id = :otherServiceId " +
+    @Query("SELECT s FROM OsAppointmentSlot s WHERE s.vendor.id = :vendorId AND s.slotDate= :slotDate AND s.startTime = :time AND s.currentBookings < s.maxBookings")
+    Optional<OsAppointmentSlot> findByVendorAndStartTime(@Param("vendorId") Integer vendorId, @Param("slotDate") LocalDate date, @Param("time") LocalTime time);
+
+    @Query("SELECT s FROM OsAppointmentSlot s WHERE s.vendor.id = :vendorId " +
             "AND s.slotDate >= :startDate AND s.slotDate <= :endDate " +
             "ORDER BY s.slotDate, s.startTime")
     List<OsAppointmentSlot> findMonthlySlots(
-            @Param("otherServiceId") Integer garageId,
+            @Param("vendorId") Integer vendorId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
-    List<OsAppointmentSlot> findAvailableSlotsByOtherServiceId(Integer otherServiceId);
+    List<OsAppointmentSlot> findAvailableSlotsByVendorId(Integer vendorId);
 
-    Optional<OsAppointmentSlot> findByOtherServiceIdAndSlotDateAndStartTime(Integer id, LocalDate date, LocalTime currentTime);
+    Optional<OsAppointmentSlot> findByVendorIdAndSlotDateAndStartTime(Integer id, LocalDate date, LocalTime currentTime);
+
     @Query("SELECT s FROM OsAppointmentSlot s WHERE " +
             "(s.slotDate < :currentDate) OR " +
             "(s.slotDate = :currentDate AND s.endTime <= :currentTime)")
-    List<OsAppointmentSlot> findPastSlots(  @Param("currentDate") LocalDate currentDate,
-                                            @Param("currentTime") LocalTime currentTime);
+    List<OsAppointmentSlot> findPastSlots(@Param("currentDate") LocalDate currentDate,
+                                          @Param("currentTime") LocalTime currentTime);
 }

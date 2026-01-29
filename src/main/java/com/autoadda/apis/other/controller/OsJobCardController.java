@@ -44,10 +44,10 @@ public class OsJobCardController {
         return ResponseEntity.ok(OsGenericResponse.success(jobCards));
     }
 
-    @GetMapping("/other-service/{otherServiceId}")
-    public ResponseEntity<OsGenericResponse> getOtherServiceJobCards(@PathVariable Integer otherServiceId,
-                                                                     @RequestParam(required = false) Status status) {
-        List<OsJobCard> jobCards = jobCardService.getGarageJobCards(otherServiceId, status);
+    @GetMapping("/vendor/{vendorId}")
+    public ResponseEntity<OsGenericResponse> getVendorJobCards(@PathVariable Integer vendorId,
+                                                               @RequestParam(required = false) Status status) {
+        List<OsJobCard> jobCards = jobCardService.getVendorJobCards(vendorId, status);
         return ResponseEntity.ok(OsGenericResponse.success(jobCards));
     }
 }

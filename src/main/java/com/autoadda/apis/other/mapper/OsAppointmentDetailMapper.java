@@ -1,7 +1,7 @@
 package com.autoadda.apis.other.mapper;
 
 import com.autoadda.apis.other.clients.VehicleClient;
-import com.autoadda.apis.other.entity.OsAppointmentDetails;
+import com.autoadda.apis.other.entity.Booking;
 import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -10,27 +10,26 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OsAppointmentDetailMapper {
     private final OsSlotMapper osSlotMapper;
-    private final OtherServiceMapper otherServiceMapper;
+    private final VendorMapper vendorMapper;
     private final VehicleClient vehicleClient;
 
-    public OsAppointmentDetailResponse entityToResponse(OsAppointmentDetails osAppointmentDetails) {
-        OsAppointmentDetailResponse osAppointmentDetailResponse = new OsAppointmentDetailResponse();
-        osAppointmentDetailResponse.setId(osAppointmentDetails.getId());
-        osAppointmentDetailResponse.setAppointmentReferenceId(osAppointmentDetails.getAppointmentReferenceId());
-        osAppointmentDetailResponse.setScheduleDate(osAppointmentDetails.getScheduleDate());
-        osAppointmentDetailResponse.setServiceStartTime(osAppointmentDetails.getServiceStartTime());
-        osAppointmentDetailResponse.setServiceEndTime(osAppointmentDetails.getServiceEndTime());
-        osAppointmentDetailResponse.setDeliveryTime(osAppointmentDetails.getDeliveryTime());
-        osAppointmentDetailResponse.setComments(osAppointmentDetails.getComments());
-        osAppointmentDetailResponse.setStatus(osAppointmentDetails.getStatus());
-        osAppointmentDetailResponse.setOtherService(otherServiceMapper.entityToResponse(osAppointmentDetails.getOtherService()));
-        osAppointmentDetailResponse.setSlot(osSlotMapper.toResponse(osAppointmentDetails.getSlot()));
-        osAppointmentDetailResponse.setSelectedOsServiceIds(osAppointmentDetails.getSelectedOtherServiceIds());
-        osAppointmentDetailResponse.setOtherServiceSubscriptionPlanId(osAppointmentDetails.getOsSubscriptionPlanId());
-        osAppointmentDetailResponse.setVehicleId(osAppointmentDetails.getVehicleId());
-        osAppointmentDetailResponse.setVehicle(vehicleClient.getVehicleDetailsByIdResponse(osAppointmentDetails.getVehicleId()));
+    public OsAppointmentDetailResponse entityToResponse(Booking booking) {
+        OsAppointmentDetailResponse response = new OsAppointmentDetailResponse();
+        response.setId(booking.getId());
+        response.setAppointmentReferenceId(booking.getAppointmentReferenceId());
+        response.setScheduleDate(booking.getScheduleDate());
+        response.setServiceStartTime(booking.getServiceStartTime());
+        response.setServiceEndTime(booking.getServiceEndTime());
+        response.setDeliveryTime(booking.getDeliveryTime());
+        response.setComments(booking.getComments());
+        response.setStatus(booking.getStatus());
+        response.setVendor(vendorMapper.entityToResponse(booking.getVendor()));
+        response.setSlot(osSlotMapper.toResponse(booking.getSlot()));
+        response.setSelectedServiceIds(booking.getSelectedOtherServiceIds());
+        response.setSubscriptionPlanId(booking.getOsSubscriptionPlanId());
+        response.setVehicleId(booking.getVehicleId());
+        response.setVehicle(vehicleClient.getVehicleDetailsByIdResponse(booking.getVehicleId()));
 
-        return osAppointmentDetailResponse;
+        return response;
     }
 }
-

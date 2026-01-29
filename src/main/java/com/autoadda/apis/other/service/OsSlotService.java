@@ -62,21 +62,28 @@ public class OsSlotService {
     }
 
     public OsAppointmentSlotResponse getSlotById(Integer id) {
-        OsAppointmentSlot slot = slotRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("slot not found"));
+        OsAppointmentSlot slot = slotRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
         return slotMapper.toResponse(slot);
     }
 
     public List<OsAppointmentSlotResponse> getAvailableSlots(LocalTime startTime, LocalTime endTime) {
-        return slotRepository.findAvailableSlotsBetween(startTime, endTime).stream().map(slotMapper::toResponse).toList();
+        return slotRepository.findAvailableSlotsBetween(startTime, endTime).stream()
+                .map(slotMapper::toResponse)
+                .toList();
     }
 
-    public List<OsAppointmentSlotResponse> getAvailableSlots(Integer otherServiceId) {
-        return slotRepository.findAvailableSlotsByOtherServiceId(otherServiceId).stream().filter(OsAppointmentSlot::isAvailable).map(slotMapper::toResponse).toList();
+    public List<OsAppointmentSlotResponse> getAvailableSlots(Integer vendorId) {
+        return slotRepository.findAvailableSlotsByVendorId(vendorId).stream()
+                .filter(OsAppointmentSlot::isAvailable)
+                .map(slotMapper::toResponse)
+                .toList();
     }
 
     @Transactional
     public void incrementSlotBookings(Integer slotId) {
-        OsAppointmentSlot slot = slotRepository.findById(slotId).orElseThrow(() -> new ResourceNotFoundException("slot not found"));
+        OsAppointmentSlot slot = slotRepository.findById(slotId)
+                .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
         if (!slot.isAvailable()) {
             throw new IllegalStateException("Slot is fully booked");
         }
@@ -86,53 +93,48 @@ public class OsSlotService {
 
     @Transactional
     public void decrementSlotBookings(Integer slotId) {
-        OsAppointmentSlot slot = slotRepository.findById(slotId).orElseThrow(() -> new ResourceNotFoundException("slot not found"));
+        OsAppointmentSlot slot = slotRepository.findById(slotId)
+                .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
         if (slot.getCurrentBookings() > 0) {
             slot.setCurrentBookings(slot.getCurrentBookings() - 1);
             slotRepository.save(slot);
         }
     }
 
-    public OsAppointmentSlot findAvailableSlotByGarageIdAndTime(Integer otherServiceId, LocalDate date, LocalTime time) {
+    public OsAppointmentSlot findAvailableSlotByVendorIdAndTime(Integer vendorId, LocalDate date, LocalTime time) {
         return slotRepository
-                .findByOtherServiceAndStartTime(otherServiceId, date, time)
-                .orElseThrow(() -> new ResourceNotFoundException("either slot not found or slot is fully booked"));
+                .findByVendorAndStartTime(vendorId, date, time)
+                .orElseThrow(() -> new ResourceNotFoundException("Either slot not found or slot is fully booked"));
     }
 
+    // Legacy method for backward compatibility
+    @Deprecated
+    public OsAppointmentSlot findAvailableSlotByGarageIdAndTime(Integer vendorId, LocalDate date, LocalTime time) {
+        return findAvailableSlotByVendorIdAndTime(vendorId, date, time);
+    }
 
-    public OsMonthlyAvailabilityResponse getMonthlyAvailability(Integer otherServiceId) {
+    public OsMonthlyAvailabilityResponse getMonthlyAvailability(Integer vendorId) {
         LocalDate today = LocalDate.now();
-        // Start from tomorrow (current date + 1)
         LocalDate startDate = today;
-
-        // End date is 2 months from today
         LocalDate endDate = today.plusMonths(2);
 
         int year = startDate.getYear();
         int month = startDate.getMonthValue();
-        // Get all slots for the garage in this month
-        List<OsAppointmentSlot> monthlySlots = slotRepository
-                .findMonthlySlots(otherServiceId, startDate, endDate);
 
-        // Group slots by date
+        List<OsAppointmentSlot> monthlySlots = slotRepository
+                .findMonthlySlots(vendorId, startDate, endDate);
+
         Map<LocalDate, List<OsAppointmentSlot>> slotsByDate = monthlySlots.stream()
                 .collect(Collectors.groupingBy(OsAppointmentSlot::getSlotDate));
 
-        // Create daily availability map
         Map<LocalDate, Boolean> dailyAvailability = new HashMap<>();
 
-        // Check each day of the month
-        for (LocalDate date = startDate;
-             !date.isAfter(endDate);
-             date = date.plusDays(1)) {
-
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             List<OsAppointmentSlot> daySlots = slotsByDate.get(date);
 
             if (daySlots == null || daySlots.isEmpty()) {
-                // No slots for this day
                 dailyAvailability.put(date, false);
             } else {
-                // Check if any slot has available appointments
                 boolean hasAvailableSlots = daySlots.stream()
                         .anyMatch(OsAppointmentSlot::isAvailable);
                 dailyAvailability.put(date, hasAvailableSlots);
@@ -140,7 +142,7 @@ public class OsSlotService {
         }
 
         return OsMonthlyAvailabilityResponse.builder()
-                .otherServiceId(otherServiceId)
+                .vendorId(vendorId)
                 .year(year)
                 .month(month)
                 .dailyAvailability(dailyAvailability)
@@ -154,16 +156,13 @@ public class OsSlotService {
         LocalDate today = now.toLocalDate();
         LocalTime currentTime = now.toLocalTime();
 
-        // Find slots that have passed
         List<OsAppointmentSlot> pastSlots = slotRepository.findPastSlots(today, currentTime);
 
-        // Mark them as full to prevent new bookings
         pastSlots.forEach(slot -> {
             if (slot.getCurrentBookings() == 0) {
-                slot.setCurrentBookings(slot.getMaxBookings()); // Make it appear full
+                slot.setCurrentBookings(slot.getMaxBookings());
             }
         });
         slotRepository.saveAll(pastSlots);
     }
 }
-

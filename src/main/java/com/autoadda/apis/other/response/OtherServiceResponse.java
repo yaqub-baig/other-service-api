@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 public class OtherServiceResponse {
     private Integer id;
     private Boolean isActive;
-    private Integer osServiceId;
-    private AvailableServiceResponse availableService; // Using the existing AvailableServiceResponse
+    private Integer vendorId;
+    private AvailableServiceResponse serviceCategory;
 }
