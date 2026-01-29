@@ -1,0 +1,38 @@
+package com.autoadda.apis.other.request;
+
+import com.autoadda.apis.other.util.DataType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ServiceAttributeDefinitionRequest {
+
+    private Integer serviceCategoryId;
+
+    private String attributeCode;
+
+    private String attributeName;
+
+    private DataType dataType;
+
+    private String unit;
+
+    private Boolean isRequired;
+
+    private Boolean isFilterable;
+
+    private Boolean isSearchable;
+
+    private Integer displayOrder;
+
+    private String description;
+
+    private String defaultValue;
+
+    private String validationRules;
+}

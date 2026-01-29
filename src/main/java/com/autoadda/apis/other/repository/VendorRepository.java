@@ -88,6 +88,6 @@ public interface VendorRepository extends JpaRepository<Vendor, Integer> {
     @Query("SELECT DISTINCT g FROM Vendor g " +
             "LEFT JOIN FETCH g.companyLocation " +
             "LEFT JOIN FETCH g.services s " +
-            "LEFT JOIN FETCH s.availableService")
+            "LEFT JOIN FETCH s.serviceCategory")
     Set<Vendor> findAllWithLocationAndServices();
 }
