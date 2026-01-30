@@ -9,12 +9,14 @@ import com.autoadda.apis.other.entity.VendorServiceBridge;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.VendorMapper;
+import com.autoadda.apis.other.mapper.VendorProfileMapper;
 import com.autoadda.apis.other.repository.MediaFileRepository;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
 import com.autoadda.apis.other.repository.VendorRepository;
 import com.autoadda.apis.other.request.GarageServiceRequest;
 import com.autoadda.apis.other.request.OtherServiceRequest;
 import com.autoadda.apis.other.response.OsResponse;
+import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.util.Status;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +44,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     private final MediaFileRepository mediaFileRepository;
     private final VendorServiceBridgeService vendorServiceBridgeService;
     private final VendorMapper vendorMapper;
+    private final VendorProfileMapper vendorProfileMapper;
 
     private Vendor mapToEntity(OtherServiceRequest request) {
         Vendor vendor = new Vendor();
@@ -64,7 +67,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
 
     @Override
     @Transactional
-    public Vendor createVendor(OtherServiceRequest request, String autoAddaId) {
+    public VendorProfileResponse createVendor(OtherServiceRequest request, String autoAddaId) {
         Vendor vendor = mapToEntity(request);
 
         // Set location
@@ -117,32 +120,36 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         }
 
         saved.setServices(vendorServices);
-        return vendorRepository.save(saved);
+        Vendor finalVendor = vendorRepository.save(saved);
+        return vendorProfileMapper.toVendorProfileResponse(finalVendor);
     }
 
     @Override
-    public List<Vendor> getAllVendors() {
-        return vendorRepository.findAll().stream()
+    public List<VendorProfileResponse> getAllVendors() {
+        List<Vendor> vendors = vendorRepository.findAll().stream()
                 .filter(Vendor::isActive)
                 .toList();
+        return vendorProfileMapper.toVendorProfileResponseList(vendors);
     }
 
     @Override
-    public List<Vendor> getVendorsByOwnerId(String autoAddaId) {
-        return vendorRepository.findByCompanyOwner(Integer.parseInt(autoAddaId)).stream()
+    public List<VendorProfileResponse> getVendorsByOwnerId(String autoAddaId) {
+        List<Vendor> vendors = vendorRepository.findByCompanyOwner(Integer.parseInt(autoAddaId)).stream()
                 .filter(Vendor::isActive)
                 .toList();
+        return vendorProfileMapper.toVendorProfileResponseList(vendors);
     }
 
     @Override
-    public Optional<Vendor> getVendorById(Integer id) {
+    public Optional<VendorProfileResponse> getVendorById(Integer id) {
         return vendorRepository.findById(id)
-                .filter(Vendor::isActive);
+                .filter(Vendor::isActive)
+                .map(vendorProfileMapper::toVendorProfileResponse);
     }
 
     @Override
     @Transactional
-    public Vendor updateVendor(Integer id, OtherServiceRequest request) {
+    public VendorProfileResponse updateVendor(Integer id, OtherServiceRequest request) {
         Vendor existing = vendorRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Vendor not found with id: " + id));
 
@@ -258,7 +265,8 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         existing.getServices().clear();
         existing.getServices().addAll(vendorServiceBridges);
 
-        return vendorRepository.save(existing);
+        Vendor updatedVendor = vendorRepository.save(existing);
+        return vendorProfileMapper.toVendorProfileResponse(updatedVendor);
     }
 
     private void validateTradeLicenceNumber(String tradeLicenceNumber) {
@@ -316,29 +324,34 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     }
 
     @Override
-    public List<Vendor> findVendorsByBrandName(String name) {
-        return vendorRepository.findByCompanyBrandNameContainingIgnoreCaseAndIsActiveTrue(name);
+    public List<VendorProfileResponse> findVendorsByBrandName(String name) {
+        List<Vendor> vendors = vendorRepository.findByCompanyBrandNameContainingIgnoreCaseAndIsActiveTrue(name);
+        return vendorProfileMapper.toVendorProfileResponseList(vendors);
     }
 
     @Override
-    public List<Vendor> findVendorsByServiceType(String serviceType) {
-        return vendorRepository.findByServiceTypeAndIsActiveTrue(serviceType);
+    public List<VendorProfileResponse> findVendorsByServiceType(String serviceType) {
+        List<Vendor> vendors = vendorRepository.findByServiceTypeAndIsActiveTrue(serviceType);
+        return vendorProfileMapper.toVendorProfileResponseList(vendors);
     }
 
     @Override
-    public List<Vendor> findVendorsByStatus(Status status) {
-        return vendorRepository.findByAccountStatusAndIsActiveTrue(status);
+    public List<VendorProfileResponse> findVendorsByStatus(Status status) {
+        List<Vendor> vendors = vendorRepository.findByAccountStatusAndIsActiveTrue(status);
+        return vendorProfileMapper.toVendorProfileResponseList(vendors);
     }
 
     @Override
-    public Optional<Vendor> findVendorByEmail(String email) {
-        return vendorRepository.findByEmailAndIsActiveTrue(email);
+    public Optional<VendorProfileResponse> findVendorByEmail(String email) {
+        return vendorRepository.findByEmailAndIsActiveTrue(email)
+                .map(vendorProfileMapper::toVendorProfileResponse);
     }
 
     @Override
-    public Optional<Vendor> findVendorByContact(String contact) {
+    public Optional<VendorProfileResponse> findVendorByContact(String contact) {
         return vendorRepository.findByPhoneNumberOrMobileNumberAndIsActiveTrue(contact)
-                .stream().findFirst();
+                .stream().findFirst()
+                .map(vendorProfileMapper::toVendorProfileResponse);
     }
 
     @Override

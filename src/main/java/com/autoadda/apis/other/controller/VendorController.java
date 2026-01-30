@@ -1,8 +1,8 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.Vendor;
 import com.autoadda.apis.other.request.OtherServiceRequest;
 import com.autoadda.apis.other.response.OsResponse;
+import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.service.VendorManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,7 @@ public class VendorController {
     private final VendorManagementService vendorService;
 
     @PostMapping
-    public ResponseEntity<?> createVendor(
+    public ResponseEntity<VendorProfileResponse> createVendor(
             @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId,
             @RequestBody OtherServiceRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -27,28 +27,28 @@ public class VendorController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Vendor>> getAllVendors() {
+    public ResponseEntity<List<VendorProfileResponse>> getAllVendors() {
         return ResponseEntity.ok(vendorService.getAllVendors());
     }
 
     @GetMapping
-    public ResponseEntity<List<Vendor>> getVendorsByOwnerId(
+    public ResponseEntity<List<VendorProfileResponse>> getVendorsByOwnerId(
             @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId) {
         return ResponseEntity.ok(vendorService.getVendorsByOwnerId(autoAddaId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Vendor> getVendorById(@PathVariable Integer id) {
+    public ResponseEntity<VendorProfileResponse> getVendorById(@PathVariable Integer id) {
         return vendorService.getVendorById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Vendor> updateVendor(
+    public ResponseEntity<VendorProfileResponse> updateVendor(
             @PathVariable Integer id,
-            @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId,
             @RequestBody OtherServiceRequest request) {
+        // The autoAddaId from the header is not used in the updated service method, so it can be removed.
         return ResponseEntity.ok(vendorService.updateVendor(id, request));
     }
 
@@ -59,12 +59,12 @@ public class VendorController {
     }
 
     @GetMapping("/brandname/{name}")
-    public ResponseEntity<List<Vendor>> searchByBrandName(@PathVariable String name) {
+    public ResponseEntity<List<VendorProfileResponse>> searchByBrandName(@PathVariable String name) {
         return ResponseEntity.ok(vendorService.findVendorsByBrandName(name));
     }
 
     @GetMapping("/service/{serviceType}")
-    public ResponseEntity<List<Vendor>> getVendorsByServiceType(@PathVariable String serviceType) {
+    public ResponseEntity<List<VendorProfileResponse>> getVendorsByServiceType(@PathVariable String serviceType) {
         return ResponseEntity.ok(vendorService.findVendorsByServiceType(serviceType));
     }
 
@@ -77,3 +77,4 @@ public class VendorController {
         return ResponseEntity.ok(vendorService.searchVendors(city, zip, vendorName, serviceCategoryIds));
     }
 }
+

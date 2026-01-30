@@ -1,9 +1,9 @@
 package com.autoadda.apis.other.service;
 
 
-import com.autoadda.apis.other.entity.Vendor;
 import com.autoadda.apis.other.request.OtherServiceRequest;
 import com.autoadda.apis.other.response.OsResponse;
+import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.util.Status;
 
 import java.util.List;
@@ -14,27 +14,27 @@ public interface VendorManagementService {
     /**
      * Create a new vendor
      */
-    Vendor createVendor(OtherServiceRequest request, String autoAddaId);
+    VendorProfileResponse createVendor(OtherServiceRequest request, String autoAddaId);
 
     /**
      * Get all vendors
      */
-    List<Vendor> getAllVendors();
+    List<VendorProfileResponse> getAllVendors();
 
     /**
      * Get all vendors by owner ID
      */
-    List<Vendor> getVendorsByOwnerId(String autoAddaId);
+    List<VendorProfileResponse> getVendorsByOwnerId(String autoAddaId);
 
     /**
      * Get vendor by ID
      */
-    Optional<Vendor> getVendorById(Integer id);
+    Optional<VendorProfileResponse> getVendorById(Integer id);
 
     /**
      * Update an existing vendor
      */
-    Vendor updateVendor(Integer id, OtherServiceRequest request);
+    VendorProfileResponse updateVendor(Integer id, OtherServiceRequest request);
 
     /**
      * Delete a vendor
@@ -44,27 +44,27 @@ public interface VendorManagementService {
     /**
      * Find vendors by brand name
      */
-    List<Vendor> findVendorsByBrandName(String name);
+    List<VendorProfileResponse> findVendorsByBrandName(String name);
 
     /**
      * Find vendors by service type
      */
-    List<Vendor> findVendorsByServiceType(String serviceType);
+    List<VendorProfileResponse> findVendorsByServiceType(String serviceType);
 
     /**
      * Find vendors by status
      */
-    List<Vendor> findVendorsByStatus(Status status);
+    List<VendorProfileResponse> findVendorsByStatus(Status status);
 
     /**
      * Find vendor by email
      */
-    Optional<Vendor> findVendorByEmail(String email);
+    Optional<VendorProfileResponse> findVendorByEmail(String email);
 
     /**
      * Find vendor by contact number
      */
-    Optional<Vendor> findVendorByContact(String contact);
+    Optional<VendorProfileResponse> findVendorByContact(String contact);
 
     /**
      * Search vendors by criteria

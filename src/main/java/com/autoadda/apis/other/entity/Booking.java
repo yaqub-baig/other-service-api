@@ -5,6 +5,7 @@ import com.autoadda.apis.other.util.Status;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -65,4 +66,44 @@ public class Booking {
 
     @Column(name = "technician_id", nullable = true)
     private Integer technicianId;
+
+    // ==================== Quotation Reference ====================
+
+    /**
+     * Type of reference (e.g., "QUOTATION", "DIRECT_BOOKING").
+     */
+    @Column(name = "reference_type", length = 30)
+    private String referenceType;
+
+    /**
+     * ID of the referenced entity (e.g., VendorQuotation ID).
+     */
+    @Column(name = "reference_id")
+    private Integer referenceId;
+
+    // ==================== Pricing Details ====================
+
+    /**
+     * Subtotal before taxes and discounts.
+     */
+    @Column(name = "subtotal", precision = 10, scale = 2)
+    private BigDecimal subtotal;
+
+    /**
+     * Tax amount.
+     */
+    @Column(name = "taxes", precision = 10, scale = 2)
+    private BigDecimal taxes;
+
+    /**
+     * Discount amount.
+     */
+    @Column(name = "discount", precision = 10, scale = 2)
+    private BigDecimal discount;
+
+    /**
+     * Final total amount.
+     */
+    @Column(name = "total_amount", precision = 10, scale = 2)
+    private BigDecimal totalAmount;
 }

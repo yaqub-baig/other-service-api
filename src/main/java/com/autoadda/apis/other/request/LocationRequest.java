@@ -22,4 +22,14 @@ public class LocationRequest {
     private String state;
     private String country;
     private String gmap;
+
+    /**
+     * Latitude coordinate for geo-spatial queries.
+     */
+    private Double latitude;
+
+    /**
+     * Longitude coordinate for geo-spatial queries.
+     */
+    private Double longitude;
 }

@@ -5,14 +5,19 @@ import com.autoadda.apis.other.entity.OsAppointmentServices;
 import com.autoadda.apis.other.entity.OsAppointmentStatusActivity;
 import com.autoadda.apis.other.entity.OsJobCard;
 import com.autoadda.apis.other.entity.Vendor;
+import com.autoadda.apis.other.entity.VendorQuotation;
+import com.autoadda.apis.other.entity.VendorQuotationLineItem;
 import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.CustomerNotFoundException;
 import com.autoadda.apis.other.exception.GarageNotFoundException;
 import com.autoadda.apis.other.exception.OtherServiceNotFoundException;
 import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
+import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.repository.*;
+import com.autoadda.apis.other.request.BookingFromQuotationRequest;
 import com.autoadda.apis.other.request.OsAppointmentStatusRequest;
 import com.autoadda.apis.other.request.OsCustomerAppointmentRequest;
+import com.autoadda.apis.other.util.VendorQuotationStatus;
 import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
 import com.autoadda.apis.other.response.OsAppointmentResponse;
 import com.autoadda.apis.other.util.BusinessValidator;
@@ -24,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -40,6 +46,7 @@ public class BookingService {
     private final OsAppointmentServiceRepository serviceRepo;
     private final VendorRepository vendorRepository;
     private final VendorServiceRepository vendorServiceRepo;
+    private final VendorQuotationRepository vendorQuotationRepository;
     private final OsJobCardService jobCardService;
     private final OsAppointmentDetailMapper appointmentDetailMapper;
     private final BusinessValidator validator;
@@ -100,6 +107,103 @@ public class BookingService {
         }
 
         return booking;
+    }
+
+    /**
+     * Creates a booking from an accepted vendor quotation.
+     * The booking is pre-filled with pricing details from the quotation.
+     *
+     * @param request the booking request containing quotation ID and optional details.
+     * @return the created Booking object.
+     * @throws BusinessException if the quotation is not found or not accepted.
+     */
+    @Transactional
+    public Booking createBookingFromQuotation(BookingFromQuotationRequest request) {
+        // Get and validate the vendor quotation
+        VendorQuotation quotation = vendorQuotationRepository.findById(request.getVendorQuotationId())
+                .orElseThrow(() -> new BusinessException("Vendor quotation not found"));
+
+        // Validate the quotation is accepted
+        if (quotation.getStatus() != VendorQuotationStatus.ACCEPTED) {
+            throw new BusinessException("Can only create booking from an accepted quotation. Current status: " + quotation.getStatus());
+        }
+
+        // Validate customer owns the quotation request
+        if (!quotation.getQuotationRequest().getCustomerId().equals(request.getCustomerId())) {
+            throw new BusinessException("You can only create bookings from your own quotation requests");
+        }
+
+        // Check if a booking already exists for this quotation
+        if (bookingRepository.existsByReferenceTypeAndReferenceId("QUOTATION", quotation.getId())) {
+            throw new BusinessException("A booking has already been created for this quotation");
+        }
+
+        // Calculate pricing from line items if available
+        BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal taxes = BigDecimal.ZERO;
+        BigDecimal discount = BigDecimal.ZERO;
+
+        List<VendorQuotationLineItem> lineItems = quotation.getLineItems();
+        if (lineItems != null && !lineItems.isEmpty()) {
+            for (VendorQuotationLineItem item : lineItems) {
+                if (item.getIsOptional() == null || !item.getIsOptional()) {
+                    if (item.getUnitPrice() != null && item.getQuantity() != null) {
+                        subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                    }
+                    if (item.getDiscount() != null) {
+                        discount = discount.add(item.getDiscount());
+                    }
+                    if (item.getTaxRate() != null && item.getUnitPrice() != null && item.getQuantity() != null) {
+                        BigDecimal itemSubtotal = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                        taxes = taxes.add(itemSubtotal.multiply(item.getTaxRate()).divide(BigDecimal.valueOf(100)));
+                    }
+                }
+            }
+        }
+
+        // Use quotation total amount if available, otherwise calculate
+        BigDecimal totalAmount = quotation.getTotalAmount();
+        if (totalAmount == null) {
+            totalAmount = subtotal.subtract(discount).add(taxes);
+        }
+
+        // Generate booking reference
+        String bookingCode = generateBookingCode();
+
+        // Create the booking
+        Booking booking = Booking.builder()
+                .appointmentReferenceId(bookingCode)
+                .vendor(quotation.getVendor())
+                .customerId(request.getCustomerId())
+                .vehicleId(request.getVehicleId())
+                .scheduleDate(request.getScheduleDate())
+                .comments(request.getComments())
+                .status(Status.CONFIRMED)
+                .insert_tms(DateHelper.dbDate())
+                // Quotation reference
+                .referenceType("QUOTATION")
+                .referenceId(quotation.getId())
+                // Pricing details
+                .subtotal(subtotal)
+                .taxes(taxes)
+                .discount(discount)
+                .totalAmount(totalAmount)
+                .build();
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // Save activity
+        appointmentActivityRepo.save(OsAppointmentStatusActivity.builder()
+                .osAppointmentId(savedBooking.getId())
+                .status(savedBooking.getStatus())
+                .comments("Booking created from quotation: " + quotation.getQuoteNumber())
+                .insert_tms(DateHelper.dbDate())
+                .build());
+
+        log.info("Created booking {} from quotation {} for customer {}",
+                bookingCode, quotation.getQuoteNumber(), request.getCustomerId());
+
+        return savedBooking;
     }
 
     /**
