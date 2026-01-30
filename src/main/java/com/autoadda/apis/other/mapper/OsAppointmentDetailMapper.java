@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class OsAppointmentDetailMapper {
-    private final OsSlotMapper osSlotMapper;
+    private final BookingSlotMapper bookingSlotMapper;
     private final VendorMapper vendorMapper;
     private final VehicleClient vehicleClient;
 
@@ -24,7 +24,7 @@ public class OsAppointmentDetailMapper {
         response.setComments(booking.getComments());
         response.setStatus(booking.getStatus());
         response.setVendor(vendorMapper.entityToResponse(booking.getVendor()));
-        response.setSlot(osSlotMapper.toResponse(booking.getSlot()));
+        response.setSlot(bookingSlotMapper.toResponse(booking.getSlot()));
         response.setSelectedServiceIds(booking.getSelectedOtherServiceIds());
         response.setSubscriptionPlanId(booking.getOsSubscriptionPlanId());
         response.setVehicleId(booking.getVehicleId());

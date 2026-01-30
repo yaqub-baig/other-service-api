@@ -8,7 +8,7 @@ import com.autoadda.apis.other.response.BookingResponse;
 import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
 import com.autoadda.apis.other.response.OsAppointmentResponse;
 import com.autoadda.apis.other.service.BookingService;
-import com.autoadda.apis.other.service.OsAppointmentSlotService;
+import com.autoadda.apis.other.service.VendorSlotService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -27,7 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BookingController {
     private final BookingService appointmentService;
-    private final OsAppointmentSlotService appointmentSlotService;
+    private final VendorSlotService appointmentSlotService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> createCustomerAppointment(@RequestBody OsCustomerAppointmentRequest request) {

@@ -16,12 +16,12 @@ import java.util.stream.Collectors;
 public class BookingMapper {
 
     private final VendorProfileMapper vendorProfileMapper;
-    private final OsSlotMapper osSlotMapper;
+    private final BookingSlotMapper bookingSlotMapper;
     private final TechnicianMapper technicianMapper;
 
-    public BookingMapper(VendorProfileMapper vendorProfileMapper, OsSlotMapper osSlotMapper, TechnicianMapper technicianMapper) {
+    public BookingMapper(VendorProfileMapper vendorProfileMapper, BookingSlotMapper bookingSlotMapper, TechnicianMapper technicianMapper) {
         this.vendorProfileMapper = vendorProfileMapper;
-        this.osSlotMapper = osSlotMapper;
+        this.bookingSlotMapper = bookingSlotMapper;
         this.technicianMapper = technicianMapper;
     }
 
@@ -50,7 +50,7 @@ public class BookingMapper {
 
             // Map nested OsAppointmentSlot
             if (b.getSlot() != null) {
-                response.setSlot(osSlotMapper.toResponse(b.getSlot()));
+                response.setSlot(bookingSlotMapper.toResponse(b.getSlot()));
             }
 
             // Map nested Technician
