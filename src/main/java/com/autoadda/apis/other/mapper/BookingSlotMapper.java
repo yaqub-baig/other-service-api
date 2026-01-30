@@ -1,13 +1,13 @@
 package com.autoadda.apis.other.mapper;
 
-import com.autoadda.apis.other.entity.OsAppointmentSlot;
+import com.autoadda.apis.other.entity.BookingSlot;
 import com.autoadda.apis.other.response.OsAppointmentSlotResponse;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OsSlotMapper {
+public class BookingSlotMapper {
 
-    public OsAppointmentSlotResponse toResponse(OsAppointmentSlot slot) {
+    public OsAppointmentSlotResponse toResponse(BookingSlot slot) {
         OsAppointmentSlotResponse response = new OsAppointmentSlotResponse();
         response.setId(slot.getId());
         response.setSlotDate(slot.getSlotDate());

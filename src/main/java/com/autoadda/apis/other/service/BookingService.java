@@ -1,9 +1,9 @@
 package com.autoadda.apis.other.service;
 
 import com.autoadda.apis.other.entity.Booking;
-import com.autoadda.apis.other.entity.OsAppointmentServices;
-import com.autoadda.apis.other.entity.OsAppointmentStatusActivity;
-import com.autoadda.apis.other.entity.OsJobCard;
+import com.autoadda.apis.other.entity.BookedService;
+import com.autoadda.apis.other.entity.BookingStatusActivity;
+import com.autoadda.apis.other.entity.JobCard;
 import com.autoadda.apis.other.entity.Vendor;
 import com.autoadda.apis.other.entity.VendorQuotation;
 import com.autoadda.apis.other.entity.VendorQuotationLineItem;
@@ -44,12 +44,12 @@ import java.util.stream.Collectors;
 public class BookingService {
 
     private final BookingRepository bookingRepository;
-    private final OsAppointmentStatusActivityRepository appointmentActivityRepo;
-    private final OsAppointmentServiceRepository serviceRepo;
+    private final BookingStatusActivityRepository appointmentActivityRepo;
+    private final BookedServiceRepository serviceRepo;
     private final VendorRepository vendorRepository;
     private final VendorServiceRepository vendorServiceRepo;
     private final VendorQuotationRepository vendorQuotationRepository;
-    private final OsJobCardService jobCardService;
+    private final JobCardService jobCardService;
     private final OsAppointmentDetailMapper appointmentDetailMapper;
     private final BusinessValidator validator;
     private final BookingMapper bookingMapper; // Inject BookingMapper
@@ -83,23 +83,23 @@ public class BookingService {
         Booking savedBooking = bookingRepository.save(booking);
 
         // Save activity
-        appointmentActivityRepo.save(OsAppointmentStatusActivity.builder()
-                .osAppointmentId(savedBooking.getId())
+        appointmentActivityRepo.save(BookingStatusActivity.builder()
+                .bookingId(savedBooking.getId())
                 .status(savedBooking.getStatus())
                 .memberId(request.getMemberId())
                 .memberType(request.getMemberType())
-                .insert_tms(DateHelper.dbDate())
+                .insertTms(DateHelper.dbDate())
                 .build());
 
         // Services optional
         if (request.getServiceIds() != null && !request.getServiceIds().isEmpty()) {
-            List<OsAppointmentServices> services = request.getServiceIds().stream()
+            List<BookedService> services = request.getServiceIds().stream()
                     .filter(Objects::nonNull)
                     .map(serviceId -> {
                         VendorService vendorService = vendorServiceRepo.findById(serviceId)
                                 .orElseThrow(() -> new RuntimeException("Service not found"));
-                        return OsAppointmentServices.builder()
-                                .appointmentId(savedBooking.getId())
+                        return BookedService.builder()
+                                .bookingId(savedBooking.getId())
                                 .vendorService(vendorService)
                                 .status(Status.NEW)
                                 .build();
@@ -196,11 +196,11 @@ public class BookingService {
         Booking savedBooking = bookingRepository.save(booking);
 
         // Save activity
-        appointmentActivityRepo.save(OsAppointmentStatusActivity.builder()
-                .osAppointmentId(savedBooking.getId())
+        appointmentActivityRepo.save(BookingStatusActivity.builder()
+                .bookingId(savedBooking.getId())
                 .status(savedBooking.getStatus())
                 .comments("Booking created from quotation: " + quotation.getQuoteNumber())
-                .insert_tms(DateHelper.dbDate())
+                .insertTms(DateHelper.dbDate())
                 .build());
 
         log.info("Created booking {} from quotation {} for customer {}",
@@ -243,8 +243,8 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        List<OsAppointmentServices> services = serviceRepo.findByAppointmentId(bookingId);
-        List<OsJobCard> jobCards = jobCardService.getJobCardsByAppointmentId(bookingId);
+        List<BookedService> services = serviceRepo.findByBookingId(bookingId);
+        List<JobCard> jobCards = jobCardService.getJobCardsByBookingId(bookingId);
 
         return OsAppointmentResponse.builder()
                 .appointment(booking)
@@ -280,13 +280,13 @@ public class BookingService {
         booking.setComments(request.getComments());
         Booking updatedBooking = bookingRepository.save(booking);
 
-        appointmentActivityRepo.save(OsAppointmentStatusActivity.builder()
-                .osAppointmentId(updatedBooking.getId())
+        appointmentActivityRepo.save(BookingStatusActivity.builder()
+                .bookingId(updatedBooking.getId())
                 .status(updatedBooking.getStatus())
                 .memberId(request.getMemberId())
                 .memberType(request.getMemberType())
                 .comments(request.getComments())
-                .insert_tms(DateHelper.dbDate())
+                .insertTms(DateHelper.dbDate())
                 .build());
 
         return bookingMapper.toBookingResponse(updatedBooking);

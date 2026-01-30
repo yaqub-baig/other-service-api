@@ -6,9 +6,8 @@ import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.request.OsAssignServiceRequest;
 import com.autoadda.apis.other.request.OsJobCardStatusRequest;
 
-import com.autoadda.apis.other.response.OsGenericResponse;
 import com.autoadda.apis.other.response.OsJobCardResponse;
-import com.autoadda.apis.other.service.OsJobCardService;
+import com.autoadda.apis.other.service.JobCardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,9 +20,9 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/os-jobcards")
 @RequiredArgsConstructor
-public class OsJobCardController {
+public class JobCardController {
 
-    private final OsJobCardService jobCardService;
+    private final JobCardService jobCardService;
 
     @PostMapping("/assign")
     public ResponseEntity<ApiResponse<OsJobCardResponse>> assignTechnician(@RequestBody OsAssignServiceRequest request) {
