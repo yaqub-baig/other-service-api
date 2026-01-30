@@ -11,12 +11,14 @@ import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.CustomerNotFoundException;
 import com.autoadda.apis.other.exception.GarageNotFoundException;
 import com.autoadda.apis.other.exception.OtherServiceNotFoundException;
+import com.autoadda.apis.other.mapper.BookingMapper;
 import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
 import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.repository.*;
 import com.autoadda.apis.other.request.BookingFromQuotationRequest;
 import com.autoadda.apis.other.request.OsAppointmentStatusRequest;
 import com.autoadda.apis.other.request.OsCustomerAppointmentRequest;
+import com.autoadda.apis.other.response.BookingResponse;
 import com.autoadda.apis.other.util.VendorQuotationStatus;
 import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
 import com.autoadda.apis.other.response.OsAppointmentResponse;
@@ -50,18 +52,19 @@ public class BookingService {
     private final OsJobCardService jobCardService;
     private final OsAppointmentDetailMapper appointmentDetailMapper;
     private final BusinessValidator validator;
+    private final BookingMapper bookingMapper; // Inject BookingMapper
 
     /**
      * Creates a new customer booking.
      *
      * @param request the booking request containing details like vendor ID,
      *                customer ID, vehicle ID, schedule date, service IDs, etc.
-     * @return the created Booking object.
+     * @return the created BookingResponse DTO.
      * @throws CustomerNotFoundException     if the customer does not exist.
      * @throws OtherServiceNotFoundException if the vendor does not exist.
      */
     @Transactional
-    public Booking createCustomerBooking(OsCustomerAppointmentRequest request)
+    public BookingResponse createCustomerBooking(OsCustomerAppointmentRequest request)
             throws CustomerNotFoundException, OtherServiceNotFoundException {
 
         // Vendor is mandatory
@@ -77,12 +80,12 @@ public class BookingService {
                 .status(Status.CONFIRMED)
                 .insert_tms(DateHelper.dbDate())
                 .build();
-        bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
 
         // Save activity
         appointmentActivityRepo.save(OsAppointmentStatusActivity.builder()
-                .osAppointmentId(booking.getId())
-                .status(booking.getStatus())
+                .osAppointmentId(savedBooking.getId())
+                .status(savedBooking.getStatus())
                 .memberId(request.getMemberId())
                 .memberType(request.getMemberType())
                 .insert_tms(DateHelper.dbDate())
@@ -96,7 +99,7 @@ public class BookingService {
                         VendorService vendorService = vendorServiceRepo.findById(serviceId)
                                 .orElseThrow(() -> new RuntimeException("Service not found"));
                         return OsAppointmentServices.builder()
-                                .appointmentId(booking.getId())
+                                .appointmentId(savedBooking.getId())
                                 .vendorService(vendorService)
                                 .status(Status.NEW)
                                 .build();
@@ -106,7 +109,7 @@ public class BookingService {
             serviceRepo.saveAll(services);
         }
 
-        return booking;
+        return bookingMapper.toBookingResponse(savedBooking);
     }
 
     /**
@@ -114,11 +117,11 @@ public class BookingService {
      * The booking is pre-filled with pricing details from the quotation.
      *
      * @param request the booking request containing quotation ID and optional details.
-     * @return the created Booking object.
+     * @return the created BookingResponse DTO.
      * @throws BusinessException if the quotation is not found or not accepted.
      */
     @Transactional
-    public Booking createBookingFromQuotation(BookingFromQuotationRequest request) {
+    public BookingResponse createBookingFromQuotation(BookingFromQuotationRequest request) {
         // Get and validate the vendor quotation
         VendorQuotation quotation = vendorQuotationRepository.findById(request.getVendorQuotationId())
                 .orElseThrow(() -> new BusinessException("Vendor quotation not found"));
@@ -203,7 +206,7 @@ public class BookingService {
         log.info("Created booking {} from quotation {} for customer {}",
                 bookingCode, quotation.getQuoteNumber(), request.getCustomerId());
 
-        return savedBooking;
+        return bookingMapper.toBookingResponse(savedBooking);
     }
 
     /**
@@ -211,20 +214,22 @@ public class BookingService {
      *
      * @param vendorId the ID of the vendor.
      * @param status   the status to filter bookings by, or null for all.
-     * @return a list of Booking for the vendor.
+     * @return a list of BookingResponse DTOs for the vendor.
      * @throws OtherServiceNotFoundException if the vendor does not exist.
      */
     @Transactional(readOnly = true)
-    public List<Booking> getVendorBookings(Integer vendorId, Status status)
+    public List<BookingResponse> getVendorBookings(Integer vendorId, Status status)
             throws OtherServiceNotFoundException {
 
-        Vendor vendor = validator.validateAndGetVendor(vendorId);
+        validator.validateAndGetVendor(vendorId);
 
-        if (StringUtils.isEmpty(status.toString())) {
-            return bookingRepository.findByVendorId(vendorId);
+        List<Booking> bookings;
+        if (status == null) { // status.toString() would throw NPE if status is null
+            bookings = bookingRepository.findByVendorId(vendorId);
         } else {
-            return bookingRepository.findByVendorIdAndStatus(vendorId, status);
+            bookings = bookingRepository.findByVendorIdAndStatus(vendorId, status);
         }
+        return bookingMapper.toBookingResponseList(bookings);
     }
 
     /**
@@ -253,10 +258,10 @@ public class BookingService {
      *
      * @param request the request containing booking ID, new status, comments,
      *                and member details.
-     * @return the updated Booking object.
+     * @return the updated BookingResponse DTO.
      */
     @Transactional
-    public Booking updateBookingStatus(OsAppointmentStatusRequest request) {
+    public BookingResponse updateBookingStatus(OsAppointmentStatusRequest request) {
         Booking booking = bookingRepository.findById(request.getAppointmentId())
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
@@ -273,18 +278,18 @@ public class BookingService {
         }
 
         booking.setComments(request.getComments());
-        bookingRepository.save(booking);
+        Booking updatedBooking = bookingRepository.save(booking);
 
         appointmentActivityRepo.save(OsAppointmentStatusActivity.builder()
-                .osAppointmentId(booking.getId())
-                .status(booking.getStatus())
+                .osAppointmentId(updatedBooking.getId())
+                .status(updatedBooking.getStatus())
                 .memberId(request.getMemberId())
                 .memberType(request.getMemberType())
                 .comments(request.getComments())
                 .insert_tms(DateHelper.dbDate())
                 .build());
 
-        return booking;
+        return bookingMapper.toBookingResponse(updatedBooking);
     }
 
     /**
@@ -336,12 +341,12 @@ public class BookingService {
 
     // Legacy method names for backward compatibility
     @Deprecated
-    public Booking createCustomerAppointment(OsCustomerAppointmentRequest request) {
+    public BookingResponse createCustomerAppointment(OsCustomerAppointmentRequest request) {
         return createCustomerBooking(request);
     }
 
     @Deprecated
-    public List<Booking> getOtherServiceAppointment(Integer vendorId, Status status) {
+    public List<BookingResponse> getOtherServiceAppointment(Integer vendorId, Status status) {
         return getVendorBookings(vendorId, status);
     }
 
@@ -351,7 +356,7 @@ public class BookingService {
     }
 
     @Deprecated
-    public Booking updateAppointmentStatus(OsAppointmentStatusRequest request) {
+    public BookingResponse updateAppointmentStatus(OsAppointmentStatusRequest request) {
         return updateBookingStatus(request);
     }
 

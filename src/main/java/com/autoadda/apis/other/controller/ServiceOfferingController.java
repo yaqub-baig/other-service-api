@@ -1,9 +1,9 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
-import com.autoadda.apis.other.entity.ServiceOffering;
 import com.autoadda.apis.other.request.ServiceOfferingRequest;
-import com.autoadda.apis.other.response.OsGenericResponse;
+import com.autoadda.apis.other.response.ApiResponse;
+import com.autoadda.apis.other.response.ServiceAttributeDefinitionResponse;
+import com.autoadda.apis.other.response.ServiceOfferingResponse;
 import com.autoadda.apis.other.service.ServiceOfferingService;
 import com.autoadda.apis.other.util.StockStatus;
 import lombok.RequiredArgsConstructor;
@@ -33,64 +33,64 @@ public class ServiceOfferingController {
      * Create a new service offering.
      */
     @PostMapping
-    public ResponseEntity<OsGenericResponse> create(@RequestBody ServiceOfferingRequest request) {
-        ServiceOffering offering = offeringService.create(request);
+    public ResponseEntity<ApiResponse<ServiceOfferingResponse>> create(@RequestBody ServiceOfferingRequest request) {
+        ServiceOfferingResponse offering = offeringService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OsGenericResponse.success("Service offering created", offering));
+                .body(ApiResponse.success("Service offering created", offering));
     }
 
     /**
      * Get offering by ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ServiceOffering> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(offeringService.getById(id));
+    public ResponseEntity<ApiResponse<ServiceOfferingResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getById(id)));
     }
 
     /**
      * Get offering by SKU.
      */
     @GetMapping("/sku/{sku}")
-    public ResponseEntity<ServiceOffering> getBySku(@PathVariable String sku) {
-        return ResponseEntity.ok(offeringService.getBySku(sku));
+    public ResponseEntity<ApiResponse<ServiceOfferingResponse>> getBySku(@PathVariable String sku) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getBySku(sku)));
     }
 
     /**
      * Update an offering.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<OsGenericResponse> update(
+    public ResponseEntity<ApiResponse<ServiceOfferingResponse>> update(
             @PathVariable Long id,
             @RequestBody ServiceOfferingRequest request) {
-        ServiceOffering updated = offeringService.update(id, request);
-        return ResponseEntity.ok(OsGenericResponse.success("Service offering updated", updated));
+        ServiceOfferingResponse updated = offeringService.update(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Service offering updated", updated));
     }
 
     /**
      * Soft delete an offering.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<OsGenericResponse> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         offeringService.delete(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Service offering deleted", null));
+        return ResponseEntity.ok(ApiResponse.success("Service offering deleted", null));
     }
 
     /**
      * Hard delete an offering (admin only).
      */
     @DeleteMapping("/{id}/hard")
-    public ResponseEntity<OsGenericResponse> hardDelete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> hardDelete(@PathVariable Long id) {
         offeringService.hardDelete(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Service offering permanently deleted", null));
+        return ResponseEntity.ok(ApiResponse.success("Service offering permanently deleted", null));
     }
 
     /**
      * Reactivate a soft-deleted offering.
      */
     @PostMapping("/{id}/reactivate")
-    public ResponseEntity<OsGenericResponse> reactivate(@PathVariable Long id) {
-        ServiceOffering reactivated = offeringService.reactivate(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Service offering reactivated", reactivated));
+    public ResponseEntity<ApiResponse<ServiceOfferingResponse>> reactivate(@PathVariable Long id) {
+        ServiceOfferingResponse reactivated = offeringService.reactivate(id);
+        return ResponseEntity.ok(ApiResponse.success("Service offering reactivated", reactivated));
     }
 
     // ==================== Vendor Operations ====================
@@ -99,42 +99,42 @@ public class ServiceOfferingController {
      * Get all offerings for a vendor service.
      */
     @GetMapping("/vendor-service/{vendorServiceId}")
-    public ResponseEntity<List<ServiceOffering>> getByVendorService(@PathVariable Integer vendorServiceId) {
-        return ResponseEntity.ok(offeringService.getByVendorService(vendorServiceId));
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getByVendorService(@PathVariable Integer vendorServiceId) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getByVendorService(vendorServiceId)));
     }
 
     /**
      * Get all offerings for a vendor service (including inactive).
      */
     @GetMapping("/vendor-service/{vendorServiceId}/all")
-    public ResponseEntity<List<ServiceOffering>> getAllByVendorService(@PathVariable Integer vendorServiceId) {
-        return ResponseEntity.ok(offeringService.getAllByVendorService(vendorServiceId));
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getAllByVendorService(@PathVariable Integer vendorServiceId) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getAllByVendorService(vendorServiceId)));
     }
 
     /**
      * Get all offerings for a vendor.
      */
     @GetMapping("/vendor/{vendorId}")
-    public ResponseEntity<List<ServiceOffering>> getByVendor(@PathVariable Integer vendorId) {
-        return ResponseEntity.ok(offeringService.getByVendor(vendorId));
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getByVendor(@PathVariable Integer vendorId) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getByVendor(vendorId)));
     }
 
     /**
      * Get all offerings for a vendor (including inactive).
      */
     @GetMapping("/vendor/{vendorId}/all")
-    public ResponseEntity<List<ServiceOffering>> getAllByVendor(@PathVariable Integer vendorId) {
-        return ResponseEntity.ok(offeringService.getAllByVendor(vendorId));
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getAllByVendor(@PathVariable Integer vendorId) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getAllByVendor(vendorId)));
     }
 
     /**
      * Get offerings by vendor and category.
      */
     @GetMapping("/vendor/{vendorId}/category/{categoryId}")
-    public ResponseEntity<List<ServiceOffering>> getByVendorAndCategory(
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getByVendorAndCategory(
             @PathVariable Integer vendorId,
             @PathVariable Integer categoryId) {
-        return ResponseEntity.ok(offeringService.getByVendorAndCategory(vendorId, categoryId));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getByVendorAndCategory(vendorId, categoryId)));
     }
 
     // ==================== Category & Discovery ====================
@@ -143,48 +143,48 @@ public class ServiceOfferingController {
      * Get offerings by category.
      */
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ServiceOffering>> getByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(offeringService.getByCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getByCategory(categoryId)));
     }
 
     /**
      * Get paginated offerings by category.
      */
     @GetMapping("/category/{categoryId}/page")
-    public ResponseEntity<Page<ServiceOffering>> getByCategoryPaginated(
+    public ResponseEntity<ApiResponse<Page<ServiceOfferingResponse>>> getByCategoryPaginated(
             @PathVariable Integer categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(offeringService.getByCategoryPaginated(categoryId, page, size));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getByCategoryPaginated(categoryId, page, size)));
     }
 
     /**
      * Search offerings by name.
      */
     @GetMapping("/search")
-    public ResponseEntity<List<ServiceOffering>> searchByName(@RequestParam String q) {
-        return ResponseEntity.ok(offeringService.searchByName(q));
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> searchByName(@RequestParam String q) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.searchByName(q)));
     }
 
     /**
      * Search offerings by name within a category.
      */
     @GetMapping("/category/{categoryId}/search")
-    public ResponseEntity<List<ServiceOffering>> searchByNameInCategory(
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> searchByNameInCategory(
             @PathVariable Integer categoryId,
             @RequestParam String q) {
-        return ResponseEntity.ok(offeringService.searchByNameInCategory(categoryId, q));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.searchByNameInCategory(categoryId, q)));
     }
 
     /**
      * Get offerings by price range.
      */
     @GetMapping("/category/{categoryId}/price-range")
-    public ResponseEntity<List<ServiceOffering>> getByPriceRange(
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getByPriceRange(
             @PathVariable Integer categoryId,
             @RequestParam BigDecimal minPrice,
             @RequestParam BigDecimal maxPrice) {
-        return ResponseEntity.ok(offeringService.getByPriceRange(categoryId, minPrice, maxPrice));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getByPriceRange(categoryId, minPrice, maxPrice)));
     }
 
     // ==================== Featured & Popular ====================
@@ -193,34 +193,34 @@ public class ServiceOfferingController {
      * Get featured offerings.
      */
     @GetMapping("/featured")
-    public ResponseEntity<List<ServiceOffering>> getFeatured() {
-        return ResponseEntity.ok(offeringService.getFeatured());
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getFeatured() {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getFeatured()));
     }
 
     /**
      * Get featured offerings by category.
      */
     @GetMapping("/category/{categoryId}/featured")
-    public ResponseEntity<List<ServiceOffering>> getFeaturedByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(offeringService.getFeaturedByCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getFeaturedByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getFeaturedByCategory(categoryId)));
     }
 
     /**
      * Get top-rated offerings.
      */
     @GetMapping("/top-rated")
-    public ResponseEntity<List<ServiceOffering>> getTopRated(
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getTopRated(
             @RequestParam(defaultValue = "10") int limit) {
-        return ResponseEntity.ok(offeringService.getTopRated(limit));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getTopRated(limit)));
     }
 
     /**
      * Get most popular offerings.
      */
     @GetMapping("/popular")
-    public ResponseEntity<List<ServiceOffering>> getMostPopular(
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> getMostPopular(
             @RequestParam(defaultValue = "10") int limit) {
-        return ResponseEntity.ok(offeringService.getMostPopular(limit));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getMostPopular(limit)));
     }
 
     // ==================== Stock Management ====================
@@ -229,21 +229,21 @@ public class ServiceOfferingController {
      * Update stock status.
      */
     @PatchMapping("/{id}/stock")
-    public ResponseEntity<OsGenericResponse> updateStockStatus(
+    public ResponseEntity<ApiResponse<ServiceOfferingResponse>> updateStockStatus(
             @PathVariable Long id,
             @RequestParam StockStatus status,
             @RequestParam(required = false) Integer quantity) {
-        ServiceOffering updated = offeringService.updateStockStatus(id, status, quantity);
-        return ResponseEntity.ok(OsGenericResponse.success("Stock status updated", updated));
+        ServiceOfferingResponse updated = offeringService.updateStockStatus(id, status, quantity);
+        return ResponseEntity.ok(ApiResponse.success("Stock status updated", updated));
     }
 
     /**
      * Toggle featured status.
      */
     @PatchMapping("/{id}/featured")
-    public ResponseEntity<OsGenericResponse> toggleFeatured(@PathVariable Long id) {
-        ServiceOffering updated = offeringService.toggleFeatured(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Featured status toggled", updated));
+    public ResponseEntity<ApiResponse<ServiceOfferingResponse>> toggleFeatured(@PathVariable Long id) {
+        ServiceOfferingResponse updated = offeringService.toggleFeatured(id);
+        return ResponseEntity.ok(ApiResponse.success("Featured status toggled", updated));
     }
 
     // ==================== Attribute Filtering ====================
@@ -252,19 +252,19 @@ public class ServiceOfferingController {
      * Filter offerings by a single attribute.
      */
     @GetMapping("/filter")
-    public ResponseEntity<List<ServiceOffering>> filterByAttribute(
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> filterByAttribute(
             @RequestParam String attribute,
             @RequestParam String value) {
-        return ResponseEntity.ok(offeringService.filterByAttribute(attribute, value));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.filterByAttribute(attribute, value)));
     }
 
     /**
      * Filter offerings by multiple attributes.
      */
     @PostMapping("/filter")
-    public ResponseEntity<List<ServiceOffering>> filterByAttributes(
+    public ResponseEntity<ApiResponse<List<ServiceOfferingResponse>>> filterByAttributes(
             @RequestBody Map<String, Object> attributes) {
-        return ResponseEntity.ok(offeringService.filterByAttributes(attributes));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.filterByAttributes(attributes)));
     }
 
     // ==================== Attribute Definitions (Helper) ====================
@@ -274,17 +274,17 @@ public class ServiceOfferingController {
      * Useful for building dynamic forms on the frontend.
      */
     @GetMapping("/category/{categoryId}/attributes")
-    public ResponseEntity<List<ServiceAttributeDefinition>> getAttributeDefinitions(
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getAttributeDefinitions(
             @PathVariable Integer categoryId) {
-        return ResponseEntity.ok(offeringService.getAttributeDefinitions(categoryId));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getAttributeDefinitions(categoryId)));
     }
 
     /**
      * Get required attribute definitions for a category.
      */
     @GetMapping("/category/{categoryId}/attributes/required")
-    public ResponseEntity<List<ServiceAttributeDefinition>> getRequiredAttributeDefinitions(
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getRequiredAttributeDefinitions(
             @PathVariable Integer categoryId) {
-        return ResponseEntity.ok(offeringService.getRequiredAttributeDefinitions(categoryId));
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getRequiredAttributeDefinitions(categoryId)));
     }
 }

@@ -5,6 +5,7 @@ import com.autoadda.apis.other.entity.MediaFile;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.MediaFileMapper;
 import com.autoadda.apis.other.repository.MediaFileRepository;
+import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.GenericResponse;
 import com.autoadda.apis.other.response.MediaFileResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,9 +35,9 @@ public class MediaFileServiceImpl implements MediaFileService {
     private String baseUrl;
 
     @Override
-    public List<MediaFile> upload(List<MultipartFile> files) throws IOException {
+    public List<MediaFileResponse> upload(List<MultipartFile> files) throws IOException {
 
-        List<MediaFile> mediaFileResponses = new ArrayList<> ( );
+        List<MediaFileResponse> mediaFileResponses = new ArrayList<> ( );
         if ( files.isEmpty ( ) ) {
              throw new RuntimeException ( "No files uploaded" );
         }
@@ -63,26 +64,26 @@ public class MediaFileServiceImpl implements MediaFileService {
             String url = baseUrl + "/uploads/" + subFolder + "/" + fileName;
             log.info ( "5. Adding to response" );
             log.info ( "File uploaded: {}, URL: {}", file.getOriginalFilename ( ), url );
-//            MediaFileResponse mediaFileResponse = mediaFileMapper.toResponse(save,url);
+            MediaFileResponse mediaFileResponse = mediaFileMapper.toResponse(save,url);
             // 5. Add to response
-            mediaFileResponses.add ( save );
+            mediaFileResponses.add ( mediaFileResponse );
         }
         return mediaFileResponses;
     }
 
     @Override
-    public GenericResponse delete(Long mediaFileId) {
+    public ApiResponse<String> delete(Long mediaFileId) {
         MediaFile mediaFile = mediaFileRepository.findById ( mediaFileId ).orElseThrow ( () -> new ResourceNotFoundException ( "File not found" ) );
         mediaFileRepository.delete ( mediaFile);
-        return GenericResponse.builder ( ).code ( "200" ).status ( "success" ).message ( "File deleted successfully" ).build ( );
+        return ApiResponse.success("File deleted successfully", null);
     }
 
     @Override
-    public GenericResponse getMediaFileById(Long mediaFileId) {
+    public ApiResponse<MediaFileResponse> getMediaFileById(Long mediaFileId) {
         MediaFile mediaFile = mediaFileRepository.findById ( mediaFileId ).orElseThrow ( () -> new ResourceNotFoundException ( "File not found" ) );
         String url = baseUrl + "/uploads/" + mediaFile.getFilePath();
         MediaFileResponse mediaFileResponse = mediaFileMapper.toResponse(mediaFile,url);
-        return GenericResponse.builder ( ).body ( mediaFileResponse ).code ( "200" ).status ( "success" ).build ( );
+        return ApiResponse.success(mediaFileResponse);
     }
 
 

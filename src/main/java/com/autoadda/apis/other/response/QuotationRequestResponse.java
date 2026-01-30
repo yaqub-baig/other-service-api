@@ -2,42 +2,34 @@ package com.autoadda.apis.other.response;
 
 import com.autoadda.apis.other.util.QuotationRequestStatus;
 import com.autoadda.apis.other.util.ServiceLocationType;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Response DTO for quotation request details.
- */
 @Data
-@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class QuotationRequestResponse {
     private Integer id;
     private String quotationNumber;
-    private Integer serviceCategoryId;
-    private String serviceCategoryName;
+    private AvailableServiceResponse serviceCategory; // Nested DTO
     private Integer customerId;
     private ServiceLocationType serviceLocationType;
     private String city;
     private String area;
     private String address;
+    private Double latitude;
+    private Double longitude;
     private QuotationRequestStatus status;
     private String customerNotes;
     private LocalDateTime expiresAt;
     private Integer broadcastCount;
     private Integer quotesReceivedCount;
-    private List<FieldValueResponse> fieldValues;
+    private List<QuotationRequestFieldValueResponse> fieldValues; // Nested DTOs
+    private List<VendorQuotationResponse> vendorQuotations; // Nested DTOs
     private LocalDateTime createdAt;
-
-    @Data
-    @Builder
-    public static class FieldValueResponse {
-        private String fieldCode;
-        private String fieldLabel;
-        private Object fieldValue;
-        private String fileUrl;
-    }
+    private LocalDateTime updatedAt;
 }

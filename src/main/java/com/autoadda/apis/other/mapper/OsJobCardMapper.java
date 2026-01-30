@@ -5,6 +5,9 @@ import com.autoadda.apis.other.response.OsJobCardResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class OsJobCardMapper {
@@ -19,5 +22,12 @@ public class OsJobCardMapper {
                 .technicianId ( jobCard.getTechnician ( ) != null ? jobCard.getTechnician ( ).getId ( ) : null )
                 .status ( jobCard.getStatus ( ).name ( ) )
                 .build ( );
+    }
+
+    public List<OsJobCardResponse> entityToResponseList(List<OsJobCard> jobCards) {
+        if (jobCards == null) return Collections.emptyList();
+        return jobCards.stream()
+                .map(this::entityToResponse)
+                .toList();
     }
 }

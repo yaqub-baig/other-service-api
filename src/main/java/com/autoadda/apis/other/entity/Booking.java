@@ -62,7 +62,7 @@ public class Booking {
     private Integer vehicleId;
 
     @ManyToOne
-    private OsAppointmentSlot slot;
+    private BookingSlot slot;
 
     @Column(name = "technician_id", nullable = true)
     private Integer technicianId;

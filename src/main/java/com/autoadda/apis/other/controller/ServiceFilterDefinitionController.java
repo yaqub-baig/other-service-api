@@ -1,10 +1,10 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.FilterOption;
-import com.autoadda.apis.other.entity.ServiceFilterDefinition;
 import com.autoadda.apis.other.request.FilterOptionRequest;
 import com.autoadda.apis.other.request.ServiceFilterDefinitionRequest;
-import com.autoadda.apis.other.response.OsGenericResponse;
+import com.autoadda.apis.other.response.ApiResponse;
+import com.autoadda.apis.other.response.FilterOptionResponse;
+import com.autoadda.apis.other.response.ServiceFilterDefinitionResponse;
 import com.autoadda.apis.other.service.ServiceFilterDefinitionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,108 +28,108 @@ public class ServiceFilterDefinitionController {
      * Create a new filter definition.
      */
     @PostMapping
-    public ResponseEntity<OsGenericResponse> create(@RequestBody ServiceFilterDefinitionRequest request) {
-        ServiceFilterDefinition filter = filterService.create(request);
+    public ResponseEntity<ApiResponse<ServiceFilterDefinitionResponse>> create(@RequestBody ServiceFilterDefinitionRequest request) {
+        ServiceFilterDefinitionResponse filter = filterService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OsGenericResponse.success("Filter definition created", filter));
+                .body(ApiResponse.success("Filter definition created", filter));
     }
 
     /**
      * Get all active filters for a service category.
      */
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ServiceFilterDefinition>> getByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(filterService.getByServiceCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceFilterDefinitionResponse>>> getByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(filterService.getByServiceCategory(categoryId)));
     }
 
     /**
      * Get all filters for a service category (including inactive).
      */
     @GetMapping("/category/{categoryId}/all")
-    public ResponseEntity<List<ServiceFilterDefinition>> getAllByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(filterService.getAllByServiceCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceFilterDefinitionResponse>>> getAllByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(filterService.getAllByServiceCategory(categoryId)));
     }
 
     /**
      * Get required filters for a service category.
      */
     @GetMapping("/category/{categoryId}/required")
-    public ResponseEntity<List<ServiceFilterDefinition>> getRequiredByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(filterService.getRequiredByServiceCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceFilterDefinitionResponse>>> getRequiredByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(filterService.getRequiredByServiceCategory(categoryId)));
     }
 
     /**
      * Get filters that depend on a specific filter.
      */
     @GetMapping("/category/{categoryId}/dependent/{parentFilterCode}")
-    public ResponseEntity<List<ServiceFilterDefinition>> getDependentFilters(
+    public ResponseEntity<ApiResponse<List<ServiceFilterDefinitionResponse>>> getDependentFilters(
             @PathVariable Integer categoryId,
             @PathVariable String parentFilterCode) {
-        return ResponseEntity.ok(filterService.getDependentFilters(categoryId, parentFilterCode));
+        return ResponseEntity.ok(ApiResponse.success(filterService.getDependentFilters(categoryId, parentFilterCode)));
     }
 
     /**
      * Get filter by ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ServiceFilterDefinition> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(filterService.getById(id));
+    public ResponseEntity<ApiResponse<ServiceFilterDefinitionResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(filterService.getById(id)));
     }
 
     /**
      * Get filter by code within a category.
      */
     @GetMapping("/category/{categoryId}/code/{code}")
-    public ResponseEntity<ServiceFilterDefinition> getByCode(
+    public ResponseEntity<ApiResponse<ServiceFilterDefinitionResponse>> getByCode(
             @PathVariable Integer categoryId,
             @PathVariable String code) {
-        return ResponseEntity.ok(filterService.getByCode(categoryId, code));
+        return ResponseEntity.ok(ApiResponse.success(filterService.getByCode(categoryId, code)));
     }
 
     /**
      * Update a filter definition.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<OsGenericResponse> update(
+    public ResponseEntity<ApiResponse<ServiceFilterDefinitionResponse>> update(
             @PathVariable Long id,
             @RequestBody ServiceFilterDefinitionRequest request) {
-        ServiceFilterDefinition updated = filterService.update(id, request);
-        return ResponseEntity.ok(OsGenericResponse.success("Filter definition updated", updated));
+        ServiceFilterDefinitionResponse updated = filterService.update(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Filter definition updated", updated));
     }
 
     /**
      * Soft delete a filter definition.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<OsGenericResponse> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         filterService.delete(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Filter definition deleted", null));
+        return ResponseEntity.ok(ApiResponse.success("Filter definition deleted", null));
     }
 
     /**
      * Hard delete a filter definition (admin only).
      */
     @DeleteMapping("/{id}/hard")
-    public ResponseEntity<OsGenericResponse> hardDelete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> hardDelete(@PathVariable Long id) {
         filterService.hardDelete(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Filter definition permanently deleted", null));
+        return ResponseEntity.ok(ApiResponse.success("Filter definition permanently deleted", null));
     }
 
     /**
      * Reactivate a soft-deleted filter definition.
      */
     @PostMapping("/{id}/reactivate")
-    public ResponseEntity<OsGenericResponse> reactivate(@PathVariable Long id) {
-        ServiceFilterDefinition reactivated = filterService.reactivate(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Filter definition reactivated", reactivated));
+    public ResponseEntity<ApiResponse<ServiceFilterDefinitionResponse>> reactivate(@PathVariable Long id) {
+        ServiceFilterDefinitionResponse reactivated = filterService.reactivate(id);
+        return ResponseEntity.ok(ApiResponse.success("Filter definition reactivated", reactivated));
     }
 
     /**
      * Get all active filters across all categories.
      */
     @GetMapping
-    public ResponseEntity<List<ServiceFilterDefinition>> getAll() {
-        return ResponseEntity.ok(filterService.getAllActive());
+    public ResponseEntity<ApiResponse<List<ServiceFilterDefinitionResponse>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.success(filterService.getAllActive()));
     }
 
     // Filter Option endpoints
@@ -138,41 +138,41 @@ public class ServiceFilterDefinitionController {
      * Add an option to a filter.
      */
     @PostMapping("/{filterId}/options")
-    public ResponseEntity<OsGenericResponse> addOption(
+    public ResponseEntity<ApiResponse<ServiceFilterDefinitionResponse>> addOption(
             @PathVariable Long filterId,
             @RequestBody FilterOptionRequest request) {
-        ServiceFilterDefinition updated = filterService.addOption(filterId, request);
+        ServiceFilterDefinitionResponse updated = filterService.addOption(filterId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OsGenericResponse.success("Filter option added", updated));
+                .body(ApiResponse.success("Filter option added", updated));
     }
 
     /**
      * Get options for a filter.
      */
     @GetMapping("/{filterId}/options")
-    public ResponseEntity<List<FilterOption>> getOptions(
+    public ResponseEntity<ApiResponse<List<FilterOptionResponse>>> getOptions(
             @PathVariable Long filterId,
             @RequestParam(required = false) String parentValue) {
-        return ResponseEntity.ok(filterService.getOptions(filterId, parentValue));
+        return ResponseEntity.ok(ApiResponse.success(filterService.getOptions(filterId, parentValue)));
     }
 
     /**
      * Update an option.
      */
     @PutMapping("/options/{optionId}")
-    public ResponseEntity<OsGenericResponse> updateOption(
+    public ResponseEntity<ApiResponse<FilterOptionResponse>> updateOption(
             @PathVariable Long optionId,
             @RequestBody FilterOptionRequest request) {
-        FilterOption updated = filterService.updateOption(optionId, request);
-        return ResponseEntity.ok(OsGenericResponse.success("Filter option updated", updated));
+        FilterOptionResponse updated = filterService.updateOption(optionId, request);
+        return ResponseEntity.ok(ApiResponse.success("Filter option updated", updated));
     }
 
     /**
      * Delete an option.
      */
     @DeleteMapping("/options/{optionId}")
-    public ResponseEntity<OsGenericResponse> deleteOption(@PathVariable Long optionId) {
+    public ResponseEntity<ApiResponse<Void>> deleteOption(@PathVariable Long optionId) {
         filterService.deleteOption(optionId);
-        return ResponseEntity.ok(OsGenericResponse.success("Filter option deleted", null));
+        return ResponseEntity.ok(ApiResponse.success("Filter option deleted", null));
     }
 }

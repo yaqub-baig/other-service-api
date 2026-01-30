@@ -1,10 +1,7 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.QuotationRequest;
-import com.autoadda.apis.other.entity.VendorQuotation;
-import com.autoadda.apis.other.entity.VendorQuotationLineItem;
 import com.autoadda.apis.other.request.VendorQuotationSubmission;
-import com.autoadda.apis.other.response.OsGenericResponse;
+import com.autoadda.apis.other.response.*;
 import com.autoadda.apis.other.service.QuotationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Vendor-facing controller for quotation operations.
@@ -32,28 +30,28 @@ public class QuotationVendorController {
      * Filters by vendor's service categories and location.
      */
     @GetMapping("/requests/open")
-    public ResponseEntity<OsGenericResponse> findOpenRequests(
+    public ResponseEntity<ApiResponse<List<QuotationRequestResponse>>> findOpenRequests(
             @RequestParam Integer vendorId,
             @RequestParam Integer categoryId) {
-        List<QuotationRequest> requests = quotationService.findOpenRequestsForVendor(vendorId, categoryId);
-        return ResponseEntity.ok(OsGenericResponse.success(requests));
+        List<QuotationRequestResponse> requests = quotationService.findOpenRequestsForVendor(vendorId, categoryId);
+        return ResponseEntity.ok(ApiResponse.success(requests));
     }
 
     /**
      * Get details of a specific quotation request.
      */
     @GetMapping("/request/{requestId}")
-    public ResponseEntity<OsGenericResponse> getRequestDetails(@PathVariable Integer requestId) {
-        QuotationRequest request = quotationService.getRequestById(requestId);
-        return ResponseEntity.ok(OsGenericResponse.success(request));
+    public ResponseEntity<ApiResponse<QuotationRequestResponse>> getRequestDetails(@PathVariable Integer requestId) {
+        QuotationRequestResponse request = quotationService.getRequestById(requestId);
+        return ResponseEntity.ok(ApiResponse.success(request));
     }
 
     /**
      * Get field values for a quotation request.
      */
     @GetMapping("/request/{requestId}/fields")
-    public ResponseEntity<OsGenericResponse> getRequestFieldValues(@PathVariable Integer requestId) {
-        return ResponseEntity.ok(OsGenericResponse.success(
+    public ResponseEntity<ApiResponse<List<QuotationRequestFieldValueResponse>>> getRequestFieldValues(@PathVariable Integer requestId) {
+        return ResponseEntity.ok(ApiResponse.success(
                 quotationService.getRequestFieldValues(requestId)));
     }
 
@@ -63,61 +61,61 @@ public class QuotationVendorController {
      * Submit a quotation for a request.
      */
     @PostMapping("/quote")
-    public ResponseEntity<OsGenericResponse> submitQuote(
+    public ResponseEntity<ApiResponse<VendorQuotationResponse>> submitQuote(
             @RequestBody VendorQuotationSubmission submission) {
-        VendorQuotation quote = quotationService.submitQuote(submission);
+        VendorQuotationResponse quote = quotationService.submitQuote(submission);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OsGenericResponse.success("Quotation submitted", quote));
+                .body(ApiResponse.success("Quotation submitted", quote));
     }
 
     /**
      * Get vendor's submitted quotations.
      */
     @GetMapping("/quotes")
-    public ResponseEntity<OsGenericResponse> getMyQuotations(@RequestParam Integer vendorId) {
-        List<VendorQuotation> quotes = quotationService.getVendorQuotations(vendorId);
-        return ResponseEntity.ok(OsGenericResponse.success(quotes));
+    public ResponseEntity<ApiResponse<List<VendorQuotationResponse>>> getMyQuotations(@RequestParam Integer vendorId) {
+        List<VendorQuotationResponse> quotes = quotationService.getVendorQuotations(vendorId);
+        return ResponseEntity.ok(ApiResponse.success(quotes));
     }
 
     /**
      * Get vendor's quotations with pagination.
      */
     @GetMapping("/quotes/page")
-    public ResponseEntity<OsGenericResponse> getMyQuotationsPaginated(
+    public ResponseEntity<ApiResponse<Page<VendorQuotationResponse>>> getMyQuotationsPaginated(
             @RequestParam Integer vendorId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<VendorQuotation> quotes = quotationService.getVendorQuotationsPaginated(vendorId, page, size);
-        return ResponseEntity.ok(OsGenericResponse.success(quotes));
+        Page<VendorQuotationResponse> quotes = quotationService.getVendorQuotationsPaginated(vendorId, page, size);
+        return ResponseEntity.ok(ApiResponse.success(quotes));
     }
 
     /**
      * Get a specific quotation by ID.
      */
     @GetMapping("/quote/{quotationId}")
-    public ResponseEntity<OsGenericResponse> getQuotationById(@PathVariable Integer quotationId) {
-        VendorQuotation quote = quotationService.getQuotationById(quotationId);
-        return ResponseEntity.ok(OsGenericResponse.success(quote));
+    public ResponseEntity<ApiResponse<VendorQuotationResponse>> getQuotationById(@PathVariable Integer quotationId) {
+        VendorQuotationResponse quote = quotationService.getQuotationById(quotationId);
+        return ResponseEntity.ok(ApiResponse.success(quote));
     }
 
     /**
      * Get line items for a quotation.
      */
     @GetMapping("/quote/{quotationId}/items")
-    public ResponseEntity<OsGenericResponse> getQuotationLineItems(@PathVariable Integer quotationId) {
-        List<VendorQuotationLineItem> items = quotationService.getQuotationLineItems(quotationId);
-        return ResponseEntity.ok(OsGenericResponse.success(items));
+    public ResponseEntity<ApiResponse<List<VendorQuotationLineItemResponse>>> getQuotationLineItems(@PathVariable Integer quotationId) {
+        List<VendorQuotationLineItemResponse> items = quotationService.getQuotationLineItems(quotationId);
+        return ResponseEntity.ok(ApiResponse.success(items));
     }
 
     /**
      * Withdraw a submitted quotation.
      */
     @PostMapping("/quote/{quotationId}/withdraw")
-    public ResponseEntity<OsGenericResponse> withdrawQuote(
+    public ResponseEntity<ApiResponse<VendorQuotationResponse>> withdrawQuote(
             @PathVariable Integer quotationId,
             @RequestParam Integer vendorId) {
-        VendorQuotation withdrawn = quotationService.withdrawQuote(quotationId, vendorId);
-        return ResponseEntity.ok(OsGenericResponse.success("Quotation withdrawn", withdrawn));
+        VendorQuotationResponse withdrawn = quotationService.withdrawQuote(quotationId, vendorId);
+        return ResponseEntity.ok(ApiResponse.success("Quotation withdrawn", withdrawn));
     }
 
     // ==================== Statistics ====================
@@ -127,8 +125,8 @@ public class QuotationVendorController {
      * This would be expanded to include more detailed stats.
      */
     @GetMapping("/stats")
-    public ResponseEntity<OsGenericResponse> getQuotationStats(@RequestParam Integer vendorId) {
-        List<VendorQuotation> allQuotes = quotationService.getVendorQuotations(vendorId);
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getQuotationStats(@RequestParam Integer vendorId) {
+     List<VendorQuotationResponse> allQuotes = quotationService.getVendorQuotations(vendorId);
 
         long pending = allQuotes.stream()
                 .filter(q -> q.getStatus().name().equals("SENT"))
@@ -140,8 +138,8 @@ public class QuotationVendorController {
                 .filter(q -> q.getStatus().name().equals("REJECTED"))
                 .count();
 
-        return ResponseEntity.ok(OsGenericResponse.success(java.util.Map.of(
-                "total", allQuotes.size(),
+        return ResponseEntity.ok(ApiResponse.success(java.util.Map.of(
+                "total", (long)allQuotes.size(),
                 "pending", pending,
                 "accepted", accepted,
                 "rejected", rejected

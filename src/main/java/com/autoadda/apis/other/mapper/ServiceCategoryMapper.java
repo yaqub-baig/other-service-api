@@ -4,6 +4,10 @@ import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.response.AvailableServiceResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 public class ServiceCategoryMapper {
 
@@ -22,4 +26,14 @@ public class ServiceCategoryMapper {
         serviceCategory.setDescription(response.getDescription());
         return serviceCategory;
     }
+
+    public List<AvailableServiceResponse> toResponseList(List<ServiceCategory> entities) {
+        if (entities == null || entities.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return entities.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
 }

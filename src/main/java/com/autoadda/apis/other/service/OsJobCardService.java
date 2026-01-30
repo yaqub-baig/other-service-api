@@ -77,33 +77,73 @@ public class OsJobCardService {
         return jobCardMapper.entityToResponse(jobCard);
     }
 
-    /**
-     * Updates the status of a job card.
-     *
-     * @param request the request containing job card ID and new status
-     * @return the updated JobCard
-     */
-    @Transactional
-    public OsJobCard updateJobCardStatus(OsJobCardStatusRequest request) {
-        OsJobCard jobCard = osJobCardRepository.findById(request.getJobcardId())
-                .orElseThrow(() -> new RuntimeException("Jobcard not found"));
+        /**
 
-        jobCard.setStatus(request.getStatus());
+         * Updates the status of a job card.
 
-        if (Status.COMPLETED.equals(request.getStatus())) {
-            jobCard.setServiceEndTime(DateHelper.dbTime());
+         *
+
+         * @param request the request containing job card ID and new status
+
+         * @return the updated OsJobCardResponse
+
+         */
+
+        @Transactional
+
+        public OsJobCardResponse updateJobCardStatus(OsJobCardStatusRequest request) {
+
+            OsJobCard jobCard = osJobCardRepository.findById(request.getJobcardId())
+
+                    .orElseThrow(() -> new RuntimeException("Jobcard not found"));
+
+    
+
+            jobCard.setStatus(request.getStatus());
+
+    
+
+            if (Status.COMPLETED.equals(request.getStatus())) {
+
+                jobCard.setServiceEndTime(DateHelper.dbTime());
+
+            }
+
+    
+
+            OsAppointmentServices service = jobCard.getService();
+
+            service.setStatus(request.getStatus());
+
+            appointmentServiceRepo.save(service);
+
+    
+
+            jobcardStatusActivityRepo.save(OsJobcardStatusActivity
+
+                    .builder()
+
+                    .jobcardId(jobCard.getId())
+
+                    .status(request.getStatus())
+
+                    .memberId(request.getMemberId())
+
+                    .memberType(request.getMemberType())
+
+                    .comments(request.getComments())
+
+                    .insert_tms(DateHelper.dbDate())
+
+                    .build());
+
+    
+
+            OsJobCard updatedJobCard = osJobCardRepository.save(jobCard);
+
+            return jobCardMapper.entityToResponse(updatedJobCard);
+
         }
-
-        OsAppointmentServices service = jobCard.getService();
-        service.setStatus(request.getStatus());
-        appointmentServiceRepo.save(service);
-
-        jobcardStatusActivityRepo.save(OsJobcardStatusActivity.builder().jobcardId(jobCard.getId())
-                .status(request.getStatus()).memberId(request.getMemberId()).memberType(request.getMemberType())
-                .comments(request.getComments()).insert_tms(DateHelper.dbDate()).build());
-
-        return osJobCardRepository.save(jobCard);
-    }
 
     /**
      * Retrieves a job card by its ID.
@@ -112,12 +152,14 @@ public class OsJobCardService {
      * @return the osJobCard if found
      */
     @Transactional(readOnly = true)
-    public List<OsJobCard> getTechnicianJobCards(Integer technicianId, Status status) throws MemberNotFoundException {
+    public List<OsJobCardResponse> getTechnicianJobCards(Integer technicianId, Status status) throws MemberNotFoundException {
         validator.validateTechnician(technicianId);
+        List<OsJobCard> jobCards;
         if (status == null || StringUtils.isBlank(status.toString()))
-            return osJobCardRepository.findByTechnicianId(technicianId);
+            jobCards = osJobCardRepository.findByTechnicianId(technicianId);
         else
-            return osJobCardRepository.findByTechnicianIdAndStatus(technicianId, status);
+            jobCards = osJobCardRepository.findByTechnicianIdAndStatus(technicianId, status);
+        return jobCardMapper.entityToResponseList(jobCards);
     }
 
     /**
@@ -128,11 +170,13 @@ public class OsJobCardService {
      * @return a list of JobCards for the specified garage
      */
     @Transactional(readOnly = true)
-    public List<OsJobCard> getVendorJobCards(Integer vendorId, Status status) {
+    public List<OsJobCardResponse> getVendorJobCards(Integer vendorId, Status status) {
+        List<OsJobCard> jobCards;
         if (status == null || StringUtils.isBlank(status.toString()))
-            return osJobCardRepository.findByVendorId(vendorId);
+            jobCards = osJobCardRepository.findByVendorId(vendorId);
         else
-            return osJobCardRepository.findByVendorIdAndStatus(vendorId, status);
+            jobCards = osJobCardRepository.findByVendorIdAndStatus(vendorId, status);
+        return jobCardMapper.entityToResponseList(jobCards);
     }
 
     /**

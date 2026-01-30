@@ -1,6 +1,8 @@
 package com.autoadda.apis.other.controller;
 
 import com.autoadda.apis.other.entity.ServiceCategory;
+import com.autoadda.apis.other.response.ApiResponse;
+import com.autoadda.apis.other.response.AvailableServiceResponse;
 import com.autoadda.apis.other.response.OsGenericResponse;
 import com.autoadda.apis.other.service.ServiceCategoryService;
 import org.springframework.http.ResponseEntity;
@@ -19,42 +21,42 @@ public class ServiceCategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ServiceCategory>> getAll() {
-        return ResponseEntity.ok(serviceCategoryService.getAll());
+    public ResponseEntity<ApiResponse<List<AvailableServiceResponse>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.success(serviceCategoryService.getAll()));
     }
 
     @PostMapping
-    public ResponseEntity<OsGenericResponse> create(@RequestBody ServiceCategory request) {
-        ServiceCategory created = serviceCategoryService.create(request);
-        return ResponseEntity.ok(OsGenericResponse.success("Service category created", created));
+    public ResponseEntity<ApiResponse<AvailableServiceResponse>> create(@RequestBody ServiceCategory request) {
+        AvailableServiceResponse created = serviceCategoryService.create(request);
+        return ResponseEntity.ok(ApiResponse.success("Service category created", created));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ServiceCategory> getById(@PathVariable Integer id) {
-        return ResponseEntity.ok(serviceCategoryService.getById(id));
+    public ResponseEntity<ApiResponse<AvailableServiceResponse>> getById(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.success(serviceCategoryService.getById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<OsGenericResponse> update(
+    public ResponseEntity<ApiResponse<AvailableServiceResponse>> update(
             @PathVariable Integer id,
             @RequestBody ServiceCategory updatedCategory) {
-        serviceCategoryService.update(id, updatedCategory);
-        return ResponseEntity.ok(OsGenericResponse.success("Service category updated successfully", updatedCategory));
+        AvailableServiceResponse updated = serviceCategoryService.update(id, updatedCategory);
+        return ResponseEntity.ok(ApiResponse.success("Service category updated successfully", updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<OsGenericResponse> delete(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<String>> delete(@PathVariable Integer id) {
         serviceCategoryService.delete(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Service category deleted successfully", null));
+        return ResponseEntity.ok(ApiResponse.success("Service category deleted successfully", null));
     }
 
     @GetMapping("/parent/{parentId}")
-    public ResponseEntity<List<ServiceCategory>> getByParentId(@PathVariable Integer parentId) {
-        return ResponseEntity.ok(serviceCategoryService.getByParentId(parentId));
+    public ResponseEntity<ApiResponse<List<AvailableServiceResponse>>> getByParentId(@PathVariable Integer parentId) {
+        return ResponseEntity.ok(ApiResponse.success(serviceCategoryService.getByParentId(parentId)));
     }
 
     @GetMapping("/root")
-    public ResponseEntity<List<ServiceCategory>> getRootCategories() {
-        return ResponseEntity.ok(serviceCategoryService.getRootCategories());
+    public ResponseEntity<ApiResponse<List<AvailableServiceResponse>>> getRootCategories() {
+        return ResponseEntity.ok(ApiResponse.success(serviceCategoryService.getRootCategories()));
     }
 }

@@ -112,7 +112,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         if (request.getOsServiceIds() != null && !request.getOsServiceIds().isEmpty()) {
             request.getOsServiceIds().forEach(sId -> {
                 serviceCategoryRepository.findById(sId)
-                        .map(serviceCategory -> vendorServiceBridgeService.createVendorServiceBridge(
+                        .map(serviceCategory -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
                                 new GarageServiceRequest(saved.getId(), serviceCategory.getId(), TRUE)))
                         .map(vendorServices::add)
                         .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category"));
@@ -280,7 +280,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         if (request.getOsServiceIds() != null && !request.getOsServiceIds().isEmpty()) {
             request.getOsServiceIds().forEach(sId -> {
                 serviceCategoryRepository.findById(sId)
-                        .map(serviceCategory -> vendorServiceBridgeService.createVendorServiceBridge(
+                        .map(serviceCategory -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
                                 new GarageServiceRequest(vendor.getId(), serviceCategory.getId(), TRUE)))
                         .map(vendorServices::add)
                         .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category"));

@@ -9,8 +9,10 @@ import com.autoadda.apis.other.entity.OsWorkHours;
 import com.autoadda.apis.other.entity.Vendor;
 import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
+import com.autoadda.apis.other.mapper.BookingMapper;
 import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
 import com.autoadda.apis.other.repository.*;
+import com.autoadda.apis.other.response.BookingResponse;
 import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
 import com.autoadda.apis.other.util.DateHelper;
 import com.autoadda.apis.other.util.Status;
@@ -43,6 +45,7 @@ public class OsAppointmentSlotService {
     private final OsAppointmentDetailMapper appointmentDetailMapper;
     private final VendorServiceRepository vendorServiceRepository;
     private final OsAppointmentServiceRepository appointmentServiceRepository;
+    private final BookingMapper bookingMapper;
 
     /**
      * Retrieves available time slots for a vendor on a specific date.
@@ -197,7 +200,7 @@ public class OsAppointmentSlotService {
     }
 
     @Transactional
-    public ResponseEntity<Booking> editBooking(Integer vendorId, Integer vehicleId, Integer bookingId, LocalDateTime time, String autoAddaId) {
+    public BookingResponse editBooking(Integer vendorId, Integer vehicleId, Integer bookingId, LocalDateTime time, String autoAddaId) {
         Booking booking = bookingRepo.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("No such booking found to edit."));
 
@@ -228,6 +231,6 @@ public class OsAppointmentSlotService {
         }
 
         Booking saved = bookingRepo.save(booking);
-        return new ResponseEntity<>(saved, HttpStatus.OK);
+        return bookingMapper.toBookingResponse(saved);
     }
 }

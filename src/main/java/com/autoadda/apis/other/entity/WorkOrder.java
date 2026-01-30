@@ -22,7 +22,7 @@ public class WorkOrder {
     private Booking appointment;
 
     @OneToMany(mappedBy = "workOrder", cascade = CascadeType.ALL)
-    private List<OsJobCard> jobCards;
+    private List<JobCard> jobCards;
 
     @Enumerated(EnumType.STRING)
     private Status status;

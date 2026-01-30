@@ -1,7 +1,7 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.MediaFile;
-import com.autoadda.apis.other.response.GenericResponse;
+import com.autoadda.apis.other.response.ApiResponse;
+import com.autoadda.apis.other.response.MediaFileResponse;
 import com.autoadda.apis.other.service.MediaFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -18,15 +18,16 @@ import java.util.List;
 public class MediaFileController {
     private final MediaFileService mediaFileService;
     @PostMapping(value = "/upload",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public List<MediaFile> upload(@RequestPart("files") List<MultipartFile> files) throws IOException {
+    public ResponseEntity<ApiResponse<List<MediaFileResponse>>> upload(@RequestPart("files") List<MultipartFile> files) throws IOException {
         if ( files.stream ( ).anyMatch ( f -> f.getSize ( ) > 10 * 1024 * 1024 ) ) {
             throw new IllegalArgumentException ( "File size must be less than 10MB" );
         }
-        return mediaFileService.upload ( files );
+        List<MediaFileResponse> responses = mediaFileService.upload ( files );
+        return ResponseEntity.ok(ApiResponse.success("Files uploaded successfully", responses));
     }
 
     @DeleteMapping("/delete-image/{id}")
-    public ResponseEntity<GenericResponse> deleteImage(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponse<String>> deleteImage(@PathVariable("id") Long id) {
         return ResponseEntity.ok ( mediaFileService.delete ( id ) );
     }
 

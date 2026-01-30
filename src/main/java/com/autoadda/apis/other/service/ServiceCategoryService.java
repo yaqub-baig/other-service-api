@@ -2,7 +2,9 @@ package com.autoadda.apis.other.service;
 
 import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
+import com.autoadda.apis.other.mapper.ServiceCategoryMapper;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
+import com.autoadda.apis.other.response.AvailableServiceResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,25 +13,29 @@ import java.util.List;
 public class ServiceCategoryService {
 
     private final ServiceCategoryRepository serviceCategoryRepository;
+    private final ServiceCategoryMapper serviceCategoryMapper;
 
-    public ServiceCategoryService(ServiceCategoryRepository serviceCategoryRepository) {
+    public ServiceCategoryService(ServiceCategoryRepository serviceCategoryRepository, ServiceCategoryMapper serviceCategoryMapper) {
         this.serviceCategoryRepository = serviceCategoryRepository;
+        this.serviceCategoryMapper = serviceCategoryMapper;
     }
 
-    public List<ServiceCategory> getAll() {
-        return serviceCategoryRepository.findAll();
+    public List<AvailableServiceResponse> getAll() {
+        return serviceCategoryMapper.toResponseList(serviceCategoryRepository.findAll());
     }
 
-    public ServiceCategory getById(Integer id) {
+    public AvailableServiceResponse getById(Integer id) {
         return serviceCategoryRepository.findById(id)
+                .map(serviceCategoryMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Service category not found with id: " + id));
     }
 
-    public ServiceCategory create(ServiceCategory serviceCategory) {
-        return serviceCategoryRepository.save(serviceCategory);
+    public AvailableServiceResponse create(ServiceCategory serviceCategory) {
+        ServiceCategory savedCategory = serviceCategoryRepository.save(serviceCategory);
+        return serviceCategoryMapper.toResponse(savedCategory);
     }
 
-    public ServiceCategory update(Integer id, ServiceCategory updatedCategory) {
+    public AvailableServiceResponse update(Integer id, ServiceCategory updatedCategory) {
         ServiceCategory existing = serviceCategoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Service category not found with id: " + id));
 
@@ -41,7 +47,8 @@ public class ServiceCategoryService {
             existing.setParent(updatedCategory.getParent());
         }
 
-        return serviceCategoryRepository.save(existing);
+        ServiceCategory savedCategory = serviceCategoryRepository.save(existing);
+        return serviceCategoryMapper.toResponse(savedCategory);
     }
 
     public void delete(Integer id) {
@@ -51,11 +58,11 @@ public class ServiceCategoryService {
         serviceCategoryRepository.deleteById(id);
     }
 
-    public List<ServiceCategory> getByParentId(Integer parentId) {
-        return serviceCategoryRepository.findByParentId(parentId);
+    public List<AvailableServiceResponse> getByParentId(Integer parentId) {
+        return serviceCategoryMapper.toResponseList(serviceCategoryRepository.findByParentId(parentId));
     }
 
-    public List<ServiceCategory> getRootCategories() {
-        return serviceCategoryRepository.findByParentIsNull();
+    public List<AvailableServiceResponse> getRootCategories() {
+        return serviceCategoryMapper.toResponseList(serviceCategoryRepository.findByParentIsNull());
     }
 }

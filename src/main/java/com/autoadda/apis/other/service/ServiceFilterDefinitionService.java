@@ -5,11 +5,14 @@ import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.entity.ServiceFilterDefinition;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
+import com.autoadda.apis.other.mapper.ServiceFilterDefinitionMapper;
 import com.autoadda.apis.other.repository.FilterOptionRepository;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
 import com.autoadda.apis.other.repository.ServiceFilterDefinitionRepository;
 import com.autoadda.apis.other.request.FilterOptionRequest;
 import com.autoadda.apis.other.request.ServiceFilterDefinitionRequest;
+import com.autoadda.apis.other.response.FilterOptionResponse;
+import com.autoadda.apis.other.response.ServiceFilterDefinitionResponse;
 import com.autoadda.apis.other.util.DataSourceType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +29,13 @@ public class ServiceFilterDefinitionService {
     private final ServiceFilterDefinitionRepository filterRepository;
     private final FilterOptionRepository optionRepository;
     private final ServiceCategoryRepository serviceCategoryRepository;
+    private final ServiceFilterDefinitionMapper filterMapper;
 
     /**
      * Create a new filter definition for a service category.
      */
     @Transactional
-    public ServiceFilterDefinition create(ServiceFilterDefinitionRequest request) {
+    public ServiceFilterDefinitionResponse create(ServiceFilterDefinitionRequest request) {
         // Validate service category exists
         ServiceCategory category = serviceCategoryRepository.findById(request.getServiceCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -75,67 +79,73 @@ public class ServiceFilterDefinitionService {
             filter = filterRepository.save(filter);
         }
 
-        return filter;
+        return filterMapper.toResponse(filter);
     }
 
     /**
      * Get all active filters for a service category.
      */
     @Transactional(readOnly = true)
-    public List<ServiceFilterDefinition> getByServiceCategory(Integer serviceCategoryId) {
-        return filterRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId);
+    public List<ServiceFilterDefinitionResponse> getByServiceCategory(Integer serviceCategoryId) {
+        List<ServiceFilterDefinition> filters = filterRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId);
+        return filterMapper.toResponseList(filters);
     }
 
     /**
      * Get all filters for a service category (including inactive).
      */
     @Transactional(readOnly = true)
-    public List<ServiceFilterDefinition> getAllByServiceCategory(Integer serviceCategoryId) {
-        return filterRepository.findByServiceCategoryIdOrderByDisplayOrderAsc(serviceCategoryId);
+    public List<ServiceFilterDefinitionResponse> getAllByServiceCategory(Integer serviceCategoryId) {
+        List<ServiceFilterDefinition> filters = filterRepository.findByServiceCategoryIdOrderByDisplayOrderAsc(serviceCategoryId);
+        return filterMapper.toResponseList(filters);
     }
 
     /**
      * Get required filters for a service category.
      */
     @Transactional(readOnly = true)
-    public List<ServiceFilterDefinition> getRequiredByServiceCategory(Integer serviceCategoryId) {
-        return filterRepository.findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId);
+    public List<ServiceFilterDefinitionResponse> getRequiredByServiceCategory(Integer serviceCategoryId) {
+        List<ServiceFilterDefinition> filters = filterRepository.findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId);
+        return filterMapper.toResponseList(filters);
     }
 
     /**
      * Get filters that depend on a specific filter.
      */
     @Transactional(readOnly = true)
-    public List<ServiceFilterDefinition> getDependentFilters(Integer serviceCategoryId, String parentFilterCode) {
-        return filterRepository.findByServiceCategoryIdAndDependsOnAndIsActiveTrueOrderByDisplayOrderAsc(
+    public List<ServiceFilterDefinitionResponse> getDependentFilters(Integer serviceCategoryId, String parentFilterCode) {
+        List<ServiceFilterDefinition> filters = filterRepository.findByServiceCategoryIdAndDependsOnAndIsActiveTrueOrderByDisplayOrderAsc(
                 serviceCategoryId, parentFilterCode);
+        return filterMapper.toResponseList(filters);
     }
 
     /**
      * Get filter by ID.
      */
     @Transactional(readOnly = true)
-    public ServiceFilterDefinition getById(Long id) {
-        return filterRepository.findById(id)
+    public ServiceFilterDefinitionResponse getById(Long id) {
+        ServiceFilterDefinition filter = filterRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Filter definition not found with id: " + id));
+        return filterMapper.toResponse(filter);
     }
 
     /**
      * Get filter by code within a service category.
      */
     @Transactional(readOnly = true)
-    public ServiceFilterDefinition getByCode(Integer serviceCategoryId, String filterCode) {
-        return filterRepository.findByServiceCategoryIdAndFilterCode(serviceCategoryId, filterCode)
+    public ServiceFilterDefinitionResponse getByCode(Integer serviceCategoryId, String filterCode) {
+        ServiceFilterDefinition filter = filterRepository.findByServiceCategoryIdAndFilterCode(serviceCategoryId, filterCode)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Filter not found with code: " + filterCode + " in category: " + serviceCategoryId));
+        return filterMapper.toResponse(filter);
     }
 
     /**
      * Update a filter definition.
      */
     @Transactional
-    public ServiceFilterDefinition update(Long id, ServiceFilterDefinitionRequest request) {
-        ServiceFilterDefinition filter = getById(id);
+    public ServiceFilterDefinitionResponse update(Long id, ServiceFilterDefinitionRequest request) {
+        ServiceFilterDefinition filter = findEntityById(id);
 
         // If changing filter code, check for duplicates
         if (request.getFilterCode() != null &&
@@ -193,15 +203,16 @@ public class ServiceFilterDefinitionService {
             updateFilterOptions(filter, request.getOptions());
         }
 
-        return filterRepository.save(filter);
+        ServiceFilterDefinition saved = filterRepository.save(filter);
+        return filterMapper.toResponse(saved);
     }
 
     /**
      * Add an option to a filter definition.
      */
     @Transactional
-    public ServiceFilterDefinition addOption(Long filterId, FilterOptionRequest request) {
-        ServiceFilterDefinition filter = getById(filterId);
+    public ServiceFilterDefinitionResponse addOption(Long filterId, FilterOptionRequest request) {
+        ServiceFilterDefinition filter = findEntityById(filterId);
 
         // Check for duplicate option value
         if (optionRepository.existsByFilterDefinitionIdAndOptionValue(filterId, request.getOptionValue())) {
@@ -212,14 +223,15 @@ public class ServiceFilterDefinitionService {
         FilterOption option = createOptionFromRequest(request);
         filter.addOption(option);
 
-        return filterRepository.save(filter);
+        ServiceFilterDefinition saved = filterRepository.save(filter);
+        return filterMapper.toResponse(saved);
     }
 
     /**
      * Update an option.
      */
     @Transactional
-    public FilterOption updateOption(Long optionId, FilterOptionRequest request) {
+    public FilterOptionResponse updateOption(Long optionId, FilterOptionRequest request) {
         FilterOption option = optionRepository.findById(optionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Filter option not found with id: " + optionId));
 
@@ -248,7 +260,8 @@ public class ServiceFilterDefinitionService {
             option.setMetadata(request.getMetadata());
         }
 
-        return optionRepository.save(option);
+        FilterOption saved = optionRepository.save(option);
+        return filterMapper.toOptionResponse(saved);
     }
 
     /**
@@ -267,12 +280,15 @@ public class ServiceFilterDefinitionService {
      * Get options for a filter (optionally filtered by parent value for dependent filters).
      */
     @Transactional(readOnly = true)
-    public List<FilterOption> getOptions(Long filterId, String parentValue) {
+    public List<FilterOptionResponse> getOptions(Long filterId, String parentValue) {
+        List<FilterOption> options;
         if (parentValue != null && !parentValue.isEmpty()) {
-            return optionRepository.findByFilterDefinitionIdAndParentValueAndIsActiveTrueOrderByDisplayOrderAsc(
+            options = optionRepository.findByFilterDefinitionIdAndParentValueAndIsActiveTrueOrderByDisplayOrderAsc(
                     filterId, parentValue);
+        } else {
+            options = optionRepository.findByFilterDefinitionIdAndIsActiveTrueOrderByDisplayOrderAsc(filterId);
         }
-        return optionRepository.findByFilterDefinitionIdAndIsActiveTrueOrderByDisplayOrderAsc(filterId);
+        return filterMapper.toOptionResponseList(options);
     }
 
     /**
@@ -280,7 +296,7 @@ public class ServiceFilterDefinitionService {
      */
     @Transactional
     public void delete(Long id) {
-        ServiceFilterDefinition filter = getById(id);
+        ServiceFilterDefinition filter = findEntityById(id);
         filter.setIsActive(false);
         filterRepository.save(filter);
         log.info("Soft deleted filter definition with id: {}", id);
@@ -302,18 +318,28 @@ public class ServiceFilterDefinitionService {
      * Reactivate a soft-deleted filter definition.
      */
     @Transactional
-    public ServiceFilterDefinition reactivate(Long id) {
-        ServiceFilterDefinition filter = getById(id);
+    public ServiceFilterDefinitionResponse reactivate(Long id) {
+        ServiceFilterDefinition filter = findEntityById(id);
         filter.setIsActive(true);
-        return filterRepository.save(filter);
+        ServiceFilterDefinition saved = filterRepository.save(filter);
+        return filterMapper.toResponse(saved);
     }
 
     /**
      * Get all active filters.
      */
     @Transactional(readOnly = true)
-    public List<ServiceFilterDefinition> getAllActive() {
-        return filterRepository.findByIsActiveTrueOrderByServiceCategoryIdAscDisplayOrderAsc();
+    public List<ServiceFilterDefinitionResponse> getAllActive() {
+        List<ServiceFilterDefinition> filters = filterRepository.findByIsActiveTrueOrderByServiceCategoryIdAscDisplayOrderAsc();
+        return filterMapper.toResponseList(filters);
+    }
+
+    /**
+     * Internal method to get entity by ID (for update operations).
+     */
+    private ServiceFilterDefinition findEntityById(Long id) {
+        return filterRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Filter definition not found with id: " + id));
     }
 
     // Helper methods

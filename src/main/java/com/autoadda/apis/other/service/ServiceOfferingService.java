@@ -5,10 +5,14 @@ import com.autoadda.apis.other.entity.ServiceOffering;
 import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
+import com.autoadda.apis.other.mapper.ServiceAttributeDefinitionMapper;
+import com.autoadda.apis.other.mapper.ServiceOfferingMapper;
 import com.autoadda.apis.other.repository.ServiceAttributeDefinitionRepository;
 import com.autoadda.apis.other.repository.ServiceOfferingRepository;
 import com.autoadda.apis.other.repository.VendorServiceRepository;
 import com.autoadda.apis.other.request.ServiceOfferingRequest;
+import com.autoadda.apis.other.response.ServiceAttributeDefinitionResponse;
+import com.autoadda.apis.other.response.ServiceOfferingResponse;
 import com.autoadda.apis.other.util.PricingType;
 import com.autoadda.apis.other.util.StockStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,12 +39,14 @@ public class ServiceOfferingService {
     private final VendorServiceRepository vendorServiceRepository;
     private final ServiceAttributeDefinitionRepository attributeRepository;
     private final ObjectMapper objectMapper;
+    private final ServiceOfferingMapper offeringMapper;
+    private final ServiceAttributeDefinitionMapper attributeMapper;
 
     /**
      * Create a new service offering.
      */
     @Transactional
-    public ServiceOffering create(ServiceOfferingRequest request) {
+    public ServiceOfferingResponse create(ServiceOfferingRequest request) {
         // Validate vendor service exists
         VendorService vendorService = vendorServiceRepository.findById(request.getVendorServiceId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -96,138 +102,153 @@ public class ServiceOfferingService {
                 .isActive(true)
                 .build();
 
-        return offeringRepository.save(offering);
+        ServiceOffering saved = offeringRepository.save(offering);
+        return offeringMapper.toResponse(saved);
     }
 
     /**
      * Get offering by ID.
      */
     @Transactional(readOnly = true)
-    public ServiceOffering getById(Long id) {
-        return offeringRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Service offering not found with id: " + id));
+    public ServiceOfferingResponse getById(Long id) {
+        ServiceOffering offering = findEntityById(id);
+        return offeringMapper.toResponse(offering);
     }
 
     /**
      * Get offering by SKU.
      */
     @Transactional(readOnly = true)
-    public ServiceOffering getBySku(String sku) {
-        return offeringRepository.findBySku(sku)
+    public ServiceOfferingResponse getBySku(String sku) {
+        ServiceOffering offering = offeringRepository.findBySku(sku)
                 .orElseThrow(() -> new ResourceNotFoundException("Service offering not found with SKU: " + sku));
+        return offeringMapper.toResponse(offering);
     }
 
     /**
      * Get all active offerings for a vendor service.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getByVendorService(Integer vendorServiceId) {
-        return offeringRepository.findByVendorServiceIdAndIsActiveTrueOrderByDisplayOrderAsc(vendorServiceId);
+    public List<ServiceOfferingResponse> getByVendorService(Integer vendorServiceId) {
+        List<ServiceOffering> offerings = offeringRepository.findByVendorServiceIdAndIsActiveTrueOrderByDisplayOrderAsc(vendorServiceId);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get all offerings for a vendor service (including inactive).
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getAllByVendorService(Integer vendorServiceId) {
-        return offeringRepository.findByVendorServiceIdOrderByDisplayOrderAsc(vendorServiceId);
+    public List<ServiceOfferingResponse> getAllByVendorService(Integer vendorServiceId) {
+        List<ServiceOffering> offerings = offeringRepository.findByVendorServiceIdOrderByDisplayOrderAsc(vendorServiceId);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get all active offerings for a vendor.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getByVendor(Integer vendorId) {
-        return offeringRepository.findByVendorIdAndIsActiveTrue(vendorId);
+    public List<ServiceOfferingResponse> getByVendor(Integer vendorId) {
+        List<ServiceOffering> offerings = offeringRepository.findByVendorIdAndIsActiveTrue(vendorId);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get all offerings for a vendor (including inactive).
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getAllByVendor(Integer vendorId) {
-        return offeringRepository.findByVendorId(vendorId);
+    public List<ServiceOfferingResponse> getAllByVendor(Integer vendorId) {
+        List<ServiceOffering> offerings = offeringRepository.findByVendorId(vendorId);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get offerings by category.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getByCategory(Integer categoryId) {
-        return offeringRepository.findByCategoryIdAndIsActiveTrue(categoryId);
+    public List<ServiceOfferingResponse> getByCategory(Integer categoryId) {
+        List<ServiceOffering> offerings = offeringRepository.findByCategoryIdAndIsActiveTrue(categoryId);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get paginated offerings by category.
      */
     @Transactional(readOnly = true)
-    public Page<ServiceOffering> getByCategoryPaginated(Integer categoryId, int page, int size) {
+    public Page<ServiceOfferingResponse> getByCategoryPaginated(Integer categoryId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return offeringRepository.findByCategoryIdAndIsActiveTrue(categoryId, pageable);
+        Page<ServiceOffering> offerings = offeringRepository.findByCategoryIdAndIsActiveTrue(categoryId, pageable);
+        return offerings.map(offeringMapper::toResponse);
     }
 
     /**
      * Search offerings by name.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> searchByName(String searchTerm) {
-        return offeringRepository.searchByName(searchTerm);
+    public List<ServiceOfferingResponse> searchByName(String searchTerm) {
+        List<ServiceOffering> offerings = offeringRepository.searchByName(searchTerm);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Search offerings by name within a category.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> searchByNameInCategory(Integer categoryId, String searchTerm) {
-        return offeringRepository.searchByNameInCategory(categoryId, searchTerm);
+    public List<ServiceOfferingResponse> searchByNameInCategory(Integer categoryId, String searchTerm) {
+        List<ServiceOffering> offerings = offeringRepository.searchByNameInCategory(categoryId, searchTerm);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get offerings by price range.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getByPriceRange(Integer categoryId, BigDecimal minPrice, BigDecimal maxPrice) {
-        return offeringRepository.findByCategoryIdAndPriceRange(categoryId, minPrice, maxPrice);
+    public List<ServiceOfferingResponse> getByPriceRange(Integer categoryId, BigDecimal minPrice, BigDecimal maxPrice) {
+        List<ServiceOffering> offerings = offeringRepository.findByCategoryIdAndPriceRange(categoryId, minPrice, maxPrice);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get featured offerings.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getFeatured() {
-        return offeringRepository.findByIsFeaturedTrueAndIsActiveTrueOrderByDisplayOrderAsc();
+    public List<ServiceOfferingResponse> getFeatured() {
+        List<ServiceOffering> offerings = offeringRepository.findByIsFeaturedTrueAndIsActiveTrueOrderByDisplayOrderAsc();
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get featured offerings by category.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getFeaturedByCategory(Integer categoryId) {
-        return offeringRepository.findFeaturedByCategoryId(categoryId);
+    public List<ServiceOfferingResponse> getFeaturedByCategory(Integer categoryId) {
+        List<ServiceOffering> offerings = offeringRepository.findFeaturedByCategoryId(categoryId);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get top-rated offerings.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getTopRated(int limit) {
-        return offeringRepository.findTopRated(PageRequest.of(0, limit));
+    public List<ServiceOfferingResponse> getTopRated(int limit) {
+        List<ServiceOffering> offerings = offeringRepository.findTopRated(PageRequest.of(0, limit));
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get most popular offerings.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getMostPopular(int limit) {
-        return offeringRepository.findMostPopular(PageRequest.of(0, limit));
+    public List<ServiceOfferingResponse> getMostPopular(int limit) {
+        List<ServiceOffering> offerings = offeringRepository.findMostPopular(PageRequest.of(0, limit));
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Update an offering.
      */
     @Transactional
-    public ServiceOffering update(Long id, ServiceOfferingRequest request) {
-        ServiceOffering offering = getById(id);
+    public ServiceOfferingResponse update(Long id, ServiceOfferingRequest request) {
+        ServiceOffering offering = findEntityById(id);
 
         // If changing SKU, check for duplicates
         if (request.getSku() != null && !request.getSku().equals(offering.getSku())) {
@@ -292,30 +313,33 @@ public class ServiceOfferingService {
             offering.setIsFeatured(request.getIsFeatured());
         }
 
-        return offeringRepository.save(offering);
+        ServiceOffering saved = offeringRepository.save(offering);
+        return offeringMapper.toResponse(saved);
     }
 
     /**
      * Update stock status.
      */
     @Transactional
-    public ServiceOffering updateStockStatus(Long id, StockStatus stockStatus, Integer quantity) {
-        ServiceOffering offering = getById(id);
+    public ServiceOfferingResponse updateStockStatus(Long id, StockStatus stockStatus, Integer quantity) {
+        ServiceOffering offering = findEntityById(id);
         offering.setStockStatus(stockStatus);
         if (quantity != null) {
             offering.setQuantityAvailable(quantity);
         }
-        return offeringRepository.save(offering);
+        ServiceOffering saved = offeringRepository.save(offering);
+        return offeringMapper.toResponse(saved);
     }
 
     /**
      * Toggle featured status.
      */
     @Transactional
-    public ServiceOffering toggleFeatured(Long id) {
-        ServiceOffering offering = getById(id);
+    public ServiceOfferingResponse toggleFeatured(Long id) {
+        ServiceOffering offering = findEntityById(id);
         offering.setIsFeatured(!offering.getIsFeatured());
-        return offeringRepository.save(offering);
+        ServiceOffering saved = offeringRepository.save(offering);
+        return offeringMapper.toResponse(saved);
     }
 
     /**
@@ -323,7 +347,7 @@ public class ServiceOfferingService {
      */
     @Transactional
     public void delete(Long id) {
-        ServiceOffering offering = getById(id);
+        ServiceOffering offering = findEntityById(id);
         offering.setIsActive(false);
         offeringRepository.save(offering);
         log.info("Soft deleted service offering with id: {}", id);
@@ -345,52 +369,66 @@ public class ServiceOfferingService {
      * Reactivate a soft-deleted offering.
      */
     @Transactional
-    public ServiceOffering reactivate(Long id) {
-        ServiceOffering offering = getById(id);
+    public ServiceOfferingResponse reactivate(Long id) {
+        ServiceOffering offering = findEntityById(id);
         offering.setIsActive(true);
-        return offeringRepository.save(offering);
+        ServiceOffering saved = offeringRepository.save(offering);
+        return offeringMapper.toResponse(saved);
     }
 
     /**
      * Get offerings by vendor and category.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> getByVendorAndCategory(Integer vendorId, Integer categoryId) {
-        return offeringRepository.findByVendorIdAndCategoryId(vendorId, categoryId);
+    public List<ServiceOfferingResponse> getByVendorAndCategory(Integer vendorId, Integer categoryId) {
+        List<ServiceOffering> offerings = offeringRepository.findByVendorIdAndCategoryId(vendorId, categoryId);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Filter offerings by a single attribute.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> filterByAttribute(String attributeCode, String value) {
+    public List<ServiceOfferingResponse> filterByAttribute(String attributeCode, String value) {
         String jsonPath = "$." + attributeCode;
-        return offeringRepository.findByFilterableAttribute(jsonPath, "\"" + value + "\"");
+        List<ServiceOffering> offerings = offeringRepository.findByFilterableAttribute(jsonPath, "\"" + value + "\"");
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Filter offerings by multiple attributes.
      */
     @Transactional(readOnly = true)
-    public List<ServiceOffering> filterByAttributes(Map<String, Object> attributes) {
+    public List<ServiceOfferingResponse> filterByAttributes(Map<String, Object> attributes) {
         String jsonFragment = convertToJson(attributes);
-        return offeringRepository.findByFilterableAttributesContaining(jsonFragment);
+        List<ServiceOffering> offerings = offeringRepository.findByFilterableAttributesContaining(jsonFragment);
+        return offeringMapper.toResponseList(offerings);
     }
 
     /**
      * Get attribute definitions for a category (helper for frontend forms).
      */
     @Transactional(readOnly = true)
-    public List<ServiceAttributeDefinition> getAttributeDefinitions(Integer categoryId) {
-        return attributeRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+    public List<ServiceAttributeDefinitionResponse> getAttributeDefinitions(Integer categoryId) {
+        List<ServiceAttributeDefinition> attributes = attributeRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+        return attributeMapper.toResponseList(attributes);
     }
 
     /**
      * Get required attribute definitions for a category.
      */
     @Transactional(readOnly = true)
-    public List<ServiceAttributeDefinition> getRequiredAttributeDefinitions(Integer categoryId) {
-        return attributeRepository.findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+    public List<ServiceAttributeDefinitionResponse> getRequiredAttributeDefinitions(Integer categoryId) {
+        List<ServiceAttributeDefinition> attributes = attributeRepository.findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+        return attributeMapper.toResponseList(attributes);
+    }
+
+    /**
+     * Internal method to get entity by ID (for update operations).
+     */
+    private ServiceOffering findEntityById(Long id) {
+        return offeringRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service offering not found with id: " + id));
     }
 
     // Helper methods

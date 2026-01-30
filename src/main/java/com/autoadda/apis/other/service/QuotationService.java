@@ -3,9 +3,17 @@ package com.autoadda.apis.other.service;
 import com.autoadda.apis.other.entity.*;
 import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
+import com.autoadda.apis.other.mapper.QuotationRequestFieldValueMapper;
+import com.autoadda.apis.other.mapper.QuotationRequestMapper;
+import com.autoadda.apis.other.mapper.VendorQuotationLineItemMapper;
+import com.autoadda.apis.other.mapper.VendorQuotationMapper;
 import com.autoadda.apis.other.repository.*;
 import com.autoadda.apis.other.request.QuotationRequestSubmission;
 import com.autoadda.apis.other.request.VendorQuotationSubmission;
+import com.autoadda.apis.other.response.QuotationRequestFieldValueResponse;
+import com.autoadda.apis.other.response.QuotationRequestResponse;
+import com.autoadda.apis.other.response.VendorQuotationLineItemResponse;
+import com.autoadda.apis.other.response.VendorQuotationResponse;
 import com.autoadda.apis.other.util.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +47,10 @@ public class QuotationService {
     private final ServiceCategoryRepository categoryRepository;
     private final VendorRepository vendorRepository;
     private final ObjectMapper objectMapper;
+    private final QuotationRequestMapper quotationRequestMapper; // Inject mapper
+    private final QuotationRequestFieldValueMapper quotationRequestFieldValueMapper; // Inject mapper
+    private final VendorQuotationMapper vendorQuotationMapper; // Inject mapper
+    private final VendorQuotationLineItemMapper vendorQuotationLineItemMapper; // Inject mapper
 
     // ==================== Customer Request Operations ====================
 
@@ -46,7 +58,7 @@ public class QuotationService {
      * Customer creates a new quotation request.
      */
     @Transactional
-    public QuotationRequest createRequest(QuotationRequestSubmission submission) {
+    public QuotationRequestResponse createRequest(QuotationRequestSubmission submission) {
         // Validate category
         ServiceCategory category = categoryRepository.findById(submission.getServiceCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -106,42 +118,49 @@ public class QuotationService {
         }
 
         log.info("Created quotation request: {} for customer: {}", quotationNumber, submission.getCustomerId());
-        return savedRequest;
+        return quotationRequestMapper.toResponse(savedRequest);
     }
 
     /**
      * Get customer's quotation requests.
      */
     @Transactional(readOnly = true)
-    public List<QuotationRequest> getCustomerRequests(Integer customerId) {
-        return requestRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
+    public List<QuotationRequestResponse> getCustomerRequests(Integer customerId) {
+        return quotationRequestMapper.toResponseList(requestRepository.findByCustomerIdOrderByCreatedAtDesc(customerId));
     }
 
     /**
      * Get customer's quotation requests with pagination.
      */
     @Transactional(readOnly = true)
-    public Page<QuotationRequest> getCustomerRequestsPaginated(Integer customerId, int page, int size) {
+    public Page<QuotationRequestResponse> getCustomerRequestsPaginated(Integer customerId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return requestRepository.findByCustomerId(customerId, pageable);
+        return requestRepository.findByCustomerId(customerId, pageable)
+                .map(quotationRequestMapper::toResponse);
     }
 
     /**
      * Get quotation request by ID.
      */
     @Transactional(readOnly = true)
-    public QuotationRequest getRequestById(Integer requestId) {
+    public QuotationRequestResponse getRequestById(Integer requestId) {
+        return requestRepository.findById(requestId)
+                .map(quotationRequestMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Quotation request not found with id: " + requestId));
+    }
+    public QuotationRequest getRequestById1(Integer requestId) {
         return requestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Quotation request not found with id: " + requestId));
     }
-
     /**
      * Get quotation request by quotation number.
      */
     @Transactional(readOnly = true)
-    public QuotationRequest getRequestByNumber(String quotationNumber) {
+    public QuotationRequestResponse getRequestByNumber(String quotationNumber) {
         return requestRepository.findByQuotationNumber(quotationNumber)
+                .map(quotationRequestMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Quotation request not found with number: " + quotationNumber));
     }
@@ -150,16 +169,17 @@ public class QuotationService {
      * Get field values for a quotation request.
      */
     @Transactional(readOnly = true)
-    public List<QuotationRequestFieldValue> getRequestFieldValues(Integer requestId) {
-        return fieldValueRepository.findByQuotationRequestId(requestId);
+    public List<QuotationRequestFieldValueResponse> getRequestFieldValues(Integer requestId) {
+        return quotationRequestFieldValueMapper.toResponseList(fieldValueRepository.findByQuotationRequestId(requestId));
     }
 
     /**
      * Customer cancels their quotation request.
      */
     @Transactional
-    public QuotationRequest cancelRequest(Integer requestId, Integer customerId) {
-        QuotationRequest request = getRequestById(requestId);
+    public QuotationRequestResponse cancelRequest(Integer requestId, Integer customerId) {
+        QuotationRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quotation request not found with id: " + requestId));
 
         if (!request.getCustomerId().equals(customerId)) {
             throw new BusinessException("You can only cancel your own requests");
@@ -173,7 +193,8 @@ public class QuotationService {
 
         request.setStatus(QuotationRequestStatus.CANCELLED);
         log.info("Customer {} cancelled quotation request: {}", customerId, requestId);
-        return requestRepository.save(request);
+        QuotationRequest savedRequest = requestRepository.save(request);
+        return quotationRequestMapper.toResponse(savedRequest);
     }
 
     // ==================== Vendor Quotation Operations ====================
@@ -182,20 +203,21 @@ public class QuotationService {
      * Find open quotation requests for vendors (based on category and location).
      */
     @Transactional(readOnly = true)
-    public List<QuotationRequest> findOpenRequestsForVendor(Integer vendorId, Integer categoryId) {
-        return requestRepository.findOpenRequestsByCategory(
+    public List<QuotationRequestResponse> findOpenRequestsForVendor(Integer vendorId, Integer categoryId) {
+        List<QuotationRequest> requests = requestRepository.findOpenRequestsByCategory(
                 categoryId,
                 QuotationRequestStatus.SENT_TO_VENDORS,
                 LocalDateTime.now());
+        return quotationRequestMapper.toResponseList(requests);
     }
 
     /**
      * Vendor submits a quotation for a request.
      */
     @Transactional
-    public VendorQuotation submitQuote(VendorQuotationSubmission submission) {
+    public VendorQuotationResponse submitQuote(VendorQuotationSubmission submission) {
         // Validate request exists and is open
-        QuotationRequest request = getRequestById(submission.getQuotationRequestId());
+        QuotationRequest request = getRequestById1(submission.getQuotationRequestId());
 
         if (request.getStatus() != QuotationRequestStatus.REQUESTED &&
             request.getStatus() != QuotationRequestStatus.SENT_TO_VENDORS &&
@@ -273,40 +295,42 @@ public class QuotationService {
 
         log.info("Vendor {} submitted quote {} for request {}",
                 submission.getVendorId(), quoteNumber, submission.getQuotationRequestId());
-        return savedQuote;
+        return vendorQuotationMapper.toResponse(savedQuote);
     }
 
     /**
      * Get vendor's submitted quotations.
      */
     @Transactional(readOnly = true)
-    public List<VendorQuotation> getVendorQuotations(Integer vendorId) {
-        return vendorQuotationRepository.findByVendorIdOrderByCreatedAtDesc(vendorId);
+    public List<VendorQuotationResponse> getVendorQuotations(Integer vendorId) {
+        return vendorQuotationMapper.toResponseList(vendorQuotationRepository.findByVendorIdOrderByCreatedAtDesc(vendorId));
     }
 
     /**
      * Get vendor's quotations with pagination.
      */
     @Transactional(readOnly = true)
-    public Page<VendorQuotation> getVendorQuotationsPaginated(Integer vendorId, int page, int size) {
+    public Page<VendorQuotationResponse> getVendorQuotationsPaginated(Integer vendorId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return vendorQuotationRepository.findByVendorId(vendorId, pageable);
+        return vendorQuotationRepository.findByVendorId(vendorId, pageable)
+                .map(vendorQuotationMapper::toResponse);
     }
 
     /**
      * Get quotations received for a request.
      */
     @Transactional(readOnly = true)
-    public List<VendorQuotation> getQuotationsForRequest(Integer requestId) {
-        return vendorQuotationRepository.findByQuotationRequestIdOrderByCreatedAtDesc(requestId);
+    public List<VendorQuotationResponse> getQuotationsForRequest(Integer requestId) {
+        return vendorQuotationMapper.toResponseList(vendorQuotationRepository.findByQuotationRequestIdOrderByCreatedAtDesc(requestId));
     }
 
     /**
      * Get vendor quotation by ID.
      */
     @Transactional(readOnly = true)
-    public VendorQuotation getQuotationById(Integer quotationId) {
+    public VendorQuotationResponse getQuotationById(Integer quotationId) {
         return vendorQuotationRepository.findById(quotationId)
+                .map(vendorQuotationMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Vendor quotation not found with id: " + quotationId));
     }
@@ -315,16 +339,17 @@ public class QuotationService {
      * Get line items for a vendor quotation.
      */
     @Transactional(readOnly = true)
-    public List<VendorQuotationLineItem> getQuotationLineItems(Integer quotationId) {
-        return lineItemRepository.findByVendorQuotationIdOrderByDisplayOrderAsc(quotationId);
+    public List<VendorQuotationLineItemResponse> getQuotationLineItems(Integer quotationId) {
+        return vendorQuotationLineItemMapper.toResponseList(lineItemRepository.findByVendorQuotationIdOrderByDisplayOrderAsc(quotationId));
     }
 
     /**
      * Vendor withdraws their quotation.
      */
     @Transactional
-    public VendorQuotation withdrawQuote(Integer quotationId, Integer vendorId) {
-        VendorQuotation quote = getQuotationById(quotationId);
+    public VendorQuotationResponse withdrawQuote(Integer quotationId, Integer vendorId) {
+        VendorQuotation quote = vendorQuotationRepository.findById(quotationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor quotation not found with id: " + quotationId));
 
         if (!quote.getVendor().getId().equals(vendorId)) {
             throw new BusinessException("You can only withdraw your own quotations");
@@ -337,7 +362,8 @@ public class QuotationService {
 
         quote.setStatus(VendorQuotationStatus.WITHDRAWN);
         log.info("Vendor {} withdrew quotation: {}", vendorId, quotationId);
-        return vendorQuotationRepository.save(quote);
+        VendorQuotation savedQuote = vendorQuotationRepository.save(quote);
+        return vendorQuotationMapper.toResponse(savedQuote);
     }
 
     // ==================== Quote Acceptance/Rejection ====================
@@ -346,8 +372,9 @@ public class QuotationService {
      * Customer accepts a vendor's quotation.
      */
     @Transactional
-    public VendorQuotation acceptQuote(Integer quotationId, Integer customerId) {
-        VendorQuotation quote = getQuotationById(quotationId);
+    public VendorQuotationResponse acceptQuote(Integer quotationId, Integer customerId) {
+        VendorQuotation quote = vendorQuotationRepository.findById(quotationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor quotation not found with id: " + quotationId));
         QuotationRequest request = quote.getQuotationRequest();
 
         // Validate customer owns the request
@@ -387,15 +414,16 @@ public class QuotationService {
 
         log.info("Customer {} accepted quotation {} for request {}",
                 customerId, quotationId, request.getId());
-        return quote;
+        return vendorQuotationMapper.toResponse(quote);
     }
 
     /**
      * Customer rejects a vendor's quotation.
      */
     @Transactional
-    public VendorQuotation rejectQuote(Integer quotationId, Integer customerId, String reason) {
-        VendorQuotation quote = getQuotationById(quotationId);
+    public VendorQuotationResponse rejectQuote(Integer quotationId, Integer customerId, String reason) {
+        VendorQuotation quote = vendorQuotationRepository.findById(quotationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor quotation not found with id: " + quotationId));
         QuotationRequest request = quote.getQuotationRequest();
 
         // Validate customer owns the request
@@ -413,7 +441,8 @@ public class QuotationService {
 
         log.info("Customer {} rejected quotation {} for request {}",
                 customerId, quotationId, request.getId());
-        return vendorQuotationRepository.save(quote);
+        VendorQuotation savedQuote = vendorQuotationRepository.save(quote);
+        return vendorQuotationMapper.toResponse(savedQuote);
     }
 
     // ==================== Broadcast & Matching ====================
@@ -424,7 +453,7 @@ public class QuotationService {
      */
     @Transactional
     public int broadcastToVendors(Integer requestId) {
-        QuotationRequest request = getRequestById(requestId);
+        QuotationRequest request = getRequestById1(requestId);
 
         if (request.getStatus() != QuotationRequestStatus.REQUESTED) {
             throw new BusinessException("Can only broadcast requests with REQUESTED status");

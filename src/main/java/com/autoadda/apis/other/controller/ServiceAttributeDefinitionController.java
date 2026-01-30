@@ -1,8 +1,8 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import com.autoadda.apis.other.request.ServiceAttributeDefinitionRequest;
-import com.autoadda.apis.other.response.OsGenericResponse;
+import com.autoadda.apis.other.response.ApiResponse;
+import com.autoadda.apis.other.response.ServiceAttributeDefinitionResponse;
 import com.autoadda.apis.other.service.ServiceAttributeDefinitionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,105 +26,105 @@ public class ServiceAttributeDefinitionController {
      * Create a new attribute definition.
      */
     @PostMapping
-    public ResponseEntity<OsGenericResponse> create(@RequestBody ServiceAttributeDefinitionRequest request) {
-        ServiceAttributeDefinition attribute = attributeService.create(request);
+    public ResponseEntity<ApiResponse<ServiceAttributeDefinitionResponse>> create(@RequestBody ServiceAttributeDefinitionRequest request) {
+        ServiceAttributeDefinitionResponse attribute = attributeService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OsGenericResponse.success("Attribute definition created", attribute));
+                .body(ApiResponse.success("Attribute definition created", attribute));
     }
 
     /**
      * Get all attributes for a service category.
      */
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ServiceAttributeDefinition>> getByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(attributeService.getByServiceCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getByServiceCategory(categoryId)));
     }
 
     /**
      * Get all attributes for a service category (including inactive).
      */
     @GetMapping("/category/{categoryId}/all")
-    public ResponseEntity<List<ServiceAttributeDefinition>> getAllByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(attributeService.getAllByServiceCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getAllByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getAllByServiceCategory(categoryId)));
     }
 
     /**
      * Get filterable attributes for a service category.
      */
     @GetMapping("/category/{categoryId}/filterable")
-    public ResponseEntity<List<ServiceAttributeDefinition>> getFilterableByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(attributeService.getFilterableByServiceCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getFilterableByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getFilterableByServiceCategory(categoryId)));
     }
 
     /**
      * Get required attributes for a service category.
      */
     @GetMapping("/category/{categoryId}/required")
-    public ResponseEntity<List<ServiceAttributeDefinition>> getRequiredByCategory(@PathVariable Integer categoryId) {
-        return ResponseEntity.ok(attributeService.getRequiredByServiceCategory(categoryId));
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getRequiredByCategory(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getRequiredByServiceCategory(categoryId)));
     }
 
     /**
      * Get attribute by ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ServiceAttributeDefinition> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(attributeService.getById(id));
+    public ResponseEntity<ApiResponse<ServiceAttributeDefinitionResponse>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getById(id)));
     }
 
     /**
      * Get attribute by code within a category.
      */
     @GetMapping("/category/{categoryId}/code/{code}")
-    public ResponseEntity<ServiceAttributeDefinition> getByCode(
+    public ResponseEntity<ApiResponse<ServiceAttributeDefinitionResponse>> getByCode(
             @PathVariable Integer categoryId,
             @PathVariable String code) {
-        return ResponseEntity.ok(attributeService.getByCode(categoryId, code));
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getByCode(categoryId, code)));
     }
 
     /**
      * Update an attribute definition.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<OsGenericResponse> update(
+    public ResponseEntity<ApiResponse<ServiceAttributeDefinitionResponse>> update(
             @PathVariable Long id,
             @RequestBody ServiceAttributeDefinitionRequest request) {
-        ServiceAttributeDefinition updated = attributeService.update(id, request);
-        return ResponseEntity.ok(OsGenericResponse.success("Attribute definition updated", updated));
+        ServiceAttributeDefinitionResponse updated = attributeService.update(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Attribute definition updated", updated));
     }
 
     /**
      * Soft delete an attribute definition.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<OsGenericResponse> delete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> delete(@PathVariable Long id) {
         attributeService.delete(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Attribute definition deleted", null));
+        return ResponseEntity.ok(ApiResponse.success("Attribute definition deleted", null));
     }
 
     /**
      * Hard delete an attribute definition (admin only).
      */
     @DeleteMapping("/{id}/hard")
-    public ResponseEntity<OsGenericResponse> hardDelete(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> hardDelete(@PathVariable Long id) {
         attributeService.hardDelete(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Attribute definition permanently deleted", null));
+        return ResponseEntity.ok(ApiResponse.success("Attribute definition permanently deleted", null));
     }
 
     /**
      * Reactivate a soft-deleted attribute definition.
      */
     @PostMapping("/{id}/reactivate")
-    public ResponseEntity<OsGenericResponse> reactivate(@PathVariable Long id) {
-        ServiceAttributeDefinition reactivated = attributeService.reactivate(id);
-        return ResponseEntity.ok(OsGenericResponse.success("Attribute definition reactivated", reactivated));
+    public ResponseEntity<ApiResponse<ServiceAttributeDefinitionResponse>> reactivate(@PathVariable Long id) {
+        ServiceAttributeDefinitionResponse reactivated = attributeService.reactivate(id);
+        return ResponseEntity.ok(ApiResponse.success("Attribute definition reactivated", reactivated));
     }
 
     /**
      * Get all active attributes across all categories.
      */
     @GetMapping
-    public ResponseEntity<List<ServiceAttributeDefinition>> getAll() {
-        return ResponseEntity.ok(attributeService.getAllActive());
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getAllActive()));
     }
 }

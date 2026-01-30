@@ -16,7 +16,7 @@ public class OsSlotMapper {
         response.setMaxBookings(slot.getMaxBookings());
         response.setCurrentBookings(slot.getCurrentBookings());
         response.setAvailableBookings(slot.getAvailableBookings());
-        response.setAvailable(slot.isAvailable());
+        response.setIsAvailable(slot.isAvailable());
         if (slot.getVendor() != null) {
             response.setVendorId(slot.getVendor().getId());
         }
