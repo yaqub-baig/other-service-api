@@ -2,7 +2,7 @@ package com.autoadda.apis.other.mapper;
 
 import com.autoadda.apis.other.entity.Booking;
 import com.autoadda.apis.other.response.BookingResponse;
-import com.autoadda.apis.other.response.OsAppointmentSlotResponse;
+import com.autoadda.apis.other.response.BookingSlotResponse;
 import com.autoadda.apis.other.response.TechnicianResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
 import org.springframework.stereotype.Component;

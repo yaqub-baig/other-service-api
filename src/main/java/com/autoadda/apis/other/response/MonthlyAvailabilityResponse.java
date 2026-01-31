@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Data
 @Builder
-public class OsMonthlyAvailabilityResponse {
+public class MonthlyAvailabilityResponse {
     private Integer vendorId;
     private Integer year;
     private Integer month;

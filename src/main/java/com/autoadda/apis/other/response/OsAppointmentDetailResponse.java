@@ -30,7 +30,7 @@ public class OsAppointmentDetailResponse {
     private String subscriptionPlanId;
     private Integer customerId;
     private Integer vehicleId;
-    private OsAppointmentSlotResponse slot;
+    private BookingSlotResponse slot;
     private Integer technicianId;
     private VehicleDetailResponse vehicle;
 }

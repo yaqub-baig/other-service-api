@@ -4,9 +4,9 @@ import com.autoadda.apis.other.entity.BookingSlot;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.BookingSlotMapper;
 import com.autoadda.apis.other.repository.BookingSlotRepository;
-import com.autoadda.apis.other.request.OsAppointmentSlotRequest;
-import com.autoadda.apis.other.response.OsAppointmentSlotResponse;
-import com.autoadda.apis.other.response.OsMonthlyAvailabilityResponse;
+import com.autoadda.apis.other.request.BookingSlotRequest;
+import com.autoadda.apis.other.response.BookingSlotResponse;
+import com.autoadda.apis.other.response.MonthlyAvailabilityResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class BookingSlotService {
     private final BookingSlotRepository slotRepository;
     private final BookingSlotMapper slotMapper;
 
-    public OsAppointmentSlotResponse createSlot(OsAppointmentSlotRequest request) {
+    public BookingSlotResponse createSlot(BookingSlotRequest request) {
         BookingSlot bookingSlot = new BookingSlot();
         bookingSlot.setStartTime(request.getStartTime());
         bookingSlot.setEndTime(request.getEndTime());
@@ -36,11 +36,11 @@ public class BookingSlotService {
         return slotMapper.toResponse(slotRepository.save(bookingSlot));
     }
 
-    public List<OsAppointmentSlotResponse> getAllSlots() {
+    public List<BookingSlotResponse> getAllSlots() {
         return slotRepository.findAll().stream().map(slotMapper::toResponse).toList();
     }
 
-    public OsAppointmentSlotResponse updateSlot(Integer id, OsAppointmentSlotRequest request) {
+    public BookingSlotResponse updateSlot(Integer id, BookingSlotRequest request) {
         BookingSlot bookingSlot = slotRepository.findById(id).orElseThrow();
         if (request.getStartTime() != null)
             bookingSlot.setStartTime(request.getStartTime());
@@ -61,19 +61,19 @@ public class BookingSlotService {
         slotRepository.deleteById(id);
     }
 
-    public OsAppointmentSlotResponse getSlotById(Integer id) {
+    public BookingSlotResponse getSlotById(Integer id) {
         BookingSlot slot = slotRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));
         return slotMapper.toResponse(slot);
     }
 
-    public List<OsAppointmentSlotResponse> getAvailableSlots(LocalTime startTime, LocalTime endTime) {
+    public List<BookingSlotResponse> getAvailableSlots(LocalTime startTime, LocalTime endTime) {
         return slotRepository.findAvailableSlotsBetween(startTime, endTime).stream()
                 .map(slotMapper::toResponse)
                 .toList();
     }
 
-    public List<OsAppointmentSlotResponse> getAvailableSlots(Integer vendorId) {
+    public List<BookingSlotResponse> getAvailableSlots(Integer vendorId) {
         return slotRepository.findAvailableSlotsByVendorId(vendorId).stream()
                 .filter(BookingSlot::isAvailable)
                 .map(slotMapper::toResponse)
@@ -107,7 +107,7 @@ public class BookingSlotService {
                 .orElseThrow(() -> new ResourceNotFoundException("Either slot not found or slot is fully booked"));
     }
 
-    public OsMonthlyAvailabilityResponse getMonthlyAvailability(Integer vendorId) {
+    public MonthlyAvailabilityResponse getMonthlyAvailability(Integer vendorId) {
         LocalDate today = LocalDate.now();
         LocalDate startDate = today;
         LocalDate endDate = today.plusMonths(2);
@@ -135,7 +135,7 @@ public class BookingSlotService {
             }
         }
 
-        return OsMonthlyAvailabilityResponse.builder()
+        return MonthlyAvailabilityResponse.builder()
                 .vendorId(vendorId)
                 .year(year)
                 .month(month)

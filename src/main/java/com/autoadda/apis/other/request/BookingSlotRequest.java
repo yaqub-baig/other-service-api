@@ -7,7 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalTime;
 
 @Data
-public class OsAppointmentSlotRequest {
+public class BookingSlotRequest {
     @DateTimeFormat(pattern = "HH:mm:ss")
     private LocalTime startTime;
     @DateTimeFormat(pattern = "HH:mm:ss")

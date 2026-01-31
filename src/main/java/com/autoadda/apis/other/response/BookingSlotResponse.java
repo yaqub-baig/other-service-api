@@ -10,7 +10,7 @@ import java.time.LocalTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OsAppointmentSlotResponse {
+public class BookingSlotResponse {
     private Integer id;
     private LocalDate slotDate;
     private LocalTime startTime;
