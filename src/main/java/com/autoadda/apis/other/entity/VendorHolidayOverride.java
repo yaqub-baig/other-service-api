@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "os_holiday_override")
+@Table(name = "vendor_holiday_override")
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter

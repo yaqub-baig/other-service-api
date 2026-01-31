@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "os_break_time")
+@Table(name = "vendor_break_time")
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter

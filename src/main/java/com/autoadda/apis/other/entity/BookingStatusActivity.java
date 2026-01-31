@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "os_appointment_status_activity")
+@Table(name = "booking_status_activity")
 @Getter
 @Setter
 @AllArgsConstructor

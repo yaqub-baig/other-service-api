@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "os_appointment_slot")
+@Table(name = "booking_slot")
 @Data
 @Getter
 @Setter
