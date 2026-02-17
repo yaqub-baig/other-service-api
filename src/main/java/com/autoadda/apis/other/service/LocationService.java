@@ -15,7 +15,11 @@ import java.util.NoSuchElementException;
 public class LocationService {
     private final LocationRepository locationRepository;
     public Location createLocation(LocationRequest garageLocation) {
+        if (garageLocation == null) {
+            return null;
+        }
         Location location = new Location();
+        // Handle both flat fields and nested LocationRequest
         location.setStreetAddress1(garageLocation.getStreetAddress1());
         location.setStreetAddress2(garageLocation.getStreetAddress2());
         location.setCity(garageLocation.getCity());
@@ -24,6 +28,8 @@ public class LocationService {
         location.setState(garageLocation.getState());
         location.setCountry(garageLocation.getCountry());
         location.setGmap(garageLocation.getGmap());
+        location.setLatitude(garageLocation.getLatitude());
+        location.setLongitude(garageLocation.getLongitude());
         locationRepository.save(location);
         return location;
     }

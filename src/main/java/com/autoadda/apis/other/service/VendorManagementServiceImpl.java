@@ -70,8 +70,11 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     public VendorProfileResponse createVendor(OtherServiceRequest request, String autoAddaId) {
         Vendor vendor = mapToEntity(request);
 
-        // Set location
-        Location location = locationService.createLocation(request.getCompanyLocation());
+        // Set location (handle null gracefully)
+        Location location = null;
+        if (request.getCompanyLocation() != null) {
+            location = locationService.createLocation(request.getCompanyLocation());
+        }
         vendor.setCompanyLocation(location);
         vendor.setCompanyOwner(Integer.parseInt(autoAddaId));
 
