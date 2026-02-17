@@ -2,7 +2,7 @@ package com.autoadda.apis.other.mapper;
 
 import com.autoadda.apis.other.clients.VehicleClient;
 import com.autoadda.apis.other.entity.Booking;
-import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
+import com.autoadda.apis.other.response.BookingDetailResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +13,8 @@ public class OsAppointmentDetailMapper {
     private final VendorMapper vendorMapper;
     private final VehicleClient vehicleClient;
 
-    public OsAppointmentDetailResponse entityToResponse(Booking booking) {
-        OsAppointmentDetailResponse response = new OsAppointmentDetailResponse();
+    public BookingDetailResponse entityToResponse(Booking booking) {
+        BookingDetailResponse response = new BookingDetailResponse();
         response.setId(booking.getId());
         response.setAppointmentReferenceId(booking.getAppointmentReferenceId());
         response.setScheduleDate(booking.getScheduleDate());

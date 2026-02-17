@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OsResponse {
+public class VendorResponse {
     private Integer id;
     private String companyBrandName;
     private String companyArabicName;

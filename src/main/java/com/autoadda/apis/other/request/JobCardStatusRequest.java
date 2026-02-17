@@ -1,5 +1,7 @@
 package com.autoadda.apis.other.request;
 
+import com.autoadda.apis.other.util.Status;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,14 +13,11 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class OsAssignServiceRequest {
-    private Integer appointmentId;
-    private Integer serviceId;
-    private Integer technicianId;
+public class JobCardStatusRequest {
+    private Integer jobcardId;
+    private Status status;
     private Integer memberId;
     private String memberType;
-    private Integer otherServiceId;
-    private String status;
     private String comments;
 }
 

@@ -18,7 +18,7 @@ import java.util.List;
 public class MediaFileController {
     private final MediaFileService mediaFileService;
     @PostMapping(value = "/upload",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<List<MediaFileResponse>>> upload(@RequestPart("files") List<MultipartFile> files) throws IOException {
+    public ResponseEntity<ApiResponse<?>> upload(@RequestPart("files") List<MultipartFile> files) throws IOException {
         if ( files.stream ( ).anyMatch ( f -> f.getSize ( ) > 10 * 1024 * 1024 ) ) {
             throw new IllegalArgumentException ( "File size must be less than 10MB" );
         }
@@ -27,7 +27,7 @@ public class MediaFileController {
     }
 
     @DeleteMapping("/delete-image/{id}")
-    public ResponseEntity<ApiResponse<String>> deleteImage(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponse<?>> deleteImage(@PathVariable("id") Long id) {
         return ResponseEntity.ok ( mediaFileService.delete ( id ) );
     }
 

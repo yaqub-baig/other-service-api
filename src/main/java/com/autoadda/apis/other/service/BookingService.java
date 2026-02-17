@@ -16,12 +16,12 @@ import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
 import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.repository.*;
 import com.autoadda.apis.other.request.BookingFromQuotationRequest;
-import com.autoadda.apis.other.request.OsAppointmentStatusRequest;
-import com.autoadda.apis.other.request.OsCustomerAppointmentRequest;
+import com.autoadda.apis.other.request.BookingStatusRequest;
+import com.autoadda.apis.other.request.CustomerBookingRequest;
 import com.autoadda.apis.other.response.BookingResponse;
 import com.autoadda.apis.other.util.VendorQuotationStatus;
-import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
-import com.autoadda.apis.other.response.OsAppointmentResponse;
+import com.autoadda.apis.other.response.BookingDetailResponse;
+import com.autoadda.apis.other.response.BookingDetailsResponse;
 import com.autoadda.apis.other.util.BusinessValidator;
 import com.autoadda.apis.other.util.DateHelper;
 import com.autoadda.apis.other.util.Status;
@@ -64,7 +64,7 @@ public class BookingService {
      * @throws OtherServiceNotFoundException if the vendor does not exist.
      */
     @Transactional
-    public BookingResponse createCustomerBooking(OsCustomerAppointmentRequest request)
+    public BookingResponse createCustomerBooking(CustomerBookingRequest request)
             throws CustomerNotFoundException, OtherServiceNotFoundException {
 
         // Vendor is mandatory
@@ -239,14 +239,14 @@ public class BookingService {
      * @return a BookingResponse containing booking details, services, and job cards.
      */
     @Transactional(readOnly = true)
-    public OsAppointmentResponse getBookingDetails(Integer bookingId) {
+    public BookingDetailsResponse getBookingDetails(Integer bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
         List<BookedService> services = serviceRepo.findByBookingId(bookingId);
         List<JobCard> jobCards = jobCardService.getJobCardsByBookingId(bookingId);
 
-        return OsAppointmentResponse.builder()
+        return BookingDetailsResponse.builder()
                 .appointment(booking)
                 .services(services)
                 .jobcards(jobCards)
@@ -261,7 +261,7 @@ public class BookingService {
      * @return the updated BookingResponse DTO.
      */
     @Transactional
-    public BookingResponse updateBookingStatus(OsAppointmentStatusRequest request) {
+    public BookingResponse updateBookingStatus(BookingStatusRequest request) {
         Booking booking = bookingRepository.findById(request.getAppointmentId())
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
@@ -301,7 +301,7 @@ public class BookingService {
      * @throws GarageNotFoundException if the vendor does not exist.
      */
     @Transactional(readOnly = true)
-    public List<OsAppointmentDetailResponse> getBookingsByVendor(Integer vendorId, String statusStr)
+    public List<BookingDetailResponse> getBookingsByVendor(Integer vendorId, String statusStr)
             throws GarageNotFoundException {
         validator.validateAndGetVendor(vendorId);
 
@@ -341,7 +341,7 @@ public class BookingService {
 
     // Legacy method names for backward compatibility
     @Deprecated
-    public BookingResponse createCustomerAppointment(OsCustomerAppointmentRequest request) {
+    public BookingResponse createCustomerAppointment(CustomerBookingRequest request) {
         return createCustomerBooking(request);
     }
 
@@ -351,17 +351,17 @@ public class BookingService {
     }
 
     @Deprecated
-    public OsAppointmentResponse getAppointmentsDetails(Integer bookingId) {
+    public BookingDetailsResponse getAppointmentsDetails(Integer bookingId) {
         return getBookingDetails(bookingId);
     }
 
     @Deprecated
-    public BookingResponse updateAppointmentStatus(OsAppointmentStatusRequest request) {
+    public BookingResponse updateAppointmentStatus(BookingStatusRequest request) {
         return updateBookingStatus(request);
     }
 
     @Deprecated
-    public List<OsAppointmentDetailResponse> getAppointmentsByGarage(Integer vendorId, String statusStr) {
+    public List<BookingDetailResponse> getAppointmentsByGarage(Integer vendorId, String statusStr) {
         return getBookingsByVendor(vendorId, statusStr);
     }
 

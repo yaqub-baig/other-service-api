@@ -13,11 +13,11 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class OsJobCardStatusRequest {
-    private Integer jobcardId;
-    private Status status;
+public class BookingStatusRequest {
+    private Integer appointmentId;
     private Integer memberId;
     private String memberType;
+    private Status status;
     private String comments;
 }
 

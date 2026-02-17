@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.response;
 
+import com.autoadda.apis.other.entity.MediaFile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class AvailableServiceResponse {
 	private Integer id;
 	private String name;
 	private String description;
+	private MediaFile image;
 	private Boolean isActive;
 	private Double price;
 	private Double laborPrice;

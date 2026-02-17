@@ -182,12 +182,12 @@ public class QuotationCustomerController {
      * The quotation must be in ACCEPTED status to create a booking.
      */
     @PostMapping("/quote/{quotationId}/book")
-    public ResponseEntity<OsGenericResponse> createBookingFromQuote(
+    public ResponseEntity<ApiResponse<?>> createBookingFromQuote(
             @PathVariable Integer quotationId,
             @RequestBody BookingFromQuotationRequest request) {
         request.setVendorQuotationId(quotationId);
         BookingResponse booking = bookingService.createBookingFromQuotation(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OsGenericResponse.success("Booking created from quotation", booking));
+                .body(ApiResponse.success("Booking created from quotation", booking));
     }
 }

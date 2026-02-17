@@ -2,7 +2,7 @@ package com.autoadda.apis.other.service;
 
 
 import com.autoadda.apis.other.request.OtherServiceRequest;
-import com.autoadda.apis.other.response.OsResponse;
+import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.util.Status;
 
@@ -69,5 +69,5 @@ public interface VendorManagementService {
     /**
      * Search vendors by criteria
      */
-    List<OsResponse> searchVendors(String city, String zip, String vendorName, List<Integer> serviceCategoryIds);
+    List<VendorResponse> searchVendors(String city, String zip, String vendorName, List<Integer> serviceCategoryIds);
 }

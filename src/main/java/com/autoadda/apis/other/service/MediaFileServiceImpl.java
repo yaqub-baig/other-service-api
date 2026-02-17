@@ -6,7 +6,6 @@ import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.MediaFileMapper;
 import com.autoadda.apis.other.repository.MediaFileRepository;
 import com.autoadda.apis.other.response.ApiResponse;
-import com.autoadda.apis.other.response.GenericResponse;
 import com.autoadda.apis.other.response.MediaFileResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,14 +71,14 @@ public class MediaFileServiceImpl implements MediaFileService {
     }
 
     @Override
-    public ApiResponse<String> delete(Long mediaFileId) {
+    public ApiResponse delete(Long mediaFileId) {
         MediaFile mediaFile = mediaFileRepository.findById ( mediaFileId ).orElseThrow ( () -> new ResourceNotFoundException ( "File not found" ) );
         mediaFileRepository.delete ( mediaFile);
         return ApiResponse.success("File deleted successfully", null);
     }
 
     @Override
-    public ApiResponse<MediaFileResponse> getMediaFileById(Long mediaFileId) {
+    public ApiResponse getMediaFileById(Long mediaFileId) {
         MediaFile mediaFile = mediaFileRepository.findById ( mediaFileId ).orElseThrow ( () -> new ResourceNotFoundException ( "File not found" ) );
         String url = baseUrl + "/uploads/" + mediaFile.getFilePath();
         MediaFileResponse mediaFileResponse = mediaFileMapper.toResponse(mediaFile,url);

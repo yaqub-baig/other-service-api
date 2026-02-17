@@ -1,7 +1,7 @@
 package com.autoadda.apis.other.controller;
 
 import com.autoadda.apis.other.request.OtherServiceRequest;
-import com.autoadda.apis.other.response.OsResponse;
+import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.service.VendorManagementService;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +69,7 @@ public class VendorController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<OsResponse>> searchVendors(
+    public ResponseEntity<List<VendorResponse>> searchVendors(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String zip,
             @RequestParam(required = false) String vendorName,

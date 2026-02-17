@@ -3,41 +3,37 @@ package com.autoadda.apis.other.response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import lombok.Setter;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class ApiResponse<T> {
-
-    private boolean success;
+    private String status;
+    private String code;
     private String message;
     private T data;
-    private final LocalDateTime timestamp = LocalDateTime.now();
 
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
-                .success(true)
+                .status("success")
+                .code("200")
+                .message("success")
                 .data(data)
                 .build();
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
         return ApiResponse.<T>builder()
-                .success(true)
+                .status("success")
+                .code("200")
                 .message(message)
                 .data(data)
-                .build();
-    }
-    
-    // It's also good practice to have error factory methods
-    public static <T> ApiResponse<T> error(String message) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .message(message)
                 .build();
     }
 }

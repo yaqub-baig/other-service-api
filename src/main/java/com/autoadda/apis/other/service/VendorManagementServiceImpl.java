@@ -15,7 +15,7 @@ import com.autoadda.apis.other.repository.ServiceCategoryRepository;
 import com.autoadda.apis.other.repository.VendorRepository;
 import com.autoadda.apis.other.request.GarageServiceRequest;
 import com.autoadda.apis.other.request.OtherServiceRequest;
-import com.autoadda.apis.other.response.OsResponse;
+import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.util.Status;
 import jakarta.persistence.EntityNotFoundException;
@@ -356,7 +356,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
 
     @Override
     @Transactional
-    public List<OsResponse> searchVendors(String city, String zip, String vendorName, List<Integer> serviceCategoryIds) {
+    public List<VendorResponse> searchVendors(String city, String zip, String vendorName, List<Integer> serviceCategoryIds) {
         Set<Vendor> vendors = vendorRepository.findAllWithLocationAndServices();
         List<Vendor> searchResults = new ArrayList<>();
 

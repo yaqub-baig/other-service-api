@@ -1,9 +1,8 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.entity.ServiceCategory;
+import com.autoadda.apis.other.request.ServiceCategoryRequest;
 import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.AvailableServiceResponse;
-import com.autoadda.apis.other.response.OsGenericResponse;
 import com.autoadda.apis.other.service.ServiceCategoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +25,7 @@ public class ServiceCategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<AvailableServiceResponse>> create(@RequestBody ServiceCategory request) {
+    public ResponseEntity<ApiResponse<AvailableServiceResponse>> create(@RequestBody ServiceCategoryRequest request) {
         AvailableServiceResponse created = serviceCategoryService.create(request);
         return ResponseEntity.ok(ApiResponse.success("Service category created", created));
     }
@@ -39,8 +38,8 @@ public class ServiceCategoryController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AvailableServiceResponse>> update(
             @PathVariable Integer id,
-            @RequestBody ServiceCategory updatedCategory) {
-        AvailableServiceResponse updated = serviceCategoryService.update(id, updatedCategory);
+            @RequestBody ServiceCategoryRequest request) {
+        AvailableServiceResponse updated = serviceCategoryService.update(id, request);
         return ResponseEntity.ok(ApiResponse.success("Service category updated successfully", updated));
     }
 

@@ -47,12 +47,12 @@ public class GlobalExceptionHandler {
 		if (ex.getCause() instanceof FileCountLimitExceededException ) {
 			response.put("error", "Too many files in the request");
 			response.put("message", "Maximum file count exceeded. Please reduce the number of files.");
-			return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(response);
+			return ResponseEntity.status(HttpStatus.CREATED).body(response);
 		}
 
 		response.put("error", "File upload error");
 		response.put("message", ex.getMessage());
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 	@ExceptionHandler(ConstraintViolationException.class)
 	public ResponseEntity<GenericResponse> handleConstraintViolation(ConstraintViolationException ex) {
@@ -68,7 +68,7 @@ public class GlobalExceptionHandler {
 		error.put("message", "Maximum upload size exceeded");
 		error.put("maxSize", ex.getMaxUploadSize() + " bytes");
 
-		return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(error);
+		return ResponseEntity.status(HttpStatus.CREATED).body(error);
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
@@ -158,7 +158,7 @@ public class GlobalExceptionHandler {
 
 
 	private ResponseEntity<GenericResponse> buildResponse(Exception ex, HttpStatus status, String message) {
-		return ResponseEntity.status(status).body(GenericResponse.builder().status("failed")
+		return ResponseEntity.status(HttpStatus.CREATED).body(GenericResponse.builder().status("failed")
 				.code(String.valueOf(status.value())).message(message).build());
 	}
 }

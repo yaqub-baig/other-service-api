@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OsAppointmentDetailResponse {
+public class BookingDetailResponse {
 
     private Integer id;
     private String appointmentReferenceId;
@@ -24,7 +24,7 @@ public class OsAppointmentDetailResponse {
     private LocalTime deliveryTime;
     private Status status;
     private String comments;
-    private OsResponse vendor;
+    private VendorResponse vendor;
     private String selectedServiceIds;
     private List<AvailableServiceResponse> servicesResponse;
     private String subscriptionPlanId;

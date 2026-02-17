@@ -1,7 +1,7 @@
 package com.autoadda.apis.other.mapper;
 
 import com.autoadda.apis.other.entity.Vendor;
-import com.autoadda.apis.other.response.OsResponse;
+import com.autoadda.apis.other.response.VendorResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class VendorMapper {
 
-    public OsResponse entityToResponse(Vendor vendor) {
-        OsResponse response = new OsResponse();
+    public VendorResponse entityToResponse(Vendor vendor) {
+        VendorResponse response = new VendorResponse();
         response.setId(vendor.getId() != null ? vendor.getId() : null);
         response.setCompanyBrandName(vendor.getCompanyBrandName() != null ? vendor.getCompanyBrandName() : null);
         response.setCompanyArabicName(vendor.getCompanyArabicName() != null ? vendor.getCompanyArabicName() : null);

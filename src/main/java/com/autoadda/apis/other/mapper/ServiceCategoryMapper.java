@@ -16,6 +16,7 @@ public class ServiceCategoryMapper {
         response.setId(serviceCategory.getId());
         response.setName(serviceCategory.getName());
         response.setDescription(serviceCategory.getDescription());
+        response.setImage(serviceCategory.getImage());
         return response;
     }
 

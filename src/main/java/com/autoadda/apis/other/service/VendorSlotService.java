@@ -13,7 +13,7 @@ import com.autoadda.apis.other.mapper.BookingMapper;
 import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
 import com.autoadda.apis.other.repository.*;
 import com.autoadda.apis.other.response.BookingResponse;
-import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
+import com.autoadda.apis.other.response.BookingDetailResponse;
 import com.autoadda.apis.other.util.DateHelper;
 import com.autoadda.apis.other.util.Status;
 import jakarta.transaction.Transactional;
@@ -124,7 +124,7 @@ public class VendorSlotService {
      * @return The booking detail response.
      */
     @Transactional
-    public OsAppointmentDetailResponse bookSlot(Integer vendorId, Integer vehicleId, LocalDate date, LocalTime time, String autoAddaId, String selectedServiceIds) {
+    public BookingDetailResponse bookSlot(Integer vendorId, Integer vehicleId, LocalDate date, LocalTime time, String autoAddaId, String selectedServiceIds) {
         Integer userId = Integer.parseInt(autoAddaId);
         BookingSlot slot = slotService.findAvailableSlotByVendorIdAndTime(vendorId, date, time);
 
@@ -188,7 +188,7 @@ public class VendorSlotService {
      * @return A list of booking details for the user's bookings.
      */
     @Transactional
-    public List<OsAppointmentDetailResponse> getBookingsByUser(String userId) {
+    public List<BookingDetailResponse> getBookingsByUser(String userId) {
         Integer user = Integer.parseInt(userId);
         List<Booking> list = bookingRepo.findByCustomerId(user)
                 .stream()

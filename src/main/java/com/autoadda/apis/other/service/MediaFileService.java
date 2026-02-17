@@ -12,7 +12,7 @@ public interface MediaFileService {
 
     List<MediaFileResponse> upload(List<MultipartFile> files) throws IOException;
 
-    ApiResponse<String> delete(Long mediaFileId);
+    ApiResponse delete(Long mediaFileId);
 
-    ApiResponse<MediaFileResponse> getMediaFileById(Long mediaFileId);
+    ApiResponse getMediaFileById(Long mediaFileId);
 }

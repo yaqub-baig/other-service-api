@@ -18,7 +18,11 @@ public class ServiceCategory {
     private Integer id;
     private String name;
     private String description;
-    private String imageUrl;
+
+    @OneToOne
+    @JoinColumn(name = "image")
+    private MediaFile image;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private ServiceCategory parent;

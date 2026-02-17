@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-public class OsCustomerAppointmentRequest {
+public class CustomerBookingRequest {
     private Integer customerId;
     private Integer otherServiceId;
     private Integer vehicleId;

@@ -5,9 +5,9 @@ import com.autoadda.apis.other.exception.MemberNotFoundException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.JobCardMapper;
 import com.autoadda.apis.other.repository.*;
-import com.autoadda.apis.other.request.OsAssignServiceRequest;
-import com.autoadda.apis.other.request.OsJobCardStatusRequest;
-import com.autoadda.apis.other.response.OsJobCardResponse;
+import com.autoadda.apis.other.request.AssignServiceRequest;
+import com.autoadda.apis.other.request.JobCardStatusRequest;
+import com.autoadda.apis.other.response.JobCardResponse;
 import com.autoadda.apis.other.util.BusinessValidator;
 import com.autoadda.apis.other.util.DateHelper;
 import com.autoadda.apis.other.util.Status;
@@ -33,7 +33,7 @@ public class JobCardService {
     private final BusinessValidator validator;
 
     @Transactional
-    public OsJobCardResponse assignTechnicianToService(OsAssignServiceRequest request) {
+    public JobCardResponse assignTechnicianToService(AssignServiceRequest request) {
         Booking booking = bookingRepo.findById(request.getAppointmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
 
@@ -78,7 +78,7 @@ public class JobCardService {
     }
 
     @Transactional
-    public OsJobCardResponse updateJobCardStatus(OsJobCardStatusRequest request) {
+    public JobCardResponse updateJobCardStatus(JobCardStatusRequest request) {
         JobCard jobCard = jobCardRepository.findById(request.getJobcardId())
                 .orElseThrow(() -> new RuntimeException("Jobcard not found"));
 
@@ -107,7 +107,7 @@ public class JobCardService {
     }
 
     @Transactional(readOnly = true)
-    public List<OsJobCardResponse> getTechnicianJobCards(Integer technicianId, Status status) throws MemberNotFoundException {
+    public List<JobCardResponse> getTechnicianJobCards(Integer technicianId, Status status) throws MemberNotFoundException {
         validator.validateTechnician(technicianId);
         List<JobCard> jobCards;
         if (status == null || StringUtils.isBlank(status.toString()))
@@ -118,7 +118,7 @@ public class JobCardService {
     }
 
     @Transactional(readOnly = true)
-    public List<OsJobCardResponse> getVendorJobCards(Integer vendorId, Status status) {
+    public List<JobCardResponse> getVendorJobCards(Integer vendorId, Status status) {
         List<JobCard> jobCards;
         if (status == null || StringUtils.isBlank(status.toString()))
             jobCards = jobCardRepository.findByVendorId(vendorId);

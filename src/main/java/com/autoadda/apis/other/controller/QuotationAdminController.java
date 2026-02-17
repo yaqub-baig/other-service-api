@@ -3,7 +3,7 @@ package com.autoadda.apis.other.controller;
 import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.request.QuotationFieldDefinitionRequest;
 import com.autoadda.apis.other.request.QuotationScopeDefinitionRequest;
-import com.autoadda.apis.other.response.OsGenericResponse;
+import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.QuotationFieldDefinitionResponse;
 import com.autoadda.apis.other.response.QuotationScopeDefinitionResponse;
 import com.autoadda.apis.other.service.QuotationAdminService;
@@ -31,7 +31,7 @@ public class QuotationAdminController {
      * Create or update quotation scope for a service category.
      */
     @PostMapping("/scope")
-    public ResponseEntity<ApiResponse<QuotationScopeDefinitionResponse>> saveScopeDefinition(
+    public ResponseEntity<ApiResponse<?>> saveScopeDefinition(
             @RequestBody QuotationScopeDefinitionRequest request) {
         QuotationScopeDefinitionResponse scope = adminService.saveScopeDefinition(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -42,7 +42,7 @@ public class QuotationAdminController {
      * Get quotation scope for a service category.
      */
     @GetMapping("/scope/category/{categoryId}")
-    public ResponseEntity<ApiResponse<QuotationScopeDefinitionResponse>> getScopeForCategory(@PathVariable Integer categoryId) {
+    public ResponseEntity<ApiResponse<?>> getScopeForCategory(@PathVariable Integer categoryId) {
         QuotationScopeDefinitionResponse scope = adminService.getScopeDefinitionForCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.success(scope));
     }
@@ -51,7 +51,7 @@ public class QuotationAdminController {
      * Get quotation scope by ID.
      */
     @GetMapping("/scope/{id}")
-    public ResponseEntity<ApiResponse<QuotationScopeDefinitionResponse>> getScopeById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<?>> getScopeById(@PathVariable Integer id) {
         QuotationScopeDefinitionResponse scope = adminService.getScopeDefinitionById(id);
         return ResponseEntity.ok(ApiResponse.success(scope));
     }
@@ -60,7 +60,7 @@ public class QuotationAdminController {
      * Check if quotation is enabled for a category.
      */
     @GetMapping("/scope/category/{categoryId}/enabled")
-    public ResponseEntity<ApiResponse<Boolean>> isQuotationEnabled(@PathVariable Integer categoryId) {
+    public ResponseEntity<ApiResponse<?>> isQuotationEnabled(@PathVariable Integer categoryId) {
         boolean enabled = adminService.isQuotationEnabled(categoryId);
         return ResponseEntity.ok(ApiResponse.success(enabled));
     }
@@ -69,7 +69,7 @@ public class QuotationAdminController {
      * Get all categories with quotation enabled.
      */
     @GetMapping("/scope/enabled")
-    public ResponseEntity<ApiResponse<List<QuotationScopeDefinitionResponse>>> getQuotationEnabledCategories() {
+    public ResponseEntity<ApiResponse<?>> getQuotationEnabledCategories() {
         List<QuotationScopeDefinitionResponse> scopes = adminService.getQuotationEnabledCategories();
         return ResponseEntity.ok(ApiResponse.success(scopes));
     }
@@ -78,7 +78,7 @@ public class QuotationAdminController {
      * Disable quotation for a category.
      */
     @PostMapping("/scope/category/{categoryId}/disable")
-    public ResponseEntity<ApiResponse<String>> disableQuotation(@PathVariable Integer categoryId) {
+    public ResponseEntity<ApiResponse<?>> disableQuotation(@PathVariable Integer categoryId) {
         adminService.disableQuotationForCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.success("Quotation disabled for category", null));
     }
@@ -87,7 +87,7 @@ public class QuotationAdminController {
      * Delete scope definition (soft delete).
      */
     @DeleteMapping("/scope/{id}")
-    public ResponseEntity<ApiResponse<String>> deleteScopeDefinition(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<?>> deleteScopeDefinition(@PathVariable Integer id) {
         adminService.deleteScopeDefinition(id);
         return ResponseEntity.ok(ApiResponse.success("Scope definition deleted", null));
     }
@@ -98,7 +98,7 @@ public class QuotationAdminController {
      * Create a new field definition for a service category.
      */
     @PostMapping("/field")
-    public ResponseEntity<ApiResponse<QuotationFieldDefinitionResponse>> createFieldDefinition(
+    public ResponseEntity<ApiResponse<?>> createFieldDefinition(
             @RequestBody QuotationFieldDefinitionRequest request) {
         QuotationFieldDefinitionResponse field = adminService.createFieldDefinition(request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -109,7 +109,7 @@ public class QuotationAdminController {
      * Update a field definition.
      */
     @PutMapping("/field/{fieldId}")
-    public ResponseEntity<ApiResponse<QuotationFieldDefinitionResponse>> updateFieldDefinition(
+    public ResponseEntity<ApiResponse<?>> updateFieldDefinition(
             @PathVariable Integer fieldId,
             @RequestBody QuotationFieldDefinitionRequest request) {
         QuotationFieldDefinitionResponse field = adminService.updateFieldDefinition(fieldId, request);
@@ -120,7 +120,7 @@ public class QuotationAdminController {
      * Get all fields for a service category.
      */
     @GetMapping("/field/category/{categoryId}")
-    public ResponseEntity<ApiResponse<List<QuotationFieldDefinitionResponse>>> getFieldsForCategory(@PathVariable Integer categoryId) {
+    public ResponseEntity<ApiResponse<?>> getFieldsForCategory(@PathVariable Integer categoryId) {
         List<QuotationFieldDefinitionResponse> fields = adminService.getFieldsForCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.success(fields));
     }
@@ -129,7 +129,7 @@ public class QuotationAdminController {
      * Get required fields for a service category.
      */
     @GetMapping("/field/category/{categoryId}/required")
-    public ResponseEntity<ApiResponse<List<QuotationFieldDefinitionResponse>>> getRequiredFieldsForCategory(@PathVariable Integer categoryId) {
+    public ResponseEntity<ApiResponse<?>> getRequiredFieldsForCategory(@PathVariable Integer categoryId) {
         List<QuotationFieldDefinitionResponse> fields = adminService.getRequiredFieldsForCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.success(fields));
     }
@@ -138,7 +138,7 @@ public class QuotationAdminController {
      * Get field by ID.
      */
     @GetMapping("/field/{fieldId}")
-    public ResponseEntity<ApiResponse<QuotationFieldDefinitionResponse>> getFieldById(@PathVariable Integer fieldId) {
+    public ResponseEntity<ApiResponse<?>> getFieldById(@PathVariable Integer fieldId) {
         QuotationFieldDefinitionResponse field = adminService.getFieldById(fieldId);
         return ResponseEntity.ok(ApiResponse.success(field));
     }
@@ -147,7 +147,7 @@ public class QuotationAdminController {
      * Delete a field definition (soft delete).
      */
     @DeleteMapping("/field/{fieldId}")
-    public ResponseEntity<ApiResponse<String>> deleteFieldDefinition(@PathVariable Integer fieldId) {
+    public ResponseEntity<ApiResponse<?>> deleteFieldDefinition(@PathVariable Integer fieldId) {
         adminService.deleteFieldDefinition(fieldId);
         return ResponseEntity.ok(ApiResponse.success("Field definition deleted", null));
     }
@@ -156,7 +156,7 @@ public class QuotationAdminController {
      * Reorder fields within a category.
      */
     @PostMapping("/field/category/{categoryId}/reorder")
-    public ResponseEntity<ApiResponse<String>> reorderFields(
+    public ResponseEntity<ApiResponse<?>> reorderFields(
             @PathVariable Integer categoryId,
             @RequestBody List<Integer> fieldIds) {
         adminService.reorderFields(categoryId, fieldIds);

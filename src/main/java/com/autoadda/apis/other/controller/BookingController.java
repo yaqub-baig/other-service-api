@@ -1,12 +1,12 @@
 package com.autoadda.apis.other.controller;
 
 import com.autoadda.apis.other.exception.OtherServiceNotFoundException;
-import com.autoadda.apis.other.request.OsAppointmentStatusRequest;
-import com.autoadda.apis.other.request.OsCustomerAppointmentRequest;
+import com.autoadda.apis.other.request.BookingStatusRequest;
+import com.autoadda.apis.other.request.CustomerBookingRequest;
 import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.BookingResponse;
-import com.autoadda.apis.other.response.OsAppointmentDetailResponse;
-import com.autoadda.apis.other.response.OsAppointmentResponse;
+import com.autoadda.apis.other.response.BookingDetailResponse;
+import com.autoadda.apis.other.response.BookingDetailsResponse;
 import com.autoadda.apis.other.service.BookingService;
 import com.autoadda.apis.other.service.VendorSlotService;
 import lombok.RequiredArgsConstructor;
@@ -30,39 +30,39 @@ public class BookingController {
     private final VendorSlotService appointmentSlotService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<BookingResponse>> createCustomerAppointment(@RequestBody OsCustomerAppointmentRequest request) {
+    public ResponseEntity<ApiResponse<?>> createCustomerAppointment(@RequestBody CustomerBookingRequest request) {
         BookingResponse appointment = appointmentService.createCustomerAppointment(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Appointment created successfully", appointment));
     }
 
     @PostMapping("/{serviceId}/book")
-    public ResponseEntity<ApiResponse<OsAppointmentDetailResponse>> bookAppointment(@PathVariable Integer serviceId, @RequestParam Integer vehicleId,
+    public ResponseEntity<ApiResponse<?>> bookAppointment(@PathVariable Integer serviceId, @RequestParam Integer vehicleId,
                                                                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time,
                                                                           @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId,
                                                                           @RequestParam(required = false) String selectedOtherServiceIds) {
 
         LocalDate date = time.toLocalDate();
         LocalTime timestamp = time.toLocalTime();
-        OsAppointmentDetailResponse booking = appointmentSlotService.bookSlot(serviceId, vehicleId, date, timestamp, autoAddaId, selectedOtherServiceIds);
+        BookingDetailResponse booking = appointmentSlotService.bookSlot(serviceId, vehicleId, date, timestamp, autoAddaId, selectedOtherServiceIds);
         return ResponseEntity.ok(ApiResponse.success(booking));
     }
 
     @GetMapping("/other-service/{otherServiceId}")
-    public ResponseEntity<ApiResponse<List<OsAppointmentDetailResponse>>> getOtherServiceAppointments(@PathVariable Integer otherServiceId,
+    public ResponseEntity<ApiResponse<?>> getOtherServiceAppointments(@PathVariable Integer otherServiceId,
                                                                          @RequestParam(required = false) String status) throws OtherServiceNotFoundException {
-        List<OsAppointmentDetailResponse> appointments = appointmentService.getAppointmentsByGarage(otherServiceId, status);
+        List<BookingDetailResponse> appointments = appointmentService.getAppointmentsByGarage(otherServiceId, status);
         return ResponseEntity.ok(ApiResponse.success(appointments));
     }
 
     @PutMapping("/status")
-    public ResponseEntity<ApiResponse<BookingResponse>> updateAppointmentStatus(@RequestBody OsAppointmentStatusRequest request) {
+    public ResponseEntity<ApiResponse<?>> updateAppointmentStatus(@RequestBody BookingStatusRequest request) {
         BookingResponse updated = appointmentService.updateAppointmentStatus(request);
         return ResponseEntity.ok(ApiResponse.success("Status updated successfully", updated));
     }
 
     @GetMapping("/{appointmentId}")
-    public ResponseEntity<ApiResponse<OsAppointmentResponse>> getAppointmentDetails(@PathVariable Integer appointmentId) {
-        OsAppointmentResponse response = appointmentService.getAppointmentsDetails(appointmentId);
+    public ResponseEntity<ApiResponse<?>> getAppointmentDetails(@PathVariable Integer appointmentId) {
+        BookingDetailsResponse response = appointmentService.getAppointmentsDetails(appointmentId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -79,18 +79,18 @@ public class BookingController {
     }
 
     @GetMapping("/user/bookings")
-    public ResponseEntity<ApiResponse<List<OsAppointmentDetailResponse>>> getUserBookings(@RequestHeader(value = "X-Auto-Adda-Id") String userId) {
+    public ResponseEntity<ApiResponse<?>> getUserBookings(@RequestHeader(value = "X-Auto-Adda-Id") String userId) {
         return ResponseEntity.ok(ApiResponse.success(appointmentSlotService.getBookingsByUser(userId)));
     }
 
     @DeleteMapping("/{appointmentId}/cancel")
-    public ResponseEntity<ApiResponse<String>> cancelAppointment(@PathVariable Integer appointmentId, @RequestHeader(value = "X-Auto-Adda-Id") String userId) {
+    public ResponseEntity<ApiResponse<?>> cancelAppointment(@PathVariable Integer appointmentId, @RequestHeader(value = "X-Auto-Adda-Id") String userId) {
         appointmentSlotService.cancelBooking(appointmentId);
         return ResponseEntity.ok(ApiResponse.success("Booking cancelled successfully.", null));
     }
 
     @PutMapping("/edit/appointment")
-    public ResponseEntity<ApiResponse<BookingResponse>> editAppointment(@RequestParam(required = false) Integer otherServiceId,
+    public ResponseEntity<ApiResponse<?>> editAppointment(@RequestParam(required = false) Integer otherServiceId,
                                                    @RequestParam(required = false) Integer vehicleId,
                                                    @RequestParam Integer appointmentId,
                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time,

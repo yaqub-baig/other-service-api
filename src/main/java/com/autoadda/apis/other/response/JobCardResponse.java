@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OsJobCardResponse {
+public class JobCardResponse {
 
     private Integer id;
     private LocalTime serviceStartTime;

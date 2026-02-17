@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OsRequest {
+public class VendorRequest {
     private String companyBrandName;
     private String companyArabicName;
     private String name;

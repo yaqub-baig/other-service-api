@@ -16,7 +16,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class OsAppointmentResponse {
+public class BookingDetailsResponse {
     private Booking appointment;
     private List<BookedService> services;
     private List<JobCard> jobcards;
