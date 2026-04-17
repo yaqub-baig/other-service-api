@@ -19,8 +19,18 @@ public class MediaFileController {
     private final MediaFileService mediaFileService;
     @PostMapping(value = "/upload",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<?>> upload(@RequestPart("files") List<MultipartFile> files) throws IOException {
-        if ( files.stream ( ).anyMatch ( f -> f.getSize ( ) > 10 * 1024 * 1024 ) ) {
-            throw new IllegalArgumentException ( "File size must be less than 10MB" );
+        for (MultipartFile f : files) {
+            String contentType = f.getContentType ( );
+            String name = f.getOriginalFilename ( ) != null ? f.getOriginalFilename ( ).toLowerCase ( ) : "";
+            boolean isVideo = (contentType != null && contentType.startsWith ( "video/" ))
+                    || name.endsWith ( ".mp4" ) || name.endsWith ( ".avi" ) || name.endsWith ( ".mov" )
+                    || name.endsWith ( ".mkv" ) || name.endsWith ( ".webm" );
+            long maxSize = isVideo ? 30L * 1024 * 1024 : 10L * 1024 * 1024;
+            if ( f.getSize ( ) > maxSize ) {
+                throw new IllegalArgumentException ( isVideo
+                        ? "Video file size must be less than 30MB"
+                        : "File size must be less than 10MB" );
+            }
         }
         List<MediaFileResponse> responses = mediaFileService.upload ( files );
         return ResponseEntity.ok(ApiResponse.success("Files uploaded successfully", responses));
