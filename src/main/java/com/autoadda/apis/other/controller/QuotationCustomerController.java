@@ -21,7 +21,7 @@ import java.util.List;
  * Handles creating requests, viewing quotes, and accepting/rejecting.
  */
 @RestController
-@RequestMapping("/api/quotations/customer")
+@RequestMapping("/quotations/customer")
 @RequiredArgsConstructor
 public class QuotationCustomerController {
 

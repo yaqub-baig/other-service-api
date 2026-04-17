@@ -17,7 +17,7 @@ import java.util.Map;
  * Handles viewing requests, submitting quotes, and managing quotations.
  */
 @RestController
-@RequestMapping("/api/quotations/vendor")
+@RequestMapping("/quotations/vendor")
 @RequiredArgsConstructor
 public class QuotationVendorController {
 

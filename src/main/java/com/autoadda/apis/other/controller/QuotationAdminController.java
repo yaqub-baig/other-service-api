@@ -19,7 +19,7 @@ import java.util.List;
  * Handles scope definitions and field definitions for service categories.
  */
 @RestController
-@RequestMapping("/api/admin/quotation")
+@RequestMapping("/admin/quotation")
 @RequiredArgsConstructor
 public class QuotationAdminController {
 
