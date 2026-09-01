@@ -43,24 +43,4 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
     @Query("SELECT a.appointmentReferenceId FROM Booking a WHERE a.appointmentReferenceId LIKE :prefix% ORDER BY a.appointmentReferenceId DESC")
     List<String> findLatestCodesByPrefix(@Param("prefix") String codePrefix);
-
-    /**
-     * Check if a booking exists for a given reference type and ID.
-     */
-    boolean existsByReferenceTypeAndReferenceId(String referenceType, Integer referenceId);
-
-    /**
-     * Find booking by reference type and ID.
-     */
-    Optional<Booking> findByReferenceTypeAndReferenceId(String referenceType, Integer referenceId);
-
-    /**
-     * Find all bookings created from quotations.
-     */
-    List<Booking> findByReferenceType(String referenceType);
-
-    /**
-     * Find bookings by customer and reference type.
-     */
-    List<Booking> findByCustomerIdAndReferenceType(Integer customerId, String referenceType);
 }

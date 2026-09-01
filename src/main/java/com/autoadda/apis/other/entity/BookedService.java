@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -37,9 +38,15 @@ public class BookedService {
     @Column(name = "booking_id")
     private Integer bookingId;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "vendor_service_id", referencedColumnName = "id")
-    private VendorService vendorService;
+    @ManyToOne
+    @JoinColumn(name = "vendor_service_bridge_id", referencedColumnName = "id")
+    private VendorServiceBridge vendorServiceBridge;
+
+    @Column(name = "price")
+    private Double price;
+
+    @Column(name = "labour_price")
+    private Double labourPrice;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "technician_id", referencedColumnName = "id")
