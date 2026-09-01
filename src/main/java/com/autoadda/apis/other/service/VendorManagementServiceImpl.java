@@ -1,23 +1,34 @@
 package com.autoadda.apis.other.service;
 
 
+import com.autoadda.apis.other.clients.AuthClient;
 import com.autoadda.apis.other.entity.Location;
 import com.autoadda.apis.other.entity.MediaFile;
 import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.entity.Vendor;
+import com.autoadda.apis.other.entity.VendorBreakTime;
 import com.autoadda.apis.other.entity.VendorServiceBridge;
+import com.autoadda.apis.other.entity.VendorWorkHours;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.VendorMapper;
 import com.autoadda.apis.other.mapper.VendorProfileMapper;
 import com.autoadda.apis.other.repository.MediaFileRepository;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
+import com.autoadda.apis.other.repository.VendorBreakTimeRepository;
 import com.autoadda.apis.other.repository.VendorRepository;
+import com.autoadda.apis.other.repository.VendorWorkHoursRepository;
 import com.autoadda.apis.other.request.GarageServiceRequest;
 import com.autoadda.apis.other.request.OtherServiceRequest;
+import com.autoadda.apis.other.request.vendor.BaseVendorRequest;
 import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
+import com.autoadda.apis.other.service.vendor.VendorSlotGenerationService;
+import com.autoadda.apis.other.service.vendor.onboarding.DefaultVendorOnboardingHandler;
+import com.autoadda.apis.other.service.vendor.onboarding.VendorOnboardingHandler;
+import com.autoadda.apis.other.util.ERole;
 import com.autoadda.apis.other.util.Status;
+import com.autoadda.apis.other.util.VendorServiceType;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.lang.Boolean.TRUE;
 
@@ -45,6 +57,12 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     private final VendorServiceBridgeService vendorServiceBridgeService;
     private final VendorMapper vendorMapper;
     private final VendorProfileMapper vendorProfileMapper;
+    private final AuthClient authClient;
+    private final VendorWorkHoursRepository workHoursRepository;
+    private final VendorBreakTimeRepository breakTimeRepository;
+    private final VendorSlotGenerationService slotGenerationService;
+    private final List<VendorOnboardingHandler> onboardingHandlers;
+    private final DefaultVendorOnboardingHandler defaultOnboardingHandler;
 
     private Vendor mapToEntity(OtherServiceRequest request) {
         Vendor vendor = new Vendor();
@@ -125,6 +143,219 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         saved.setServices(vendorServices);
         Vendor finalVendor = vendorRepository.save(saved);
         return vendorProfileMapper.toVendorProfileResponse(finalVendor);
+    }
+
+    // ==================== Per-service onboarding (garage-style) ====================
+
+    @Override
+    @Transactional
+    public VendorProfileResponse createVendor(BaseVendorRequest request, VendorServiceType type, String autoAddaId) {
+        Integer ownerId = Integer.parseInt(autoAddaId);
+        if (authClient.getUser(ownerId) == null) {
+            throw new ResourceNotFoundException("Owner not found with id: " + ownerId);
+        }
+
+        VendorOnboardingHandler handler = resolveHandler(type);
+        handler.validate(request);
+
+        Vendor vendor = mapToEntity(request, type);
+        handler.applyDefaults(vendor, request);
+        vendor.setCompanyOwner(ownerId);
+
+        if (request.getCompanyLocation() != null) {
+            vendor.setCompanyLocation(locationService.createLocation(request.getCompanyLocation()));
+        }
+        attachMedia(vendor, request);
+
+        Vendor saved = vendorRepository.save(vendor);
+        saved.setServices(attachServiceBridges(saved, resolveServiceCategoryIds(request, type)));
+        saved = vendorRepository.save(saved);
+
+        handleVendorWorkingHours(saved, request);
+        handleVendorBreakHours(saved, request);
+
+        if (authClient.updateRole(ownerId, ERole.OTHER_SERVICE_OWNER) == null) {
+            throw new ResourceNotFoundException("error while updating owner role");
+        }
+
+        vendorRepository.flush();
+        workHoursRepository.flush();
+        breakTimeRepository.flush();
+        slotGenerationService.generateSlotsForDays(saved, 60);
+
+        return vendorProfileMapper.toVendorProfileResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public VendorProfileResponse updateVendor(Integer id, BaseVendorRequest request) {
+        Vendor existing = vendorRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Vendor not found with id: " + id));
+
+        Integer oldCapacity = existing.getConcurrentAppointmentCapacity();
+
+        applyIfPresent(request.getCompanyBrandName(), existing::setCompanyBrandName);
+        applyIfPresent(request.getCompanyArabicName(), existing::setCompanyArabicName);
+        applyIfPresent(request.getName(), existing::setName);
+        applyIfPresent(request.getEmail(), existing::setEmail);
+        applyIfPresent(request.getPhoneNumber(), existing::setPhoneNumber);
+        applyIfPresent(request.getMobileNumber(), existing::setMobileNumber);
+        applyIfPresent(request.getTrnNumber(), existing::setTrnNumber);
+        applyIfPresent(request.getWebSite(), existing::setWebSite);
+        if (request.getTradeLicenceNumber() != null) {
+            validateTradeLicenceNumber(request.getTradeLicenceNumber());
+            existing.setTradeLicenceNumber(request.getTradeLicenceNumber());
+        }
+        if (request.getOpeningTime() != null) {
+            existing.setOpeningTime(request.getOpeningTime().toString());
+        }
+        if (request.getClosingTime() != null) {
+            existing.setClosingTime(request.getClosingTime().toString());
+        }
+        if (request.getWorkingDays() != null && !request.getWorkingDays().isEmpty()) {
+            existing.setWorkingDays(joinDays(request.getWorkingDays()));
+        }
+        if (request.getConcurrentAppointmentCapacity() != null) {
+            existing.setConcurrentAppointmentCapacity(request.getConcurrentAppointmentCapacity());
+        }
+        if (request.getCompanyLocation() != null && existing.getCompanyLocation() != null) {
+            existing.setCompanyLocation(locationService.updateLocation(
+                    existing.getCompanyLocation().getId(), request.getCompanyLocation()));
+        }
+
+        if (request.getServiceCategoryIds() != null) {
+            List<Integer> existingCategoryIds = existing.getServices().stream()
+                    .map(b -> b.getServiceCategory().getId())
+                    .toList();
+            request.getServiceCategoryIds().stream()
+                    .filter(cid -> !existingCategoryIds.contains(cid))
+                    .forEach(cid -> existing.getServices().add(serviceCategoryRepository.findById(cid)
+                            .map(sc -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
+                                    new GarageServiceRequest(existing.getId(), sc.getId(), TRUE)))
+                            .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category: " + cid))));
+        }
+
+        Vendor updated = vendorRepository.save(existing);
+
+        if (!Objects.equals(oldCapacity, updated.getConcurrentAppointmentCapacity())) {
+            slotGenerationService.updateUpcomingSlotsForVendor(updated);
+        }
+        return vendorProfileMapper.toVendorProfileResponse(updated);
+    }
+
+    @Override
+    public List<VendorProfileResponse> getVendorsByOwnerIdAndType(String autoAddaId, VendorServiceType type) {
+        List<Vendor> vendors = vendorRepository
+                .findByCompanyOwnerAndServiceTypeAndIsActiveTrue(Integer.parseInt(autoAddaId), type.name());
+        return vendorProfileMapper.toVendorProfileResponseList(vendors);
+    }
+
+    private VendorOnboardingHandler resolveHandler(VendorServiceType type) {
+        return onboardingHandlers.stream()
+                .filter(h -> h.type() == type)
+                .findFirst()
+                .orElse(defaultOnboardingHandler);
+    }
+
+    private Vendor mapToEntity(BaseVendorRequest request, VendorServiceType type) {
+        Vendor vendor = new Vendor();
+        vendor.setCompanyBrandName(request.getCompanyBrandName());
+        vendor.setCompanyArabicName(request.getCompanyArabicName());
+        vendor.setName(request.getName());
+        vendor.setEmail(request.getEmail());
+        vendor.setPhoneNumber(request.getPhoneNumber());
+        vendor.setMobileNumber(request.getMobileNumber());
+        vendor.setTrnNumber(request.getTrnNumber());
+        vendor.setTradeLicenceNumber(request.getTradeLicenceNumber());
+        vendor.setWebSite(request.getWebSite());
+        vendor.setOpeningTime(request.getOpeningTime() != null ? request.getOpeningTime().toString() : null);
+        vendor.setClosingTime(request.getClosingTime() != null ? request.getClosingTime().toString() : null);
+        vendor.setWorkingDays(request.getWorkingDays() != null ? joinDays(request.getWorkingDays()) : null);
+        vendor.setConcurrentAppointmentCapacity(request.getConcurrentAppointmentCapacity());
+        vendor.setServiceType(type.name());
+        vendor.setAccountStatus(Status.PENDING);
+        vendor.setCreatedAt(LocalDateTime.now());
+        return vendor;
+    }
+
+    private void attachMedia(Vendor vendor, BaseVendorRequest request) {
+        if (request.getLogoId() != null) {
+            vendor.setCompanyLogo(mediaFileRepository.findById(request.getLogoId())
+                    .orElseThrow(() -> new EntityNotFoundException("Media file not found with id: " + request.getLogoId())));
+        }
+        addMediaFiles(request.getVatCertificateIds(), vendor.getVatCertificate());
+        addMediaFiles(request.getTradeLicenseAttachmentIds(), vendor.getTradeLicenseAttachment());
+        addMediaFiles(request.getCompanyImagesIds(), vendor.getCompanyImages());
+    }
+
+    private void addMediaFiles(List<Long> ids, List<MediaFile> target) {
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        ids.forEach(id -> target.add(mediaFileRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Media file not found with id: " + id))));
+    }
+
+    private List<Integer> resolveServiceCategoryIds(BaseVendorRequest request, VendorServiceType type) {
+        List<Integer> ids = new ArrayList<>();
+        if (request.getServiceCategoryIds() != null) {
+            ids.addAll(request.getServiceCategoryIds());
+        }
+        serviceCategoryRepository.findByName(type.getDisplayName())
+                .map(ServiceCategory::getId)
+                .filter(id -> !ids.contains(id))
+                .ifPresent(ids::add);
+        return ids;
+    }
+
+    private List<VendorServiceBridge> attachServiceBridges(Vendor vendor, List<Integer> categoryIds) {
+        List<VendorServiceBridge> bridges = new ArrayList<>();
+        categoryIds.forEach(cid -> serviceCategoryRepository.findById(cid)
+                .map(sc -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
+                        new GarageServiceRequest(vendor.getId(), sc.getId(), TRUE)))
+                .map(bridges::add)
+                .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category: " + cid)));
+        return bridges;
+    }
+
+    private void handleVendorWorkingHours(Vendor vendor, BaseVendorRequest request) {
+        if (request.getWorkingDays() == null) {
+            return;
+        }
+        request.getWorkingDays().forEach(day -> {
+            VendorWorkHours wh = new VendorWorkHours();
+            wh.setVendor(vendor);
+            wh.setDayOfWeek(day);
+            wh.setOpenTime(request.getOpeningTime());
+            wh.setCloseTime(request.getClosingTime());
+            wh.setClosed(false);
+            workHoursRepository.save(wh);
+        });
+    }
+
+    private void handleVendorBreakHours(Vendor vendor, BaseVendorRequest request) {
+        if (request.getWorkingDays() == null
+                || request.getBreakStartTime() == null || request.getBreakEndTime() == null) {
+            return;
+        }
+        request.getWorkingDays().forEach(day -> {
+            VendorBreakTime bt = new VendorBreakTime();
+            bt.setVendor(vendor);
+            bt.setDayOfWeek(day);
+            bt.setBreakStart(request.getBreakStartTime());
+            bt.setBreakEnd(request.getBreakEndTime());
+            breakTimeRepository.save(bt);
+        });
+    }
+
+    private static String joinDays(List<java.time.DayOfWeek> days) {
+        return days.stream().map(Enum::name).collect(Collectors.joining(","));
+    }
+
+    private static <T> void applyIfPresent(T value, java.util.function.Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
     }
 
     @Override

@@ -7,7 +7,7 @@ import com.autoadda.apis.other.entity.VendorBreakTime;
 import com.autoadda.apis.other.entity.VendorHolidayOverride;
 import com.autoadda.apis.other.entity.VendorWorkHours;
 import com.autoadda.apis.other.entity.Vendor;
-import com.autoadda.apis.other.entity.VendorService;
+import com.autoadda.apis.other.entity.VendorServiceBridge;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.BookingMapper;
 import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
@@ -41,7 +41,7 @@ public class VendorSlotService {
     private final BookingSlotService slotService;
     private final BookingSlotRepository slotRepository;
     private final OsAppointmentDetailMapper appointmentDetailMapper;
-    private final VendorServiceRepository vendorServiceRepository;
+    private final VendorServiceBridgeRepository vendorServiceBridgeRepository;
     private final BookedServiceRepository bookedServiceRepository;
     private final BookingMapper bookingMapper;
 
@@ -160,12 +160,12 @@ public class VendorSlotService {
                 .map(Integer::parseInt)
                 .toList();
 
-        List<VendorService> services = vendorServiceRepository.findAllById(serviceIds);
+        List<VendorServiceBridge> services = vendorServiceBridgeRepository.findAllById(serviceIds);
 
         List<BookedService> bookingServices = services.stream()
                 .map(service -> BookedService.builder()
                         .bookingId(booking.getId())
-                        .vendorService(service)
+                        .vendorServiceBridge(service)
                         .status(Status.PENDING)
                         .build())
                 .toList();

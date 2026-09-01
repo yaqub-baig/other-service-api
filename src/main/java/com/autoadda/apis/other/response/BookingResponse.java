@@ -29,8 +29,6 @@ public class BookingResponse {
     private Integer vehicleId;
     private BookingSlotResponse slot; // Nested DTO for slot details
     private TechnicianResponse technician; // Nested DTO for technician details
-    private String referenceType;
-    private Integer referenceId;
     private BigDecimal subtotal;
     private BigDecimal taxes;
     private BigDecimal discount;

@@ -67,6 +67,9 @@ public interface VendorRepository extends JpaRepository<Vendor, Integer> {
     // Find by company owner ID and active status
     List<Vendor> findByCompanyOwnerAndIsActiveTrue(Integer ownerId);
 
+    // Find by company owner ID + service type and active status
+    List<Vendor> findByCompanyOwnerAndServiceTypeAndIsActiveTrue(Integer ownerId, String serviceType);
+
     // Count references to media files
     @Query("SELECT COUNT(o) FROM Vendor o WHERE o.companyLogo.id = :mediaFileId")
     long countByCompanyLogoId(@Param("mediaFileId") Long mediaFileId);

@@ -150,6 +150,12 @@ public class GlobalExceptionHandler {
 		return buildResponse(ex, HttpStatus.CONFLICT, ErrorMessage.ERROR_DATA_INTEGRITY);
 	}
 
+	@ExceptionHandler(BusinessException.class)
+	public ResponseEntity<GenericResponse> handleBusiness(BusinessException ex) {
+		log.warn("Business rule violation", ex);
+		return buildResponse(ex, HttpStatus.BAD_REQUEST, ex.getMessage());
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<GenericResponse> handleGenericException(Exception ex) {
 		log.error("Unhandled exception", ex);

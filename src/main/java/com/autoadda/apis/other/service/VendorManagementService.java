@@ -2,9 +2,11 @@ package com.autoadda.apis.other.service;
 
 
 import com.autoadda.apis.other.request.OtherServiceRequest;
+import com.autoadda.apis.other.request.vendor.BaseVendorRequest;
 import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.util.Status;
+import com.autoadda.apis.other.util.VendorServiceType;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,9 +14,26 @@ import java.util.Optional;
 public interface VendorManagementService {
 
     /**
-     * Create a new vendor
+     * Create a new vendor (legacy generic form)
      */
     VendorProfileResponse createVendor(OtherServiceRequest request, String autoAddaId);
+
+    /**
+     * Onboard a vendor of a specific service type using the shared basic form.
+     * Mirrors garage-api's createGarage: owner validation, working-hours/break
+     * rows, owner role update and 60-day slot generation.
+     */
+    VendorProfileResponse createVendor(BaseVendorRequest request, VendorServiceType type, String autoAddaId);
+
+    /**
+     * Update a vendor via the shared basic form (service type is immutable).
+     */
+    VendorProfileResponse updateVendor(Integer id, BaseVendorRequest request);
+
+    /**
+     * List the caller's vendors of a given service type.
+     */
+    List<VendorProfileResponse> getVendorsByOwnerIdAndType(String autoAddaId, VendorServiceType type);
 
     /**
      * Get all vendors

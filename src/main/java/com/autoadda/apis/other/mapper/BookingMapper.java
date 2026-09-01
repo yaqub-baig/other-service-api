@@ -62,8 +62,6 @@ public class BookingMapper {
                 response.setTechnician(new TechnicianResponse(b.getTechnicianId(), null, null, null));
             }
 
-            response.setReferenceType(b.getReferenceType());
-            response.setReferenceId(b.getReferenceId());
             response.setSubtotal(b.getSubtotal());
             response.setTaxes(b.getTaxes());
             response.setDiscount(b.getDiscount());

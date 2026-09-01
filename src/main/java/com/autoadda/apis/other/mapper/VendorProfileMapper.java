@@ -17,9 +17,11 @@ import java.util.stream.Collectors;
 public class VendorProfileMapper {
 
     private final MediaFileMapper mediaFileMapper;
+    private final VendorServiceBridgeMapper vendorServiceBridgeMapper;
 
-    public VendorProfileMapper(MediaFileMapper mediaFileMapper) {
+    public VendorProfileMapper(MediaFileMapper mediaFileMapper, VendorServiceBridgeMapper vendorServiceBridgeMapper) {
         this.mediaFileMapper = mediaFileMapper;
+        this.vendorServiceBridgeMapper = vendorServiceBridgeMapper;
     }
 
     public VendorProfileResponse toVendorProfileResponse(Vendor vendor) {
@@ -30,12 +32,21 @@ public class VendorProfileMapper {
         VendorProfileResponse response = new VendorProfileResponse();
         response.setId(vendor.getId());
         response.setCompanyBrandName(vendor.getCompanyBrandName());
+        response.setCompanyArabicName(vendor.getCompanyArabicName());
+        response.setName(vendor.getName());
+        response.setServiceType(vendor.getServiceType());
+        response.setTrnNumber(vendor.getTrnNumber());
+        response.setTradeLicenceNumber(vendor.getTradeLicenceNumber());
         response.setWebSite(vendor.getWebSite());
         response.setEmail(vendor.getEmail());
         response.setPhoneNumber(vendor.getPhoneNumber());
+        response.setMobileNumber(vendor.getMobileNumber());
         response.setOpeningTime(vendor.getOpeningTime());
         response.setClosingTime(vendor.getClosingTime());
         response.setWorkingDays(vendor.getWorkingDays());
+        response.setConcurrentAppointmentCapacity(vendor.getConcurrentAppointmentCapacity());
+        response.setAccountStatus(vendor.getAccountStatus());
+        response.setServices(vendorServiceBridgeMapper.toResponseList(vendor.getServices()));
 
         // Map company logo
         if (vendor.getCompanyLogo() != null) {

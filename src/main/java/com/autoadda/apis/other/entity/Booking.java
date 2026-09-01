@@ -67,20 +67,6 @@ public class Booking {
     @Column(name = "technician_id", nullable = true)
     private Integer technicianId;
 
-    // ==================== Quotation Reference ====================
-
-    /**
-     * Type of reference (e.g., "QUOTATION", "DIRECT_BOOKING").
-     */
-    @Column(name = "reference_type", length = 30)
-    private String referenceType;
-
-    /**
-     * ID of the referenced entity (e.g., VendorQuotation ID).
-     */
-    @Column(name = "reference_id")
-    private Integer referenceId;
-
     // ==================== Pricing Details ====================
 
     /**
