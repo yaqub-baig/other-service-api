@@ -70,6 +70,9 @@ public class Vendor {
     @Column(name = "service_type")
     private String serviceType;
 
+    @Column(name = "concurrent_appointment_capacity")
+    private Integer concurrentAppointmentCapacity;
+
     @JsonManagedReference("vendor-services")
     @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VendorServiceBridge> services = new ArrayList<>();

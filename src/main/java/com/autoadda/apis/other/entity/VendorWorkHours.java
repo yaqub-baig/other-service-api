@@ -35,5 +35,5 @@ public class VendorWorkHours {
     private LocalTime openTime;
     private LocalTime closeTime;
     private boolean isClosed;
-    final private int slotDurationMinutes = 20;
+    private int slotDurationMinutes = 20;
 }
