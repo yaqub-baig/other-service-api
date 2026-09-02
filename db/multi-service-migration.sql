@@ -9,6 +9,8 @@
 -- ============================================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
+-- MySQL Workbench "safe update mode" blocks UPDATEs whose WHERE has no key column.
+SET SQL_SAFE_UPDATES = 0;
 
 -- ---------------------------------------------------------------------------
 -- 1. os / other-service naming  ->  vendor / booking
@@ -195,6 +197,7 @@ WHERE m.service_images IS NULL;
 -- If car_wash_details is empty:  DROP TABLE car_wash_details;
 
 SET FOREIGN_KEY_CHECKS = 1;
+SET SQL_SAFE_UPDATES = 1;
 
 -- ============================================================================
 -- 6. CLEANUP — run only after the app has been verified on the new schema
