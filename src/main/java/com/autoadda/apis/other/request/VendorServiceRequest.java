@@ -1,4 +1,5 @@
 package com.autoadda.apis.other.request;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -7,14 +8,13 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GarageServiceRequest {
+public class VendorServiceRequest {
 
-	@NotNull(message = "Garage ID is required")
-	private Integer garageId;
+	@NotNull(message = "Vendor ID is required")
+	private Integer vendorId;
 
-	@NotNull(message = "Service ID is required")
+	@NotNull(message = "Service category ID is required")
 	private Integer serviceId;
 
 	private boolean isActive;
 }
-

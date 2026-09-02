@@ -49,11 +49,11 @@ public class Booking {
     @JoinColumn(name = "vendor_id")
     private Vendor vendor;
 
-    @Column(name = "selected_other_service")
-    private String selectedOtherServiceIds;
+    @Column(name = "selected_vendor_service")
+    private String selectedVendorServiceIds;
 
-    @Column(name = "os_subscription_plan_id")
-    private String osSubscriptionPlanId;
+    @Column(name = "subscription_plan_id")
+    private String subscriptionPlanId;
 
     @Column(name = "customer_id", nullable = false)
     private Integer customerId;

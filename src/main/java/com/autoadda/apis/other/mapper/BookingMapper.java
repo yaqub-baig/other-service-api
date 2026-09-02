@@ -43,8 +43,8 @@ public class BookingMapper {
                 response.setVendor(vendorProfileMapper.toVendorProfileResponse(b.getVendor()));
             }
 
-            response.setSelectedOtherServiceIds(b.getSelectedOtherServiceIds());
-            response.setOsSubscriptionPlanId(b.getOsSubscriptionPlanId());
+            response.setSelectedVendorServiceIds(b.getSelectedVendorServiceIds());
+            response.setSubscriptionPlanId(b.getSubscriptionPlanId());
             response.setCustomerId(b.getCustomerId());
             response.setVehicleId(b.getVehicleId());
 

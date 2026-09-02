@@ -30,7 +30,7 @@ public class BookingStatusActivity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    @Column(name = "os_appointment_id")
+    @Column(name = "booking_id")
     private Integer bookingId;
 
     @Column(name = "status")

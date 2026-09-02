@@ -10,7 +10,7 @@ import com.autoadda.apis.other.entity.Vendor;
 import com.autoadda.apis.other.entity.VendorServiceBridge;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.BookingMapper;
-import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
+import com.autoadda.apis.other.mapper.BookingDetailMapper;
 import com.autoadda.apis.other.repository.*;
 import com.autoadda.apis.other.response.BookingResponse;
 import com.autoadda.apis.other.response.BookingDetailResponse;
@@ -40,7 +40,7 @@ public class VendorSlotService {
     private final BookingService bookingService;
     private final BookingSlotService slotService;
     private final BookingSlotRepository slotRepository;
-    private final OsAppointmentDetailMapper appointmentDetailMapper;
+    private final BookingDetailMapper bookingDetailMapper;
     private final VendorServiceBridgeRepository vendorServiceBridgeRepository;
     private final BookedServiceRepository bookedServiceRepository;
     private final BookingMapper bookingMapper;
@@ -143,7 +143,7 @@ public class VendorSlotService {
                 .comments("Booked via platform")
                 .vehicleId(vehicleId)
                 .customerId(userId)
-                .selectedOtherServiceIds(selectedServiceIds)
+                .selectedVendorServiceIds(selectedServiceIds)
                 .appointmentReferenceId(bookingService.generateBookingCode())
                 .slot(slot)
                 .insert_tms(DateHelper.dbDate())
@@ -152,7 +152,7 @@ public class VendorSlotService {
         slotService.incrementSlotBookings(slot.getId());
         Booking saved = bookingRepo.save(booking);
         generateBookingServices(saved, selectedServiceIds, vendorId);
-        return appointmentDetailMapper.entityToResponse(saved);
+        return bookingDetailMapper.entityToResponse(saved);
     }
 
     private void generateBookingServices(Booking booking, String selectedServiceIds, Integer vendorId) {
@@ -194,7 +194,7 @@ public class VendorSlotService {
                 .stream()
                 .sorted(Comparator.comparing(Booking::getServiceStartTime).reversed())
                 .toList();
-        return list.stream().map(appointmentDetailMapper::entityToResponse).toList();
+        return list.stream().map(bookingDetailMapper::entityToResponse).toList();
     }
 
     @Transactional

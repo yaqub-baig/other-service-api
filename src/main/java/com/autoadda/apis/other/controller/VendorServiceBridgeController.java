@@ -2,7 +2,7 @@ package com.autoadda.apis.other.controller;
 
 
 import com.autoadda.apis.other.entity.VendorServiceBridge;
-import com.autoadda.apis.other.request.GarageServiceRequest;
+import com.autoadda.apis.other.request.VendorServiceRequest;
 import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.VendorServiceBridgeResponse;
 import com.autoadda.apis.other.service.VendorServiceBridgeService;
@@ -21,7 +21,7 @@ public class VendorServiceBridgeController {
     private final VendorServiceBridgeService vendorServiceBridgeService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<VendorServiceBridgeResponse>> create(@RequestBody GarageServiceRequest request) {
+    public ResponseEntity<ApiResponse<VendorServiceBridgeResponse>> create(@RequestBody VendorServiceRequest request) {
         VendorServiceBridgeResponse response = vendorServiceBridgeService.createVendorServiceBridge(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Vendor service bridge created", response));

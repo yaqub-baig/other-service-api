@@ -18,7 +18,7 @@ import com.autoadda.apis.other.repository.ServiceCategoryRepository;
 import com.autoadda.apis.other.repository.VendorBreakTimeRepository;
 import com.autoadda.apis.other.repository.VendorRepository;
 import com.autoadda.apis.other.repository.VendorWorkHoursRepository;
-import com.autoadda.apis.other.request.GarageServiceRequest;
+import com.autoadda.apis.other.request.VendorServiceRequest;
 import com.autoadda.apis.other.request.OtherServiceRequest;
 import com.autoadda.apis.other.request.vendor.BaseVendorRequest;
 import com.autoadda.apis.other.response.VendorResponse;
@@ -134,7 +134,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
             request.getOsServiceIds().forEach(sId -> {
                 serviceCategoryRepository.findById(sId)
                         .map(serviceCategory -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
-                                new GarageServiceRequest(saved.getId(), serviceCategory.getId(), TRUE)))
+                                new VendorServiceRequest(saved.getId(), serviceCategory.getId(), TRUE)))
                         .map(vendorServices::add)
                         .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category"));
             });
@@ -231,7 +231,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
                     .filter(cid -> !existingCategoryIds.contains(cid))
                     .forEach(cid -> existing.getServices().add(serviceCategoryRepository.findById(cid)
                             .map(sc -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
-                                    new GarageServiceRequest(existing.getId(), sc.getId(), TRUE)))
+                                    new VendorServiceRequest(existing.getId(), sc.getId(), TRUE)))
                             .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category: " + cid))));
         }
 
@@ -312,7 +312,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         List<VendorServiceBridge> bridges = new ArrayList<>();
         categoryIds.forEach(cid -> serviceCategoryRepository.findById(cid)
                 .map(sc -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
-                        new GarageServiceRequest(vendor.getId(), sc.getId(), TRUE)))
+                        new VendorServiceRequest(vendor.getId(), sc.getId(), TRUE)))
                 .map(bridges::add)
                 .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category: " + cid)));
         return bridges;
@@ -515,7 +515,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
             request.getOsServiceIds().forEach(sId -> {
                 serviceCategoryRepository.findById(sId)
                         .map(serviceCategory -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
-                                new GarageServiceRequest(vendor.getId(), serviceCategory.getId(), TRUE)))
+                                new VendorServiceRequest(vendor.getId(), serviceCategory.getId(), TRUE)))
                         .map(vendorServices::add)
                         .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category"));
             });

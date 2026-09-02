@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OtherServiceResponse {
+public class VendorServiceSummaryResponse {
     private Integer id;
     private Boolean isActive;
     private Integer vendorId;

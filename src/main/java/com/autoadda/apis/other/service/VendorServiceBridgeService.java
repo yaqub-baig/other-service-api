@@ -7,7 +7,7 @@ import com.autoadda.apis.other.mapper.VendorServiceBridgeMapper;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
 import com.autoadda.apis.other.repository.VendorServiceBridgeRepository;
 import com.autoadda.apis.other.repository.VendorRepository;
-import com.autoadda.apis.other.request.GarageServiceRequest;
+import com.autoadda.apis.other.request.VendorServiceRequest;
 import com.autoadda.apis.other.response.VendorServiceBridgeResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,17 +22,17 @@ public class VendorServiceBridgeService {
     private final VendorServiceBridgeRepository vendorServiceBridgeRepository;
     private final VendorServiceBridgeMapper bridgeMapper;
 
-    private VendorServiceBridge mapToEntity(GarageServiceRequest request) {
+    private VendorServiceBridge mapToEntity(VendorServiceRequest request) {
         VendorServiceBridge bridge = new VendorServiceBridge();
         bridge.setIsActive(request.isActive());
-        bridge.setVendor(vendorRepository.findById(request.getGarageId())
+        bridge.setVendor(vendorRepository.findById(request.getVendorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor not found")));
         bridge.setServiceCategory(serviceCategoryRepository.findById(request.getServiceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Service category not found")));
         return bridge;
     }
 
-    public VendorServiceBridgeResponse createVendorServiceBridge(GarageServiceRequest request) {
+    public VendorServiceBridgeResponse createVendorServiceBridge(VendorServiceRequest request) {
         VendorServiceBridge saved = createVendorServiceBridgeEntity(request);
         return bridgeMapper.toResponse(saved);
     }
@@ -40,7 +40,7 @@ public class VendorServiceBridgeService {
     /**
      * Internal method for creating and returning the entity (used by VendorManagementService).
      */
-    public VendorServiceBridge createVendorServiceBridgeEntity(GarageServiceRequest request) {
+    public VendorServiceBridge createVendorServiceBridgeEntity(VendorServiceRequest request) {
         return vendorServiceBridgeRepository.save(mapToEntity(request));
     }
 

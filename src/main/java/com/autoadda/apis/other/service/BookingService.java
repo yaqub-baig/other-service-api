@@ -7,10 +7,10 @@ import com.autoadda.apis.other.entity.JobCard;
 import com.autoadda.apis.other.entity.Vendor;
 import com.autoadda.apis.other.entity.VendorServiceBridge;
 import com.autoadda.apis.other.exception.CustomerNotFoundException;
-import com.autoadda.apis.other.exception.GarageNotFoundException;
-import com.autoadda.apis.other.exception.OtherServiceNotFoundException;
+import com.autoadda.apis.other.exception.VendorNotFoundException;
+import com.autoadda.apis.other.exception.VendorNotFoundException;
 import com.autoadda.apis.other.mapper.BookingMapper;
-import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
+import com.autoadda.apis.other.mapper.BookingDetailMapper;
 import com.autoadda.apis.other.repository.*;
 import com.autoadda.apis.other.request.BookingStatusRequest;
 import com.autoadda.apis.other.request.CustomerBookingRequest;
@@ -43,7 +43,7 @@ public class BookingService {
     private final VendorRepository vendorRepository;
     private final VendorServiceBridgeRepository vendorServiceBridgeRepo;
     private final JobCardService jobCardService;
-    private final OsAppointmentDetailMapper appointmentDetailMapper;
+    private final BookingDetailMapper bookingDetailMapper;
     private final BusinessValidator validator;
     private final BookingMapper bookingMapper; // Inject BookingMapper
 
@@ -54,15 +54,15 @@ public class BookingService {
      *                customer ID, vehicle ID, schedule date, service IDs, etc.
      * @return the created BookingResponse DTO.
      * @throws CustomerNotFoundException     if the customer does not exist.
-     * @throws OtherServiceNotFoundException if the vendor does not exist.
+     * @throws VendorNotFoundException if the vendor does not exist.
      */
     @Transactional
     public BookingResponse createCustomerBooking(CustomerBookingRequest request)
-            throws CustomerNotFoundException, OtherServiceNotFoundException {
+            throws CustomerNotFoundException, VendorNotFoundException {
 
         // Vendor is mandatory
         Vendor vendor = vendorRepository.findById(request.getOtherServiceId())
-                .orElseThrow(() -> new OtherServiceNotFoundException("Vendor not found"));
+                .orElseThrow(() -> new VendorNotFoundException("Vendor not found"));
 
         // Create booking
         Booking booking = Booking.builder()
@@ -111,11 +111,11 @@ public class BookingService {
      * @param vendorId the ID of the vendor.
      * @param status   the status to filter bookings by, or null for all.
      * @return a list of BookingResponse DTOs for the vendor.
-     * @throws OtherServiceNotFoundException if the vendor does not exist.
+     * @throws VendorNotFoundException if the vendor does not exist.
      */
     @Transactional(readOnly = true)
     public List<BookingResponse> getVendorBookings(Integer vendorId, Status status)
-            throws OtherServiceNotFoundException {
+            throws VendorNotFoundException {
 
         validator.validateAndGetVendor(vendorId);
 
@@ -194,22 +194,22 @@ public class BookingService {
      * @param vendorId  the ID of the vendor.
      * @param statusStr the status to filter bookings by, or null for all.
      * @return a list of Booking for the vendor.
-     * @throws GarageNotFoundException if the vendor does not exist.
+     * @throws VendorNotFoundException if the vendor does not exist.
      */
     @Transactional(readOnly = true)
     public List<BookingDetailResponse> getBookingsByVendor(Integer vendorId, String statusStr)
-            throws GarageNotFoundException {
+            throws VendorNotFoundException {
         validator.validateAndGetVendor(vendorId);
 
         if (StringUtils.isBlank(statusStr)) {
             return bookingRepository.findByVendorId(vendorId).stream()
-                    .map(appointmentDetailMapper::entityToResponse)
+                    .map(bookingDetailMapper::entityToResponse)
                     .toList();
         }
 
         Status status = Status.valueOf(statusStr.toUpperCase());
         return bookingRepository.findByVendorIdAndStatus(vendorId, status).stream()
-                .map(appointmentDetailMapper::entityToResponse)
+                .map(bookingDetailMapper::entityToResponse)
                 .toList();
     }
 
@@ -233,36 +233,5 @@ public class BookingService {
         }
 
         return String.format("%s%06d", codePrefix, nextSequence);
-    }
-
-    // Legacy method names for backward compatibility
-    @Deprecated
-    public BookingResponse createCustomerAppointment(CustomerBookingRequest request) {
-        return createCustomerBooking(request);
-    }
-
-    @Deprecated
-    public List<BookingResponse> getOtherServiceAppointment(Integer vendorId, Status status) {
-        return getVendorBookings(vendorId, status);
-    }
-
-    @Deprecated
-    public BookingDetailsResponse getAppointmentsDetails(Integer bookingId) {
-        return getBookingDetails(bookingId);
-    }
-
-    @Deprecated
-    public BookingResponse updateAppointmentStatus(BookingStatusRequest request) {
-        return updateBookingStatus(request);
-    }
-
-    @Deprecated
-    public List<BookingDetailResponse> getAppointmentsByGarage(Integer vendorId, String statusStr) {
-        return getBookingsByVendor(vendorId, statusStr);
-    }
-
-    @Deprecated
-    public String generateAppointmentCode() {
-        return generateBookingCode();
     }
 }

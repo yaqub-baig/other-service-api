@@ -38,7 +38,7 @@ public class VendorResponse {
     private Integer companyOwnerId;
     private Boolean isActive;
     private Integer concurrentAppointmentCapacity;
-    private List<OtherServiceResponse> services;
+    private List<VendorServiceSummaryResponse> services;
     private List<MediaFile> companyImages;
     private List<MediaFile> vatCertificate;
     private List<MediaFile> tradeLicenseAttachment;

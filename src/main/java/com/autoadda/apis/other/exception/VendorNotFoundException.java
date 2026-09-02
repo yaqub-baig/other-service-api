@@ -4,20 +4,20 @@ package com.autoadda.apis.other.exception;
 /**
  * throw exception when username not exist
  */
-public class OtherServiceNotFoundException extends RuntimeException {
+public class VendorNotFoundException extends RuntimeException {
 
     private String message;
 
-    public OtherServiceNotFoundException() {
+    public VendorNotFoundException() {
         super();
     }
 
-    public OtherServiceNotFoundException(String message) {
+    public VendorNotFoundException(String message) {
         super(message);
         this.message = message;
     }
 
-    public OtherServiceNotFoundException(String message, Throwable cause) {
+    public VendorNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }
 }
