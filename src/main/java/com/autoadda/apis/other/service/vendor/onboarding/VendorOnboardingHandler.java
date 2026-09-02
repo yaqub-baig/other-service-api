@@ -1,26 +1,22 @@
 package com.autoadda.apis.other.service.vendor.onboarding;
 
-import com.autoadda.apis.other.entity.Vendor;
-import com.autoadda.apis.other.request.vendor.BaseVendorRequest;
+import com.autoadda.apis.other.entity.VendorService;
+import com.autoadda.apis.other.request.vendor.BaseVendorServiceRequest;
 import com.autoadda.apis.other.util.VendorServiceType;
 
 /**
- * Per-service hook for onboarding rules that differ from the shared vendor flow.
- *
- * <p>Most services need nothing here and fall back to
- * {@link DefaultVendorOnboardingHandler}. Register a {@code @Component}
- * implementing this interface only when a service needs bespoke validation or
- * defaults.</p>
+ * Per-service hook for onboarding rules that differ from the shared flow.
+ * Register a {@code @Component} implementing this only when a service needs
+ * bespoke validation or defaults; otherwise {@link DefaultVendorOnboardingHandler}
+ * (a no-op) is used.
  */
 public interface VendorOnboardingHandler {
 
     VendorServiceType type();
 
-    /** Validate the incoming form before the vendor is built. */
-    default void validate(BaseVendorRequest request) {
+    default void validate(BaseVendorServiceRequest request) {
     }
 
-    /** Apply service-specific defaults to the vendor before it is saved. */
-    default void applyDefaults(Vendor vendor, BaseVendorRequest request) {
+    default void applyDefaults(VendorService vendorService, BaseVendorServiceRequest request) {
     }
 }

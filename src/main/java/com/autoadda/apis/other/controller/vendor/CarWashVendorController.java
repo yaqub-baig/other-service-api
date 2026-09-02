@@ -1,9 +1,9 @@
 package com.autoadda.apis.other.controller.vendor;
 
 import com.autoadda.apis.other.request.vendor.CarWashVendorRequest;
-import com.autoadda.apis.other.response.VendorProfileResponse;
-import com.autoadda.apis.other.service.VendorManagementService;
-import com.autoadda.apis.other.util.VendorServiceType;
+import com.autoadda.apis.other.request.vendor.CarWashVendorServiceRequest;
+import com.autoadda.apis.other.response.vendor.CarWashVendorResponse;
+import com.autoadda.apis.other.service.vendor.CarWashVendorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,45 +12,52 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Onboarding + management endpoints for Car Wash vendors.
+ * Car Wash onboarding + management.
  *
- * <p>Reference implementation of the per-service pattern: a thin controller with
- * its own request DTO that delegates to the shared {@link VendorManagementService}
- * with a fixed {@link VendorServiceType}. Generic reads (GET /vendors/&#123;id&#125;,
- * /vendors/search, bookings) stay on the shared controllers.</p>
+ * <ul>
+ *   <li>{@code POST /vendors/car-wash} — create company + first car-wash service</li>
+ *   <li>{@code POST /vendors/{vendorId}/services/car-wash} — add a car-wash service to an existing company</li>
+ *   <li>{@code PUT /vendors/car-wash/{vendorServiceId}} — update a car-wash service</li>
+ * </ul>
  */
 @RestController
-@RequestMapping("/vendors/car-wash")
 @RequiredArgsConstructor
 public class CarWashVendorController {
 
-    private static final VendorServiceType TYPE = VendorServiceType.CAR_WASH;
+    private final CarWashVendorService carWashVendorService;
 
-    private final VendorManagementService vendorService;
-
-    @PostMapping
-    public ResponseEntity<VendorProfileResponse> create(
+    @PostMapping("/vendors/car-wash")
+    public ResponseEntity<CarWashVendorResponse> create(
             @RequestHeader("X-Auto-Adda-Id") String autoAddaId,
             @RequestBody CarWashVendorRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(vendorService.createVendor(request, TYPE, autoAddaId));
+                .body(carWashVendorService.create(request, autoAddaId));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<VendorProfileResponse> update(
-            @PathVariable Integer id,
-            @RequestBody CarWashVendorRequest request) {
-        return ResponseEntity.ok(vendorService.updateVendor(id, request));
+    @PostMapping("/vendors/{vendorId}/services/car-wash")
+    public ResponseEntity<CarWashVendorResponse> addToCompany(
+            @PathVariable Integer vendorId,
+            @RequestHeader("X-Auto-Adda-Id") String autoAddaId,
+            @RequestBody CarWashVendorServiceRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(carWashVendorService.addToCompany(vendorId, request, autoAddaId));
     }
 
-    @GetMapping
-    public ResponseEntity<List<VendorProfileResponse>> mine(
+    @PutMapping("/vendors/car-wash/{vendorServiceId}")
+    public ResponseEntity<CarWashVendorResponse> update(
+            @PathVariable Integer vendorServiceId,
+            @RequestBody CarWashVendorServiceRequest request) {
+        return ResponseEntity.ok(carWashVendorService.updateService(vendorServiceId, request));
+    }
+
+    @GetMapping("/vendors/car-wash")
+    public ResponseEntity<List<CarWashVendorResponse>> mine(
             @RequestHeader("X-Auto-Adda-Id") String autoAddaId) {
-        return ResponseEntity.ok(vendorService.getVendorsByOwnerIdAndType(autoAddaId, TYPE));
+        return ResponseEntity.ok(carWashVendorService.getMine(autoAddaId));
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<VendorProfileResponse>> all() {
-        return ResponseEntity.ok(vendorService.findVendorsByServiceType(TYPE.name()));
+    @GetMapping("/vendors/car-wash/all")
+    public ResponseEntity<List<CarWashVendorResponse>> all() {
+        return ResponseEntity.ok(carWashVendorService.getAll());
     }
 }

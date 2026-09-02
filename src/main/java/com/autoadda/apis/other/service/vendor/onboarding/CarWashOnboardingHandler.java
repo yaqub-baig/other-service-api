@@ -1,8 +1,8 @@
 package com.autoadda.apis.other.service.vendor.onboarding;
 
-import com.autoadda.apis.other.entity.Vendor;
+import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.BusinessException;
-import com.autoadda.apis.other.request.vendor.BaseVendorRequest;
+import com.autoadda.apis.other.request.vendor.BaseVendorServiceRequest;
 import com.autoadda.apis.other.util.VendorServiceType;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +20,7 @@ public class CarWashOnboardingHandler implements VendorOnboardingHandler {
     }
 
     @Override
-    public void validate(BaseVendorRequest request) {
+    public void validate(BaseVendorServiceRequest request) {
         if (request.getWorkingDays() == null || request.getWorkingDays().isEmpty()) {
             throw new BusinessException("A car wash must have at least one working day");
         }
@@ -30,9 +30,9 @@ public class CarWashOnboardingHandler implements VendorOnboardingHandler {
     }
 
     @Override
-    public void applyDefaults(Vendor vendor, BaseVendorRequest request) {
-        if (vendor.getConcurrentAppointmentCapacity() == null) {
-            vendor.setConcurrentAppointmentCapacity(DEFAULT_CAPACITY);
+    public void applyDefaults(VendorService vendorService, BaseVendorServiceRequest request) {
+        if (vendorService.getConcurrentAppointmentCapacity() == null) {
+            vendorService.setConcurrentAppointmentCapacity(DEFAULT_CAPACITY);
         }
     }
 }

@@ -17,11 +17,11 @@ import java.util.stream.Collectors;
 public class VendorProfileMapper {
 
     private final MediaFileMapper mediaFileMapper;
-    private final VendorServiceBridgeMapper vendorServiceBridgeMapper;
+    private final VendorServiceMapper vendorServiceMapper;
 
-    public VendorProfileMapper(MediaFileMapper mediaFileMapper, VendorServiceBridgeMapper vendorServiceBridgeMapper) {
+    public VendorProfileMapper(MediaFileMapper mediaFileMapper, VendorServiceMapper vendorServiceMapper) {
         this.mediaFileMapper = mediaFileMapper;
-        this.vendorServiceBridgeMapper = vendorServiceBridgeMapper;
+        this.vendorServiceMapper = vendorServiceMapper;
     }
 
     public VendorProfileResponse toVendorProfileResponse(Vendor vendor) {
@@ -34,37 +34,26 @@ public class VendorProfileMapper {
         response.setCompanyBrandName(vendor.getCompanyBrandName());
         response.setCompanyArabicName(vendor.getCompanyArabicName());
         response.setName(vendor.getName());
-        response.setServiceType(vendor.getServiceType());
         response.setTrnNumber(vendor.getTrnNumber());
-        response.setTradeLicenceNumber(vendor.getTradeLicenceNumber());
         response.setWebSite(vendor.getWebSite());
         response.setEmail(vendor.getEmail());
         response.setPhoneNumber(vendor.getPhoneNumber());
         response.setMobileNumber(vendor.getMobileNumber());
-        response.setOpeningTime(vendor.getOpeningTime());
-        response.setClosingTime(vendor.getClosingTime());
-        response.setWorkingDays(vendor.getWorkingDays());
-        response.setConcurrentAppointmentCapacity(vendor.getConcurrentAppointmentCapacity());
         response.setAccountStatus(vendor.getAccountStatus());
-        response.setServices(vendorServiceBridgeMapper.toResponseList(vendor.getServices()));
+        response.setServices(vendorServiceMapper.toResponseList(vendor.getServices()));
 
-        // Map company logo
         if (vendor.getCompanyLogo() != null) {
             response.setCompanyLogo(mediaFileMapper.toMediaFileResponse(vendor.getCompanyLogo()));
         }
-
-        // Map company location
         if (vendor.getCompanyLocation() != null) {
             response.setCompanyLocation(toLocationResponse(vendor.getCompanyLocation()));
         }
-
-        // Map company images
-        if (vendor.getCompanyImages() != null && !vendor.getCompanyImages().isEmpty()) {
-            response.setCompanyImages(vendor.getCompanyImages().stream()
-                                            .map(mediaFileMapper::toMediaFileResponse)
-                                            .collect(Collectors.toList()));
+        if (vendor.getVatCertificate() != null && !vendor.getVatCertificate().isEmpty()) {
+            response.setVatCertificate(vendor.getVatCertificate().stream()
+                    .map(mediaFileMapper::toMediaFileResponse)
+                    .collect(Collectors.toList()));
         } else {
-            response.setCompanyImages(Collections.emptyList());
+            response.setVatCertificate(Collections.emptyList());
         }
 
         return response;

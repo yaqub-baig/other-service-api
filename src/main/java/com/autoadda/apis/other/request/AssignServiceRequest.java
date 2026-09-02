@@ -17,7 +17,7 @@ public class AssignServiceRequest {
     private Integer technicianId;
     private Integer memberId;
     private String memberType;
-    private Integer otherServiceId;
+    private Integer vendorId;
     private String status;
     private String comments;
 }

@@ -10,5 +10,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface VendorBreakTimeRepository extends JpaRepository<VendorBreakTime, Integer> {
-    List<VendorBreakTime> findByVendorIdAndDayOfWeek(Integer vendorId, DayOfWeek dayOfWeek);
+    List<VendorBreakTime> findByVendorServiceIdAndDayOfWeek(Integer vendorServiceId, DayOfWeek dayOfWeek);
+
+    List<VendorBreakTime> findByVendorServiceId(Integer vendorServiceId);
 }

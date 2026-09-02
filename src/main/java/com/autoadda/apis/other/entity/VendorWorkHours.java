@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "os_work_hours")
+@Table(name = "vendor_work_hours")
 @NoArgsConstructor
 @AllArgsConstructor
 @Setter
@@ -28,8 +28,8 @@ public class VendorWorkHours {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @ManyToOne
-    @JoinColumn(name = "vendor_id", referencedColumnName = "id")
-    private Vendor vendor;
+    @JoinColumn(name = "vendor_service_id", referencedColumnName = "id")
+    private VendorService vendorService;
     @Enumerated(EnumType.STRING)
     private DayOfWeek dayOfWeek;
     private LocalTime openTime;

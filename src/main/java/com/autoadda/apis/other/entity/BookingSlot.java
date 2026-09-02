@@ -23,8 +23,8 @@ public class BookingSlot {
     private LocalTime endTime;
     private Integer maxBookings;
     @ManyToOne
-    @JoinColumn(name = "vendor_id")
-    private Vendor vendor;
+    @JoinColumn(name = "vendor_service_id")
+    private VendorService vendorService;
     private Integer currentBookings;
     public boolean isAvailable() {
         return currentBookings < maxBookings;

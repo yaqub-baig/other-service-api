@@ -4,12 +4,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Onboarding form for a Car Wash vendor.
- *
- * <p>Currently identical to {@link BaseVendorRequest} (the basic garage-style
- * form). Car-wash-specific fields can be added here later.</p>
+ * Combined convenience body for {@code POST /vendors/car-wash}: create the
+ * company and its first car-wash service in one call.
  */
 @Getter
 @Setter
-public class CarWashVendorRequest extends BaseVendorRequest {
+public class CarWashVendorRequest {
+
+    private VendorCompanyRequest company;
+    private CarWashVendorServiceRequest service;
 }

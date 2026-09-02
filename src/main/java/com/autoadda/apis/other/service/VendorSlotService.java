@@ -5,12 +5,11 @@ import com.autoadda.apis.other.entity.BookedService;
 import com.autoadda.apis.other.entity.BookingSlot;
 import com.autoadda.apis.other.entity.VendorBreakTime;
 import com.autoadda.apis.other.entity.VendorHolidayOverride;
+import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.entity.VendorWorkHours;
-import com.autoadda.apis.other.entity.Vendor;
-import com.autoadda.apis.other.entity.VendorServiceBridge;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.BookingMapper;
-import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
+import com.autoadda.apis.other.mapper.BookingDetailMapper;
 import com.autoadda.apis.other.repository.*;
 import com.autoadda.apis.other.response.BookingResponse;
 import com.autoadda.apis.other.response.BookingDetailResponse;
@@ -27,6 +26,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 
+/**
+ * Slot availability + booking against a specific {@link VendorService}
+ * (one service a vendor offers). All ids here are vendorService ids.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -36,36 +39,25 @@ public class VendorSlotService {
     private final VendorBreakTimeRepository breakRepo;
     private final VendorHolidayOverrideRepository holidayRepo;
     private final BookingRepository bookingRepo;
-    private final VendorRepository vendorRepository;
+    private final VendorServiceRepository vendorServiceRepository;
     private final BookingService bookingService;
     private final BookingSlotService slotService;
     private final BookingSlotRepository slotRepository;
-    private final OsAppointmentDetailMapper appointmentDetailMapper;
-    private final VendorServiceBridgeRepository vendorServiceBridgeRepository;
+    private final BookingDetailMapper bookingDetailMapper;
     private final BookedServiceRepository bookedServiceRepository;
     private final BookingMapper bookingMapper;
 
-    /**
-     * Retrieves available time slots for a vendor on a specific date.
-     *
-     * @param vendorId The ID of the vendor.
-     * @param date     The date for which to retrieve available slots.
-     * @return A list of available LocalTime slots.
-     */
     @Transactional
-    public List<BookingSlot> getAvailableSlots(Integer vendorId, LocalDate date) {
+    public List<BookingSlot> getAvailableSlots(Integer vendorServiceId, LocalDate date) {
         DayOfWeek day = date.getDayOfWeek();
 
-        // Check if vendor is closed (holiday or working hours)
-        Optional<VendorHolidayOverride> overrideOpt = holidayRepo.findByVendorIdAndDate(vendorId, date);
-
+        Optional<VendorHolidayOverride> overrideOpt = holidayRepo.findByVendorServiceIdAndDate(vendorServiceId, date);
         if (overrideOpt.isPresent() && overrideOpt.get().isClosed()) {
             return Collections.emptyList();
         }
 
-        VendorWorkHours workingHours = workingHoursRepo.findByVendorIdAndDayOfWeek(vendorId, day)
+        VendorWorkHours workingHours = workingHoursRepo.findByVendorServiceIdAndDayOfWeek(vendorServiceId, day)
                 .orElseThrow(() -> new ResourceNotFoundException("No working hours defined"));
-
         if (workingHours.isClosed()) {
             return Collections.emptyList();
         }
@@ -73,11 +65,8 @@ public class VendorSlotService {
         LocalTime openTime = workingHours.getOpenTime();
         LocalTime closeTime = workingHours.getCloseTime();
 
-        // Get slots for this specific date
-        List<BookingSlot> slotsForDate = slotRepository.findByVendorIdAndSlotDate(vendorId, date);
-
-        // Filter out slots in break times
-        List<VendorBreakTime> breaks = breakRepo.findByVendorIdAndDayOfWeek(vendorId, day);
+        List<BookingSlot> slotsForDate = slotRepository.findByVendorServiceIdAndSlotDate(vendorServiceId, date);
+        List<VendorBreakTime> breaks = breakRepo.findByVendorServiceIdAndDayOfWeek(vendorServiceId, day);
 
         return slotsForDate.stream()
                 .filter(slot -> slot.getStartTime().compareTo(openTime) >= 0)
@@ -89,61 +78,52 @@ public class VendorSlotService {
 
     private boolean isSlotInBreak(BookingSlot slot, List<VendorBreakTime> breaks) {
         return breaks.stream().anyMatch(breakTime ->
-                !slot.getStartTime().isBefore(breakTime.getBreakStart()) &&
-                        slot.getStartTime().isBefore(breakTime.getBreakEnd()));
+                !slot.getStartTime().isBefore(breakTime.getBreakStart())
+                        && slot.getStartTime().isBefore(breakTime.getBreakEnd()));
     }
 
     @Transactional
-    public List<Map<String, Object>> getAvailableSlotsWithDetails(Integer vendorId, LocalDate date) {
-        List<BookingSlot> availableSlots = getAvailableSlots(vendorId, date);
-
-        return availableSlots.stream()
+    public List<Map<String, Object>> getAvailableSlotsWithDetails(Integer vendorServiceId, LocalDate date) {
+        return getAvailableSlots(vendorServiceId, date).stream()
                 .map(slot -> {
-                    Map<String, Object> slotInfo = new HashMap<>();
-                    slotInfo.put("slotId", slot.getId());
-                    slotInfo.put("startTime", slot.getStartTime());
-                    slotInfo.put("endTime", slot.getEndTime());
-                    slotInfo.put("maxBookings", slot.getMaxBookings());
-                    slotInfo.put("currentBookings", slot.getCurrentBookings());
-                    slotInfo.put("availableBookings", slot.getAvailableBookings());
-                    slotInfo.put("isAvailable", slot.isAvailable());
-                    return slotInfo;
+                    Map<String, Object> info = new HashMap<>();
+                    info.put("slotId", slot.getId());
+                    info.put("startTime", slot.getStartTime());
+                    info.put("endTime", slot.getEndTime());
+                    info.put("maxBookings", slot.getMaxBookings());
+                    info.put("currentBookings", slot.getCurrentBookings());
+                    info.put("availableBookings", slot.getAvailableBookings());
+                    info.put("isAvailable", slot.isAvailable());
+                    return info;
                 })
                 .toList();
     }
 
-    /**
-     * Books a slot for a vendor on a specific date and time.
-     *
-     * @param vendorId              The ID of the vendor.
-     * @param vehicleId             The vehicle ID.
-     * @param date                  The date for the booking.
-     * @param time                  The time for the booking.
-     * @param autoAddaId            The user ID.
-     * @param selectedServiceIds    The selected service IDs.
-     * @return The booking detail response.
-     */
     @Transactional
-    public BookingDetailResponse bookSlot(Integer vendorId, Integer vehicleId, LocalDate date, LocalTime time, String autoAddaId, String selectedServiceIds) {
+    public BookingDetailResponse bookSlot(Integer vendorServiceId, Integer vehicleId, LocalDate date,
+                                          LocalTime time, String autoAddaId, String selectedServiceIds) {
         Integer userId = Integer.parseInt(autoAddaId);
-        BookingSlot slot = slotService.findAvailableSlotByVendorIdAndTime(vendorId, date, time);
-
+        BookingSlot slot = slotService.findAvailableSlotByVendorServiceIdAndTime(vendorServiceId, date, time);
         if (!slot.isAvailable()) {
             throw new IllegalStateException("Slot is fully booked.");
         }
 
-        Vendor vendor = vendorRepository.findById(vendorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Vendor not found"));
+        VendorService service = vendorServiceRepository.findById(vendorServiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor service not found"));
+
+        String selected = selectedServiceIds != null && !selectedServiceIds.isBlank()
+                ? selectedServiceIds : String.valueOf(vendorServiceId);
 
         Booking booking = Booking.builder()
-                .vendor(vendor)
+                .vendor(service.getVendor())
+                .vendorService(service)
                 .scheduleDate(date)
                 .serviceStartTime(time)
                 .status(Status.CONFIRMED)
                 .comments("Booked via platform")
                 .vehicleId(vehicleId)
                 .customerId(userId)
-                .selectedOtherServiceIds(selectedServiceIds)
+                .selectedVendorServiceIds(selected)
                 .appointmentReferenceId(bookingService.generateBookingCode())
                 .slot(slot)
                 .insert_tms(DateHelper.dbDate())
@@ -151,25 +131,25 @@ public class VendorSlotService {
 
         slotService.incrementSlotBookings(slot.getId());
         Booking saved = bookingRepo.save(booking);
-        generateBookingServices(saved, selectedServiceIds, vendorId);
-        return appointmentDetailMapper.entityToResponse(saved);
+        generateBookingServices(saved, selected);
+        return bookingDetailMapper.entityToResponse(saved);
     }
 
-    private void generateBookingServices(Booking booking, String selectedServiceIds, Integer vendorId) {
+    private void generateBookingServices(Booking booking, String selectedServiceIds) {
         List<Integer> serviceIds = Arrays.stream(selectedServiceIds.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
                 .map(Integer::parseInt)
                 .toList();
 
-        List<VendorServiceBridge> services = vendorServiceBridgeRepository.findAllById(serviceIds);
-
+        List<VendorService> services = vendorServiceRepository.findAllById(serviceIds);
         List<BookedService> bookingServices = services.stream()
                 .map(service -> BookedService.builder()
                         .bookingId(booking.getId())
-                        .vendorServiceBridge(service)
+                        .vendorService(service)
                         .status(Status.PENDING)
                         .build())
                 .toList();
-
         bookedServiceRepository.saveAll(bookingServices);
     }
 
@@ -181,54 +161,42 @@ public class VendorSlotService {
         bookingRepo.save(booking);
     }
 
-    /**
-     * Retrieves all bookings made by a specific user.
-     *
-     * @param userId The ID of the user.
-     * @return A list of booking details for the user's bookings.
-     */
     @Transactional
     public List<BookingDetailResponse> getBookingsByUser(String userId) {
         Integer user = Integer.parseInt(userId);
-        List<Booking> list = bookingRepo.findByCustomerId(user)
-                .stream()
-                .sorted(Comparator.comparing(Booking::getServiceStartTime).reversed())
+        return bookingRepo.findByCustomerId(user).stream()
+                .sorted(Comparator.comparing(Booking::getServiceStartTime,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(bookingDetailMapper::entityToResponse)
                 .toList();
-        return list.stream().map(appointmentDetailMapper::entityToResponse).toList();
     }
 
     @Transactional
-    public BookingResponse editBooking(Integer vendorId, Integer vehicleId, Integer bookingId, LocalDateTime time, String autoAddaId) {
+    public BookingResponse editBooking(Integer vendorServiceId, Integer vehicleId, Integer bookingId,
+                                       LocalDateTime time, String autoAddaId) {
         Booking booking = bookingRepo.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("No such booking found to edit."));
 
-        if (vendorId != null && time != null) {
+        if (vendorServiceId != null && time != null) {
             LocalDate date = time.toLocalDate();
-            LocalTime time1 = time.toLocalTime();
-            Optional<Booking> existing = bookingRepo.findLockedSlot(vendorId, date, time1);
+            LocalTime t = time.toLocalTime();
+            VendorService service = vendorServiceRepository.findById(vendorServiceId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid vendor service ID."));
 
-            if (vendorRepository.findById(vendorId).isEmpty()) {
-                throw new IllegalArgumentException("Invalid vendor ID.");
-            }
-
+            Optional<Booking> existing = bookingRepo.findLockedSlot(vendorServiceId, date, t);
             if (existing.isPresent() && existing.get().getStatus() == Status.CONFIRMED) {
                 throw new IllegalStateException("Slot already booked.");
             }
-
-            booking.setVendor(vendorRepository.findById(vendorId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Vendor not found")));
+            booking.setVendorService(service);
+            booking.setVendor(service.getVendor());
         }
-
         if (vehicleId != null) {
             booking.setVehicleId(vehicleId);
         }
-
         if (time != null) {
             booking.setServiceStartTime(time.toLocalTime());
             booking.setScheduleDate(time.toLocalDate());
         }
-
-        Booking saved = bookingRepo.save(booking);
-        return bookingMapper.toBookingResponse(saved);
+        return bookingMapper.toBookingResponse(bookingRepo.save(booking));
     }
 }

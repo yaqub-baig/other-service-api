@@ -40,7 +40,7 @@ public class JobCardService {
         BookedService service = bookedServiceRepo.findById(request.getServiceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
-        Vendor vendor = vendorRepository.findById(request.getOtherServiceId())
+        Vendor vendor = vendorRepository.findById(request.getVendorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Garage not found"));
 
         Technician technician = technicianRepo.findById(request.getTechnicianId())

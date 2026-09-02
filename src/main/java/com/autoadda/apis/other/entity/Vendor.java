@@ -12,6 +12,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A vendor company. Company-level identity only — everything specific to a
+ * service the vendor offers (working hours, capacity, trade licence, branch
+ * address, branch images, booking slots) lives on {@link VendorService}.
+ */
 @Entity
 @Getter
 @Setter
@@ -45,37 +50,20 @@ public class Vendor {
     @Column(name = "mobile_number")
     private String mobileNumber;
 
-    @Column(name = "trade_licence_number", unique = true)
-    private String tradeLicenceNumber;
-
-    @Column(name = "opening_time")
-    private String openingTime;
-
-    @Column(name = "closing_time")
-    private String closingTime;
-
-    @Column(name = "working_days")
-    private String workingDays;
-
     @OneToOne
     @JoinColumn(name = "company_logo")
     private MediaFile companyLogo;
 
+    /** Registered / HQ address. Each service may override with its own branch address. */
     @OneToOne
     private Location companyLocation;
 
     @Column(name = "account_status")
     private Status accountStatus;
 
-    @Column(name = "service_type")
-    private String serviceType;
-
-    @Column(name = "concurrent_appointment_capacity")
-    private Integer concurrentAppointmentCapacity;
-
     @JsonManagedReference("vendor-services")
     @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<VendorServiceBridge> services = new ArrayList<>();
+    private List<VendorService> services = new ArrayList<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -86,24 +74,12 @@ public class Vendor {
     private boolean isActive;
 
     @OneToMany
-    @JoinColumn(name = "company_trade_license")
-    private List<MediaFile> tradeLicenseAttachment = new ArrayList<> ( );
-
-    @OneToMany
     @JoinColumn(name = "company_vat_certificate")
-    private List<MediaFile> vatCertificate = new ArrayList<> ( );
-
-
-    @OneToMany
-    @JoinColumn(name = "company_images")
-    private List<MediaFile> companyImages = new ArrayList<> ( );
-
-
+    private List<MediaFile> vatCertificate = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
         isActive = true;
-        createdAt = LocalDateTime.now ( );
+        createdAt = LocalDateTime.now();
     }
-
 }
