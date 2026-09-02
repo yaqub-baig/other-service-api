@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Car-wash-specific attributes for a {@link Vendor}.
+ * Car-wash-specific attributes for one {@link VendorService}.
  *
  * <p>Template for the per-service detail table: shared vendor columns live on
- * {@code vendor}; anything specific to one service type lives in a 1:1 detail
- * table keyed by {@code vendor_id}. Each new service adds its own
- * {@code <service>_details} entity the same way.</p>
+ * {@code vendor}, shared service columns on {@code vendor_service_bridge}, and
+ * anything specific to one service type in a 1:1 detail table keyed by
+ * {@code vendor_service_id}.</p>
  */
 @Entity
 @Table(name = "car_wash_details")
@@ -28,13 +28,13 @@ import lombok.Setter;
 public class CarWashDetails {
 
     @Id
-    @Column(name = "vendor_id")
-    private Integer vendorId;
+    @Column(name = "vendor_service_id")
+    private Integer vendorServiceId;
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
-    @JoinColumn(name = "vendor_id")
-    private Vendor vendor;
+    @JoinColumn(name = "vendor_service_id")
+    private VendorService vendorService;
 
     /** Number of physical wash bays. */
     @Column(name = "bay_count")

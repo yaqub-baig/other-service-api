@@ -49,6 +49,10 @@ public class Booking {
     @JoinColumn(name = "vendor_id")
     private Vendor vendor;
 
+    @ManyToOne
+    @JoinColumn(name = "vendor_service_id")
+    private VendorService vendorService;
+
     @Column(name = "selected_vendor_service")
     private String selectedVendorServiceIds;
 

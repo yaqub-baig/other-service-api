@@ -40,7 +40,7 @@ public class BookedService {
 
     @ManyToOne
     @JoinColumn(name = "vendor_service_bridge_id", referencedColumnName = "id")
-    private VendorServiceBridge vendorServiceBridge;
+    private VendorService vendorService;
 
     @Column(name = "price")
     private Double price;

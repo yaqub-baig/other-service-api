@@ -10,5 +10,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface VendorHolidayOverrideRepository extends JpaRepository<VendorHolidayOverride, Integer> {
-    Optional<VendorHolidayOverride> findByVendorIdAndDate(Integer vendorId, LocalDate date);
+    Optional<VendorHolidayOverride> findByVendorServiceIdAndDate(Integer vendorServiceId, LocalDate date);
+
+    java.util.List<VendorHolidayOverride> findByVendorServiceId(Integer vendorServiceId);
 }

@@ -2,9 +2,11 @@ package com.autoadda.apis.other.service.vendor;
 
 import com.autoadda.apis.other.entity.CarWashDetails;
 import com.autoadda.apis.other.repository.CarWashDetailsRepository;
-import com.autoadda.apis.other.repository.VendorRepository;
+import com.autoadda.apis.other.repository.VendorServiceRepository;
 import com.autoadda.apis.other.request.vendor.CarWashVendorRequest;
+import com.autoadda.apis.other.request.vendor.CarWashVendorServiceRequest;
 import com.autoadda.apis.other.response.VendorProfileResponse;
+import com.autoadda.apis.other.response.VendorServiceResponse;
 import com.autoadda.apis.other.response.vendor.CarWashDetailsResponse;
 import com.autoadda.apis.other.response.vendor.CarWashVendorResponse;
 import com.autoadda.apis.other.service.VendorManagementService;
@@ -17,12 +19,12 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Car Wash orchestration: delegates the shared vendor lifecycle to
- * {@link VendorManagementService} and owns the {@code car_wash_details} table.
+ * Car Wash orchestration: delegates the shared vendor/service lifecycle to
+ * {@link VendorManagementService} and owns the {@code car_wash_details} table
+ * (keyed by vendorService id).
  *
- * <p>This is the per-service template. A new service copies this class,
- * swapping the {@code VendorServiceType}, request/response types and detail
- * repository.</p>
+ * <p>Per-service template — a new service copies this class, swapping the
+ * {@code VendorServiceType}, request/response types and detail repository.</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -32,48 +34,63 @@ public class CarWashVendorService {
 
     private final VendorManagementService vendorManagementService;
     private final CarWashDetailsRepository detailsRepository;
-    private final VendorRepository vendorRepository;
+    private final VendorServiceRepository vendorServiceRepository;
 
+    /** Create the company and its first car-wash service in one call. */
     @Transactional
     public CarWashVendorResponse create(CarWashVendorRequest request, String autoAddaId) {
-        VendorProfileResponse profile = vendorManagementService.createVendor(request, TYPE, autoAddaId);
-        CarWashDetails details = upsertDetails(profile.getId(), request);
-        return new CarWashVendorResponse(profile, toResponse(details));
+        VendorProfileResponse company = vendorManagementService.createCompany(request.getCompany(), autoAddaId);
+        VendorServiceResponse service = vendorManagementService.addService(
+                company.getId(), request.getService(), TYPE, autoAddaId);
+        CarWashDetails details = upsertDetails(service.getId(), request.getService());
+        return new CarWashVendorResponse(company, service, toResponse(details));
+    }
+
+    /** Add a car-wash service to an existing vendor company. */
+    @Transactional
+    public CarWashVendorResponse addToCompany(Integer vendorId, CarWashVendorServiceRequest request, String autoAddaId) {
+        VendorServiceResponse service = vendorManagementService.addService(vendorId, request, TYPE, autoAddaId);
+        CarWashDetails details = upsertDetails(service.getId(), request);
+        VendorProfileResponse company = vendorManagementService.getVendorById(vendorId).orElse(null);
+        return new CarWashVendorResponse(company, service, toResponse(details));
     }
 
     @Transactional
-    public CarWashVendorResponse update(Integer id, CarWashVendorRequest request) {
-        VendorProfileResponse profile = vendorManagementService.updateVendor(id, request);
-        CarWashDetails details = upsertDetails(id, request);
-        return new CarWashVendorResponse(profile, toResponse(details));
+    public CarWashVendorResponse updateService(Integer vendorServiceId, CarWashVendorServiceRequest request) {
+        VendorServiceResponse service = vendorManagementService.updateService(vendorServiceId, request);
+        CarWashDetails details = upsertDetails(vendorServiceId, request);
+        VendorProfileResponse company = service.getVendorId() != null
+                ? vendorManagementService.getVendorById(service.getVendorId()).orElse(null) : null;
+        return new CarWashVendorResponse(company, service, toResponse(details));
     }
 
     @Transactional(readOnly = true)
     public List<CarWashVendorResponse> getMine(String autoAddaId) {
-        return vendorManagementService.getVendorsByOwnerIdAndType(autoAddaId, TYPE).stream()
+        return vendorManagementService.getServicesByOwnerAndType(autoAddaId, TYPE).stream()
                 .map(this::withDetails)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<CarWashVendorResponse> getAll() {
-        return vendorManagementService.findVendorsByServiceType(TYPE.name()).stream()
+        return vendorManagementService.getServicesByType(TYPE).stream()
                 .map(this::withDetails)
                 .toList();
     }
 
-    private CarWashVendorResponse withDetails(VendorProfileResponse profile) {
-        CarWashDetailsResponse details = detailsRepository.findById(profile.getId())
+    private CarWashVendorResponse withDetails(VendorServiceResponse service) {
+        CarWashDetailsResponse details = detailsRepository.findById(service.getId())
                 .map(this::toResponse)
                 .orElse(null);
-        return new CarWashVendorResponse(profile, details);
+        VendorProfileResponse company = service.getVendorId() != null
+                ? vendorManagementService.getVendorById(service.getVendorId()).orElse(null) : null;
+        return new CarWashVendorResponse(company, service, details);
     }
 
-    /** Creates the detail row on first call, patches the provided fields on later calls. */
-    private CarWashDetails upsertDetails(Integer vendorId, CarWashVendorRequest request) {
-        CarWashDetails details = detailsRepository.findById(vendorId).orElseGet(() -> {
+    private CarWashDetails upsertDetails(Integer vendorServiceId, CarWashVendorServiceRequest request) {
+        CarWashDetails details = detailsRepository.findById(vendorServiceId).orElseGet(() -> {
             CarWashDetails fresh = new CarWashDetails();
-            fresh.setVendor(vendorRepository.getReferenceById(vendorId));
+            fresh.setVendorService(vendorServiceRepository.getReferenceById(vendorServiceId));
             return fresh;
         });
 
@@ -90,6 +107,9 @@ public class CarWashVendorService {
     }
 
     private CarWashDetailsResponse toResponse(CarWashDetails d) {
+        if (d == null) {
+            return null;
+        }
         return CarWashDetailsResponse.builder()
                 .bayCount(d.getBayCount())
                 .averageWashDurationMinutes(d.getAverageWashDurationMinutes())

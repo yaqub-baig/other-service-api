@@ -4,22 +4,13 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Onboarding / edit form for a Car Wash vendor.
- *
- * <p>Inherits the shared basic form from {@link BaseVendorRequest} and adds the
- * car-wash-specific fields that are persisted to {@code car_wash_details}.
- * On a 2-step wizard, step 1 sends the base fields and step 2 sends these.</p>
+ * Combined convenience body for {@code POST /vendors/car-wash}: create the
+ * company and its first car-wash service in one call.
  */
 @Getter
 @Setter
-public class CarWashVendorRequest extends BaseVendorRequest {
+public class CarWashVendorRequest {
 
-    private Integer bayCount;
-    private Integer averageWashDurationMinutes;
-    private Boolean mobileService;
-    private Boolean selfServiceAvailable;
-    private Boolean expressWashAvailable;
-    private Boolean interiorDetailingAvailable;
-    private Boolean waterRecycling;
-    private Boolean acceptsWalkIns;
+    private VendorCompanyRequest company;
+    private CarWashVendorServiceRequest service;
 }

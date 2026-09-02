@@ -10,6 +10,7 @@ import java.util.Map;
 @Builder
 public class MonthlyAvailabilityResponse {
     private Integer vendorId;
+    private Integer vendorServiceId;
     private Integer year;
     private Integer month;
     private Map<LocalDate, Boolean> dailyAvailability;

@@ -1,12 +1,13 @@
 package com.autoadda.apis.other.response.vendor;
 
 import com.autoadda.apis.other.response.VendorProfileResponse;
+import com.autoadda.apis.other.response.VendorServiceResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Car Wash vendor view: the shared vendor profile plus the car-wash detail block.
+ * Car Wash view: the vendor company, the car-wash service, and its detail block.
  */
 @Data
 @NoArgsConstructor
@@ -14,5 +15,6 @@ import lombok.NoArgsConstructor;
 public class CarWashVendorResponse {
 
     private VendorProfileResponse vendor;
+    private VendorServiceResponse service;
     private CarWashDetailsResponse carWashDetails;
 }

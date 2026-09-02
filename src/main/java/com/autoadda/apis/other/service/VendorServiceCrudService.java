@@ -1,14 +1,14 @@
 package com.autoadda.apis.other.service;
 
 
-import com.autoadda.apis.other.entity.VendorServiceBridge;
+import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
-import com.autoadda.apis.other.mapper.VendorServiceBridgeMapper;
+import com.autoadda.apis.other.mapper.VendorServiceMapper;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
-import com.autoadda.apis.other.repository.VendorServiceBridgeRepository;
+import com.autoadda.apis.other.repository.VendorServiceRepository;
 import com.autoadda.apis.other.repository.VendorRepository;
 import com.autoadda.apis.other.request.VendorServiceRequest;
-import com.autoadda.apis.other.response.VendorServiceBridgeResponse;
+import com.autoadda.apis.other.response.VendorServiceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,14 +16,14 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class VendorServiceBridgeService {
+public class VendorServiceCrudService {
     private final VendorRepository vendorRepository;
     private final ServiceCategoryRepository serviceCategoryRepository;
-    private final VendorServiceBridgeRepository vendorServiceBridgeRepository;
-    private final VendorServiceBridgeMapper bridgeMapper;
+    private final VendorServiceRepository vendorServiceRepository;
+    private final VendorServiceMapper bridgeMapper;
 
-    private VendorServiceBridge mapToEntity(VendorServiceRequest request) {
-        VendorServiceBridge bridge = new VendorServiceBridge();
+    private VendorService mapToEntity(VendorServiceRequest request) {
+        VendorService bridge = new VendorService();
         bridge.setIsActive(request.isActive());
         bridge.setVendor(vendorRepository.findById(request.getVendorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor not found")));
@@ -32,49 +32,49 @@ public class VendorServiceBridgeService {
         return bridge;
     }
 
-    public VendorServiceBridgeResponse createVendorServiceBridge(VendorServiceRequest request) {
-        VendorServiceBridge saved = createVendorServiceBridgeEntity(request);
+    public VendorServiceResponse createVendorService(VendorServiceRequest request) {
+        VendorService saved = createVendorServiceEntity(request);
         return bridgeMapper.toResponse(saved);
     }
 
     /**
      * Internal method for creating and returning the entity (used by VendorManagementService).
      */
-    public VendorServiceBridge createVendorServiceBridgeEntity(VendorServiceRequest request) {
-        return vendorServiceBridgeRepository.save(mapToEntity(request));
+    public VendorService createVendorServiceEntity(VendorServiceRequest request) {
+        return vendorServiceRepository.save(mapToEntity(request));
     }
 
-    public VendorServiceBridgeResponse getVendorServiceBridgeById(Integer id) {
-        VendorServiceBridge bridge = vendorServiceBridgeRepository.findById(id)
+    public VendorServiceResponse getVendorServiceById(Integer id) {
+        VendorService bridge = vendorServiceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor service bridge not found with id: " + id));
         return bridgeMapper.toResponse(bridge);
     }
 
-    public VendorServiceBridgeResponse updateVendorServiceBridge(Integer id, VendorServiceBridge updated) {
-        VendorServiceBridge existing = vendorServiceBridgeRepository.findById(id)
+    public VendorServiceResponse updateVendorService(Integer id, VendorService updated) {
+        VendorService existing = vendorServiceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor service bridge not found with ID: " + id));
 
         existing.setIsActive(updated.getIsActive());
         existing.setServiceCategory(updated.getServiceCategory());
         existing.setVendor(updated.getVendor());
-        VendorServiceBridge saved = vendorServiceBridgeRepository.save(existing);
+        VendorService saved = vendorServiceRepository.save(existing);
         return bridgeMapper.toResponse(saved);
     }
 
-    public void deleteVendorServiceBridge(Integer id) {
-        if (!vendorServiceBridgeRepository.existsById(id)) {
+    public void deleteVendorService(Integer id) {
+        if (!vendorServiceRepository.existsById(id)) {
             throw new ResourceNotFoundException("Vendor service bridge not found with id: " + id);
         }
-        vendorServiceBridgeRepository.deleteById(id);
+        vendorServiceRepository.deleteById(id);
     }
 
-    public List<VendorServiceBridgeResponse> getAllVendorServiceBridges() {
-        List<VendorServiceBridge> bridges = vendorServiceBridgeRepository.findAll();
+    public List<VendorServiceResponse> getAllVendorServices() {
+        List<VendorService> bridges = vendorServiceRepository.findAll();
         return bridgeMapper.toResponseList(bridges);
     }
 
-    public List<VendorServiceBridgeResponse> getByVendorId(Integer vendorId) {
-        List<VendorServiceBridge> bridges = vendorServiceBridgeRepository.findByVendorId(vendorId);
+    public List<VendorServiceResponse> getByVendorId(Integer vendorId) {
+        List<VendorService> bridges = vendorServiceRepository.findByVendorId(vendorId);
         return bridgeMapper.toResponseList(bridges);
     }
 }

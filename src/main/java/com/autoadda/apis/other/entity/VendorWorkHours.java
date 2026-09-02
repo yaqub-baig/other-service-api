@@ -28,8 +28,8 @@ public class VendorWorkHours {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @ManyToOne
-    @JoinColumn(name = "vendor_id", referencedColumnName = "id")
-    private Vendor vendor;
+    @JoinColumn(name = "vendor_service_id", referencedColumnName = "id")
+    private VendorService vendorService;
     @Enumerated(EnumType.STRING)
     private DayOfWeek dayOfWeek;
     private LocalTime openTime;

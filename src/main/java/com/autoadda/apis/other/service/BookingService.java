@@ -5,9 +5,8 @@ import com.autoadda.apis.other.entity.BookedService;
 import com.autoadda.apis.other.entity.BookingStatusActivity;
 import com.autoadda.apis.other.entity.JobCard;
 import com.autoadda.apis.other.entity.Vendor;
-import com.autoadda.apis.other.entity.VendorServiceBridge;
+import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.CustomerNotFoundException;
-import com.autoadda.apis.other.exception.VendorNotFoundException;
 import com.autoadda.apis.other.exception.VendorNotFoundException;
 import com.autoadda.apis.other.mapper.BookingMapper;
 import com.autoadda.apis.other.mapper.BookingDetailMapper;
@@ -41,7 +40,7 @@ public class BookingService {
     private final BookingStatusActivityRepository appointmentActivityRepo;
     private final BookedServiceRepository serviceRepo;
     private final VendorRepository vendorRepository;
-    private final VendorServiceBridgeRepository vendorServiceBridgeRepo;
+    private final VendorServiceRepository vendorServiceRepo;
     private final JobCardService jobCardService;
     private final BookingDetailMapper bookingDetailMapper;
     private final BusinessValidator validator;
@@ -60,13 +59,15 @@ public class BookingService {
     public BookingResponse createCustomerBooking(CustomerBookingRequest request)
             throws CustomerNotFoundException, VendorNotFoundException {
 
-        // Vendor is mandatory
-        Vendor vendor = vendorRepository.findById(request.getOtherServiceId())
-                .orElseThrow(() -> new VendorNotFoundException("Vendor not found"));
+        // A specific vendor service is mandatory
+        VendorService vendorService = vendorServiceRepo.findById(request.getVendorServiceId())
+                .orElseThrow(() -> new VendorNotFoundException("Vendor service not found"));
+        Vendor vendor = vendorService.getVendor();
 
         // Create booking
         Booking booking = Booking.builder()
                 .vendor(vendor)
+                .vendorService(vendorService)
                 .vehicleId(request.getVehicleId())
                 .customerId(request.getCustomerId())
                 .scheduleDate(request.getScheduleDate())
@@ -89,11 +90,11 @@ public class BookingService {
             List<BookedService> services = request.getServiceIds().stream()
                     .filter(Objects::nonNull)
                     .map(serviceId -> {
-                        VendorServiceBridge bridge = vendorServiceBridgeRepo.findById(serviceId)
+                        VendorService bridge = vendorServiceRepo.findById(serviceId)
                                 .orElseThrow(() -> new RuntimeException("Service not found"));
                         return BookedService.builder()
                                 .bookingId(savedBooking.getId())
-                                .vendorServiceBridge(bridge)
+                                .vendorService(bridge)
                                 .status(Status.NEW)
                                 .build();
                     })
