@@ -48,7 +48,7 @@ public class BookingMapper {
             response.setCustomerId(b.getCustomerId());
             response.setVehicleId(b.getVehicleId());
 
-            // Map nested OsAppointmentSlot
+            // Map nested BookingSlot
             if (b.getSlot() != null) {
                 response.setSlot(bookingSlotMapper.toResponse(b.getSlot()));
             }

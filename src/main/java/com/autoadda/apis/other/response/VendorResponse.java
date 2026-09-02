@@ -29,6 +29,5 @@ public class VendorResponse {
     private LocalDateTime createdAt;
     private Integer companyOwnerId;
     private Boolean isActive;
-    private List<VendorServiceSummaryResponse> services;
     private List<MediaFile> vatCertificate;
 }
