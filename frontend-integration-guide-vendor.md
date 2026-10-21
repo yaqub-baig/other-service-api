@@ -651,12 +651,12 @@ GET /quotations/vendor/stats?vendorId=1
 
 ## 5. Booking Management (Vendor View)
 
-**Base Path:** `/os-appointments`
+**Base Path:** `/bookings`
 
 ### 5.1 Get My Appointments
 
 ```
-GET /os-appointments/other-service/{otherServiceId}?status=PENDING
+GET /bookings/other-service/{otherServiceId}?status=PENDING
 ```
 
 | Param          | Type    | Description                                    |
@@ -698,13 +698,13 @@ GET /os-appointments/other-service/{otherServiceId}?status=PENDING
 ### 5.2 Get Appointment Details
 
 ```
-GET /os-appointments/{appointmentId}
+GET /bookings/{appointmentId}
 ```
 
 ### 5.3 Update Appointment Status
 
 ```
-PUT /os-appointments/status
+PUT /bookings/status
 Content-Type: application/json
 ```
 
@@ -743,7 +743,7 @@ REQUESTED -> CONFIRMED -> SCHEDULED -> WORK_INPROGRESS -> COMPLETED -> DELIVERED
 ### 5.4 Get Available Slots (Manage Capacity)
 
 ```
-GET /os-appointments/{otherServiceId}/available-slots?date=25/04/2026
+GET /bookings/{otherServiceId}/available-slots?date=25/04/2026
 ```
 
 ---
@@ -882,12 +882,12 @@ const offering = {
 ### Journey 4: Handle a Booking
 
 ```
-1. View incoming bookings         GET /os-appointments/other-service/{vendorId}?status=REQUESTED
-2. View booking details           GET /os-appointments/{appointmentId}
-3. Confirm booking                PUT /os-appointments/status  { status: "CONFIRMED" }
-4. Start work                     PUT /os-appointments/status  { status: "WORK_INPROGRESS" }
-5. Complete                       PUT /os-appointments/status  { status: "COMPLETED" }
-6. Deliver                        PUT /os-appointments/status  { status: "DELIVERED" }
+1. View incoming bookings         GET /bookings/other-service/{vendorId}?status=REQUESTED
+2. View booking details           GET /bookings/{appointmentId}
+3. Confirm booking                PUT /bookings/status  { status: "CONFIRMED" }
+4. Start work                     PUT /bookings/status  { status: "WORK_INPROGRESS" }
+5. Complete                       PUT /bookings/status  { status: "COMPLETED" }
+6. Deliver                        PUT /bookings/status  { status: "DELIVERED" }
 ```
 
 ### Journey 5: Manage Stock & Listings
@@ -1243,7 +1243,7 @@ export const getQuotationStats = (vendorId) =>
 // api/vendor/bookingApi.js
 import api from '../axiosInstance';
 
-const BOOKING_BASE = '/os-appointments';
+const BOOKING_BASE = '/bookings';
 
 // Get my appointments (by vendor ID)
 export const getMyAppointments = (otherServiceId, status = null) =>

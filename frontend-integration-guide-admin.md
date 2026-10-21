@@ -836,12 +836,12 @@ const logoId = uploaded.data[0].id;
 
 ## 9. Booking Management (Admin View)
 
-**Base Path:** `/os-appointments`
+**Base Path:** `/bookings`
 
 ### 9.1 Get Appointments by Vendor/Service
 
 ```
-GET /os-appointments/other-service/{otherServiceId}?status=PENDING
+GET /bookings/other-service/{otherServiceId}?status=PENDING
 ```
 
 | Param          | Type    | Description                      |
@@ -852,13 +852,13 @@ GET /os-appointments/other-service/{otherServiceId}?status=PENDING
 ### 9.2 Get Appointment Details
 
 ```
-GET /os-appointments/{appointmentId}
+GET /bookings/{appointmentId}
 ```
 
 ### 9.3 Update Appointment Status
 
 ```
-PUT /os-appointments/status
+PUT /bookings/status
 Content-Type: application/json
 ```
 
@@ -921,9 +921,9 @@ Content-Type: application/json
 
 **3. Handle Bookings:**
 ```
-1. View bookings for vendor     GET /os-appointments/other-service/{id}
-2. View booking details         GET /os-appointments/{id}
-3. Update status                PUT /os-appointments/status
+1. View bookings for vendor     GET /bookings/other-service/{id}
+2. View booking details         GET /bookings/{id}
+3. Update status                PUT /bookings/status
 ```
 
 ---
@@ -1382,7 +1382,7 @@ export const deleteFile = (id) =>
 // api/admin/bookingAdminApi.js
 import api from '../axiosInstance';
 
-const BOOKING_BASE = '/os-appointments';
+const BOOKING_BASE = '/bookings';
 
 // Get appointments by vendor/service
 export const getAppointmentsByVendor = (otherServiceId, status = null) =>

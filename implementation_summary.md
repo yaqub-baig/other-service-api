@@ -293,14 +293,14 @@ QuotationRequest (customer inquiry)
 ---
 
 #### 3.2.5 BookingController (Vendor Endpoints)
-**Base Path:** `/os-appointments`
+**Base Path:** `/bookings`
 **Purpose:** Manage appointments and bookings
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/os-appointments/other-service/{otherServiceId}` | Get appointments for a vendor/service |
-| `PUT` | `/os-appointments/status` | Update appointment status |
-| `GET` | `/os-appointments/{appointmentId}` | Get appointment details |
+| `GET` | `/bookings/other-service/{otherServiceId}` | Get appointments for a vendor/service |
+| `PUT` | `/bookings/status` | Update appointment status |
+| `GET` | `/bookings/{appointmentId}` | Get appointment details |
 
 **Total: 3 vendor-specific endpoints**
 
@@ -355,17 +355,17 @@ QuotationRequest (customer inquiry)
 ---
 
 #### 3.3.3 BookingController (Customer Endpoints)
-**Base Path:** `/os-appointments`
+**Base Path:** `/bookings`
 **Purpose:** Book appointments and manage bookings
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/os-appointments` | Create a customer appointment |
-| `POST` | `/os-appointments/{serviceId}/book` | Book an appointment slot |
-| `GET` | `/os-appointments/{otherServiceId}/available-slots` | Get available slots |
-| `GET` | `/os-appointments/user/bookings` | Get user's bookings |
-| `DELETE` | `/os-appointments/{appointmentId}/cancel` | Cancel an appointment |
-| `PUT` | `/os-appointments/edit/appointment` | Edit an appointment |
+| `POST` | `/bookings` | Create a customer appointment |
+| `POST` | `/bookings/{serviceId}/book` | Book an appointment slot |
+| `GET` | `/bookings/{otherServiceId}/available-slots` | Get available slots |
+| `GET` | `/bookings/user/bookings` | Get user's bookings |
+| `DELETE` | `/bookings/{appointmentId}/cancel` | Cancel an appointment |
+| `PUT` | `/bookings/edit/appointment` | Edit an appointment |
 
 **Total: 6 customer-specific endpoints** (9 total in BookingController)
 
@@ -581,20 +581,20 @@ Step 6: Submit Quotation Response
 
 Step 7: Manage Bookings
 ──────────────────────────────────────────────────
-    GET /os-appointments/other-service/{vendorServiceId}?status=PENDING
+    GET /bookings/other-service/{vendorServiceId}?status=PENDING
                 │
                 ▼
 
 Step 8: Update Booking Status & Complete Service
 ──────────────────────────────────────────────────
-    PUT /os-appointments/status
+    PUT /bookings/status
     {
       "appointmentId": 456,
       "status": "IN_PROGRESS"
     }
                 │
                 ▼
-    PUT /os-appointments/status
+    PUT /bookings/status
     {
       "appointmentId": 456,
       "status": "COMPLETED"
@@ -706,7 +706,7 @@ Step 7: Create Booking (from quote or direct)
     }
 
     // OR direct booking:
-    POST /os-appointments
+    POST /bookings
     {
       "customerId": 100,
       "vendorId": 1,
@@ -720,14 +720,14 @@ Step 7: Create Booking (from quote or direct)
 
 Step 8: Track Booking Status
 ──────────────────────────────────────────────────
-    GET /os-appointments/user/bookings
-    GET /os-appointments/{appointmentId}
+    GET /bookings/user/bookings
+    GET /bookings/{appointmentId}
                 │
                 ▼
 
 Step 9: Cancel Booking if Needed
 ──────────────────────────────────────────────────
-    DELETE /os-appointments/{appointmentId}/cancel
+    DELETE /bookings/{appointmentId}/cancel
 ```
 
 ---
@@ -883,7 +883,7 @@ POST /quotations/vendor/quote
 
 ### Booking Creation Example
 ```json
-POST /os-appointments
+POST /bookings
 {
   "customerId": 100,
   "vendorId": 1,
