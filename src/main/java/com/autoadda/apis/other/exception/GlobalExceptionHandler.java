@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MultipartException;
 
 import com.autoadda.apis.other.response.GenericResponse;
+import com.autoadda.apis.other.validation.AttributeValidationException;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -142,6 +143,14 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<GenericResponse> handleMemberNotFound(MemberNotFoundException ex) {
 		log.warn("Member not found", ex);
 		return buildResponse(ex, HttpStatus.NOT_FOUND, ErrorMessage.ERROR_NOT_FOUND);
+	}
+
+	@ExceptionHandler(AttributeValidationException.class)
+	public ResponseEntity<GenericResponse> handleAttributeValidation(AttributeValidationException ex) {
+		log.warn("Attribute validation failed: {}", ex.getErrors());
+		return ResponseEntity.status(HttpStatus.CREATED).body(GenericResponse.builder().status("failed")
+				.code(String.valueOf(HttpStatus.BAD_REQUEST.value())).message(ex.getMessage())
+				.body(ex.getErrors()).build());
 	}
 
 	@ExceptionHandler(BusinessException.class)

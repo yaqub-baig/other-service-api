@@ -39,6 +39,8 @@ public class ServiceAttributeDefinitionMapper {
             response.setDescription(e.getDescription());
             response.setDefaultValue(e.getDefaultValue());
             response.setValidationRules(e.getValidationRules());
+            response.setOptions(e.getOptions());
+            response.setInputContext(e.getInputContext());
             response.setIsActive(e.getIsActive());
             response.setCreatedAt(e.getCreatedAt());
             response.setUpdatedAt(e.getUpdatedAt());

@@ -1,6 +1,7 @@
 package com.autoadda.apis.other.entity;
 
 import com.autoadda.apis.other.util.DataType;
+import com.autoadda.apis.other.util.InputContext;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -111,6 +112,22 @@ public class ServiceAttributeDefinition {
      */
     @Column(name = "validation_rules", columnDefinition = "JSON")
     private String validationRules;
+
+    /**
+     * Allowed values for SINGLE_SELECT / MULTI_SELECT, as a JSON array of
+     * {"value": "...", "label": "...", "labelAr": "..."} objects (plain strings are accepted too).
+     */
+    @Column(name = "options", columnDefinition = "JSON")
+    private String options;
+
+    /**
+     * Who supplies the value. Offerings enforce "required" only for PROVIDER and BOTH attributes;
+     * CUSTOMER attributes are what a customer picks when booking.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "input_context", nullable = false, length = 20)
+    @Builder.Default
+    private InputContext inputContext = InputContext.BOTH;
 
     /**
      * Whether this attribute definition is active.

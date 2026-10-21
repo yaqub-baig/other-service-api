@@ -1,9 +1,11 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import com.autoadda.apis.other.entity.ServiceOffering;
 import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
+import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.ServiceAttributeDefinitionMapper;
 import com.autoadda.apis.other.mapper.ServiceOfferingMapper;
@@ -15,7 +17,10 @@ import com.autoadda.apis.other.response.ServiceAttributeDefinitionResponse;
 import com.autoadda.apis.other.response.ServiceOfferingResponse;
 import com.autoadda.apis.other.util.PricingType;
 import com.autoadda.apis.other.util.StockStatus;
+import com.autoadda.apis.other.validation.AttributeValidator;
+import com.autoadda.apis.other.validation.FieldSpecFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +47,9 @@ public class ServiceOfferingService {
     private final ServiceOfferingMapper offeringMapper;
     private final ServiceAttributeDefinitionMapper attributeMapper;
     private final ServiceCatalogService serviceCatalogService;
+    private final ServiceAttributeDefinitionService attributeDefinitionService;
+    private final AttributeValidator attributeValidator;
+    private final FieldSpecFactory fieldSpecFactory;
 
     /**
      * Create a new service offering.
@@ -61,10 +69,14 @@ public class ServiceOfferingService {
             throw new AlreadyExistsException("Offering with SKU '" + sku + "' already exists");
         }
 
-        // Validate filterable attributes against attribute definitions
+        CatalogService catalogService = request.getServiceId() != null
+                ? serviceCatalogService.getForCategory(request.getServiceId(), vendorService.getServiceCategory().getId())
+                : null;
+
+        // Always validated, so required attributes cannot be skipped by sending none
+        validateAttributes(vendorService.getServiceCategory().getId(), catalogService, request.getFilterableAttributes());
         String filterableAttributesJson = null;
         if (request.getFilterableAttributes() != null && !request.getFilterableAttributes().isEmpty()) {
-            validateFilterableAttributes(vendorService.getServiceCategory().getId(), request.getFilterableAttributes());
             filterableAttributesJson = convertToJson(request.getFilterableAttributes());
         }
 
@@ -82,9 +94,7 @@ public class ServiceOfferingService {
 
         ServiceOffering offering = ServiceOffering.builder()
                 .vendorService(vendorService)
-                .catalogService(request.getServiceId() != null
-                        ? serviceCatalogService.getForCategory(request.getServiceId(), vendorService.getServiceCategory().getId())
-                        : null)
+                .catalogService(catalogService)
                 .offeringName(request.getOfferingName())
                 .shortDescription(request.getShortDescription())
                 .description(request.getDescription())
@@ -262,9 +272,16 @@ public class ServiceOfferingService {
             offering.setSku(request.getSku());
         }
 
+        Integer categoryId = offering.getVendorService().getServiceCategory().getId();
         if (request.getServiceId() != null) {
-            offering.setCatalogService(serviceCatalogService.getForCategory(
-                    request.getServiceId(), offering.getVendorService().getServiceCategory().getId()));
+            offering.setCatalogService(serviceCatalogService.getForCategory(request.getServiceId(), categoryId));
+        }
+        // Re-check attributes when they change, or when the service (and so its attribute set) changes
+        if (request.getFilterableAttributes() != null || request.getServiceId() != null) {
+            Map<String, Object> attributes = request.getFilterableAttributes() != null
+                    ? request.getFilterableAttributes()
+                    : readJsonMap(offering.getFilterableAttributes());
+            validateAttributes(categoryId, offering.getCatalogService(), attributes);
         }
         if (request.getOfferingName() != null) {
             offering.setOfferingName(request.getOfferingName());
@@ -300,9 +317,6 @@ public class ServiceOfferingService {
             offering.setQuantityAvailable(request.getQuantityAvailable());
         }
         if (request.getFilterableAttributes() != null) {
-            validateFilterableAttributes(
-                    offering.getVendorService().getServiceCategory().getId(),
-                    request.getFilterableAttributes());
             offering.setFilterableAttributes(convertToJson(request.getFilterableAttributes()));
         }
         if (request.getSpecifications() != null) {
@@ -417,18 +431,18 @@ public class ServiceOfferingService {
      * Get attribute definitions for a category (helper for frontend forms).
      */
     @Transactional(readOnly = true)
-    public List<ServiceAttributeDefinitionResponse> getAttributeDefinitions(Integer categoryId) {
-        List<ServiceAttributeDefinition> attributes = attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
-        return attributeMapper.toResponseList(attributes);
+    public List<ServiceAttributeDefinitionResponse> getAttributeDefinitions(Integer categoryId, Integer serviceId) {
+        return attributeMapper.toResponseList(attributeDefinitionService.resolveAttributes(categoryId, serviceId));
     }
 
     /**
      * Get required attribute definitions for a category.
      */
     @Transactional(readOnly = true)
-    public List<ServiceAttributeDefinitionResponse> getRequiredAttributeDefinitions(Integer categoryId) {
-        List<ServiceAttributeDefinition> attributes = attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
-        return attributeMapper.toResponseList(attributes);
+    public List<ServiceAttributeDefinitionResponse> getRequiredAttributeDefinitions(Integer categoryId, Integer serviceId) {
+        return attributeMapper.toResponseList(attributeDefinitionService.resolveAttributes(categoryId, serviceId).stream()
+                .filter(a -> Boolean.TRUE.equals(a.getIsRequired()))
+                .toList());
     }
 
     /**
@@ -450,30 +464,20 @@ public class ServiceOfferingService {
         return categoryPrefix + "-" + vendorPrefix + "-" + uniquePart;
     }
 
-    private void validateFilterableAttributes(Integer categoryId, Map<String, Object> attributes) {
-        // Get required attributes for this category
-        List<ServiceAttributeDefinition> requiredAttributes =
-                attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+    private void validateAttributes(Integer categoryId, CatalogService catalogService, Map<String, Object> attributes) {
+        List<ServiceAttributeDefinition> definitions = attributeDefinitionService.resolveAttributes(
+                categoryId, catalogService != null ? catalogService.getId() : null);
+        attributeValidator.validateOrThrow(fieldSpecFactory.forOffering(definitions), attributes);
+    }
 
-        // Check all required attributes are present
-        for (ServiceAttributeDefinition attr : requiredAttributes) {
-            if (!attributes.containsKey(attr.getAttributeCode())) {
-                throw new IllegalArgumentException(
-                        "Required attribute '" + attr.getAttributeCode() + "' (" + attr.getAttributeName() + ") is missing");
-            }
+    private Map<String, Object> readJsonMap(String json) {
+        if (json == null || json.isBlank()) {
+            return Map.of();
         }
-
-        // Validate attribute codes exist in definitions
-        List<ServiceAttributeDefinition> allAttributes =
-                attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
-
-        for (String attrCode : attributes.keySet()) {
-            boolean found = allAttributes.stream()
-                    .anyMatch(def -> def.getAttributeCode().equals(attrCode));
-            if (!found) {
-                log.warn("Unknown attribute code '{}' for category {}. It will be stored but may not be searchable.",
-                        attrCode, categoryId);
-            }
+        try {
+            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException e) {
+            throw new BusinessException("Stored attributes for this offering are not valid JSON");
         }
     }
 

@@ -1,6 +1,8 @@
 package com.autoadda.apis.other.request;
 
 import com.autoadda.apis.other.util.DataType;
+import com.autoadda.apis.other.util.InputContext;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,4 +42,8 @@ public class ServiceAttributeDefinitionRequest {
     private String defaultValue;
 
     private String validationRules;
+    /** Allowed values for SINGLE_SELECT / MULTI_SELECT. */
+    private List<AttributeOption> options;
+    /** CUSTOMER, PROVIDER or BOTH (default). */
+    private InputContext inputContext;
 }

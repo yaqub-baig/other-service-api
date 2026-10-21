@@ -275,8 +275,9 @@ public class ServiceOfferingController {
      */
     @GetMapping("/category/{categoryId}/attributes")
     public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getAttributeDefinitions(
-            @PathVariable Integer categoryId) {
-        return ResponseEntity.ok(ApiResponse.success(offeringService.getAttributeDefinitions(categoryId)));
+            @PathVariable Integer categoryId,
+            @RequestParam(required = false) Integer serviceId) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getAttributeDefinitions(categoryId, serviceId)));
     }
 
     /**
@@ -284,7 +285,8 @@ public class ServiceOfferingController {
      */
     @GetMapping("/category/{categoryId}/attributes/required")
     public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getRequiredAttributeDefinitions(
-            @PathVariable Integer categoryId) {
-        return ResponseEntity.ok(ApiResponse.success(offeringService.getRequiredAttributeDefinitions(categoryId)));
+            @PathVariable Integer categoryId,
+            @RequestParam(required = false) Integer serviceId) {
+        return ResponseEntity.ok(ApiResponse.success(offeringService.getRequiredAttributeDefinitions(categoryId, serviceId)));
     }
 }

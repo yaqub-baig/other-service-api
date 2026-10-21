@@ -1,6 +1,7 @@
 package com.autoadda.apis.other.response;
 
 import com.autoadda.apis.other.util.DataType;
+import com.autoadda.apis.other.util.InputContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,8 @@ public class ServiceAttributeDefinitionResponse {
     private String description;
     private String defaultValue;
     private String validationRules;
+    private String options; // Raw JSON array
+    private InputContext inputContext;
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

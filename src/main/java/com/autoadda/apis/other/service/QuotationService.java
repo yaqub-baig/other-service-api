@@ -1,5 +1,7 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.validation.AttributeValidator;
+import com.autoadda.apis.other.validation.FieldSpecFactory;
 import com.autoadda.apis.other.entity.*;
 import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
@@ -53,6 +55,8 @@ public class QuotationService {
     private final VendorQuotationLineItemMapper vendorQuotationLineItemMapper; // Inject mapper
     private final QuotationAdminService quotationAdminService;
     private final ServiceCatalogService serviceCatalogService;
+    private final AttributeValidator attributeValidator;
+    private final FieldSpecFactory fieldSpecFactory;
 
     // ==================== Customer Request Operations ====================
 
@@ -81,7 +85,7 @@ public class QuotationService {
         // Validate required fields
         List<QuotationFieldDefinition> formFields =
                 quotationAdminService.resolveFields(submission.getServiceCategoryId(), submission.getServiceId());
-        validateRequiredFields(formFields, submission.getFieldValues());
+        attributeValidator.validateOrThrow(fieldSpecFactory.forQuotation(formFields), submission.getFieldValues());
 
         // Generate unique quotation number
         String quotationNumber = generateQuotationNumber();
@@ -544,20 +548,6 @@ public class QuotationService {
     }
 
     // ==================== Helper Methods ====================
-
-    private void validateRequiredFields(List<QuotationFieldDefinition> formFields, Map<String, Object> fieldValues) {
-        List<QuotationFieldDefinition> requiredFields = formFields.stream()
-                .filter(f -> Boolean.TRUE.equals(f.getIsRequired()))
-                .toList();
-
-        for (QuotationFieldDefinition field : requiredFields) {
-            if (fieldValues == null || !fieldValues.containsKey(field.getFieldCode()) ||
-                fieldValues.get(field.getFieldCode()) == null ||
-                fieldValues.get(field.getFieldCode()).toString().isBlank()) {
-                throw new BusinessException("Required field '" + field.getLabel() + "' is missing");
-            }
-        }
-    }
 
     private List<Vendor> findMatchingVendors(Integer categoryId, String city, Double lat, Double lng, Integer maxVendors) {
         // Simplified vendor matching - in production, use proper geo-spatial queries
