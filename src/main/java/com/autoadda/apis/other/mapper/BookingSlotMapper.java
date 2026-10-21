@@ -21,7 +21,12 @@ public class BookingSlotMapper {
         response.setMaxBookings(slot.getMaxBookings());
         response.setCurrentBookings(slot.getCurrentBookings());
         response.setAvailableBookings(slot.getMaxBookings() - slot.getCurrentBookings());
-        response.setVendorId(slot.getVendor().getId());
+        if (slot.getVendorService() != null) {
+            response.setVendorServiceId(slot.getVendorService().getId());
+            if (slot.getVendorService().getVendor() != null) {
+                response.setVendorId(slot.getVendorService().getVendor().getId());
+            }
+        }
         return response;
     }
 }

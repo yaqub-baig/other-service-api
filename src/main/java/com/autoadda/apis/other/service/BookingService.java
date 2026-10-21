@@ -1,5 +1,11 @@
 package com.autoadda.apis.other.service;
 
+import java.math.BigDecimal;
+import com.autoadda.apis.other.exception.BusinessException;
+import com.autoadda.apis.other.request.BookingFromQuotationRequest;
+import com.autoadda.apis.other.util.VendorQuotationStatus;
+import com.autoadda.apis.other.entity.VendorQuotationLineItem;
+import com.autoadda.apis.other.entity.VendorQuotation;
 import com.autoadda.apis.other.entity.ServiceSchemaVersion;
 import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.Booking;
@@ -7,21 +13,15 @@ import com.autoadda.apis.other.entity.BookedService;
 import com.autoadda.apis.other.entity.BookingStatusActivity;
 import com.autoadda.apis.other.entity.JobCard;
 import com.autoadda.apis.other.entity.Vendor;
-import com.autoadda.apis.other.entity.VendorQuotation;
-import com.autoadda.apis.other.entity.VendorQuotationLineItem;
 import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.CustomerNotFoundException;
-import com.autoadda.apis.other.exception.GarageNotFoundException;
-import com.autoadda.apis.other.exception.OtherServiceNotFoundException;
+import com.autoadda.apis.other.exception.VendorNotFoundException;
 import com.autoadda.apis.other.mapper.BookingMapper;
-import com.autoadda.apis.other.mapper.OsAppointmentDetailMapper;
-import com.autoadda.apis.other.exception.BusinessException;
+import com.autoadda.apis.other.mapper.BookingDetailMapper;
 import com.autoadda.apis.other.repository.*;
-import com.autoadda.apis.other.request.BookingFromQuotationRequest;
 import com.autoadda.apis.other.request.BookingStatusRequest;
 import com.autoadda.apis.other.request.CustomerBookingRequest;
 import com.autoadda.apis.other.response.BookingResponse;
-import com.autoadda.apis.other.util.VendorQuotationStatus;
 import com.autoadda.apis.other.response.BookingDetailResponse;
 import com.autoadda.apis.other.response.BookingDetailsResponse;
 import com.autoadda.apis.other.util.BusinessValidator;
@@ -33,7 +33,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -46,15 +45,15 @@ import java.util.stream.Collectors;
 public class BookingService {
 
     private final BookingRepository bookingRepository;
+    private final VendorQuotationRepository vendorQuotationRepository;
     private final ServiceCatalogService serviceCatalogService;
     private final SchemaVersionService schemaVersionService;
     private final BookingStatusActivityRepository appointmentActivityRepo;
     private final BookedServiceRepository serviceRepo;
     private final VendorRepository vendorRepository;
     private final VendorServiceRepository vendorServiceRepo;
-    private final VendorQuotationRepository vendorQuotationRepository;
     private final JobCardService jobCardService;
-    private final OsAppointmentDetailMapper appointmentDetailMapper;
+    private final BookingDetailMapper bookingDetailMapper;
     private final BusinessValidator validator;
     private final BookingMapper bookingMapper; // Inject BookingMapper
 
@@ -65,15 +64,16 @@ public class BookingService {
      *                customer ID, vehicle ID, schedule date, service IDs, etc.
      * @return the created BookingResponse DTO.
      * @throws CustomerNotFoundException     if the customer does not exist.
-     * @throws OtherServiceNotFoundException if the vendor does not exist.
+     * @throws VendorNotFoundException if the vendor does not exist.
      */
     @Transactional
     public BookingResponse createCustomerBooking(CustomerBookingRequest request)
-            throws CustomerNotFoundException, OtherServiceNotFoundException {
+            throws CustomerNotFoundException, VendorNotFoundException {
 
-        // Vendor is mandatory
-        Vendor vendor = vendorRepository.findById(request.getVendorId())
-                .orElseThrow(() -> new OtherServiceNotFoundException("Vendor not found"));
+        // A specific vendor service is mandatory
+        VendorService vendorService = vendorServiceRepo.findById(request.getVendorServiceId())
+                .orElseThrow(() -> new VendorNotFoundException("Vendor service not found"));
+        Vendor vendor = vendorService.getVendor();
 
         CatalogService catalogService = request.getCatalogServiceId() != null
                 ? serviceCatalogService.getForDirectBooking(request.getCatalogServiceId(), vendor)
@@ -82,6 +82,7 @@ public class BookingService {
         // Create booking
         Booking booking = Booking.builder()
                 .vendor(vendor)
+                .vendorService(vendorService)
                 .catalogService(catalogService)
                 .schemaVersion(liveVersion(catalogService))
                 .vehicleId(request.getVehicleId())
@@ -106,11 +107,11 @@ public class BookingService {
             List<BookedService> services = request.getServiceIds().stream()
                     .filter(Objects::nonNull)
                     .map(serviceId -> {
-                        VendorService vendorService = vendorServiceRepo.findById(serviceId)
+                        VendorService bridge = vendorServiceRepo.findById(serviceId)
                                 .orElseThrow(() -> new RuntimeException("Service not found"));
                         return BookedService.builder()
                                 .bookingId(savedBooking.getId())
-                                .vendorService(vendorService)
+                                .vendorService(bridge)
                                 .status(Status.NEW)
                                 .build();
                     })
@@ -187,6 +188,10 @@ public class BookingService {
         Booking booking = Booking.builder()
                 .appointmentReferenceId(bookingCode)
                 .vendor(quotation.getVendor())
+                .vendorService(vendorServiceRepo
+                        .findByVendorIdAndServiceCategoryId(quotation.getVendor().getId(),
+                                quotation.getQuotationRequest().getServiceCategory().getId())
+                        .stream().filter(vs -> Boolean.TRUE.equals(vs.getIsActive())).findFirst().orElse(null))
                 .catalogService(quotation.getQuotationRequest().getCatalogService())
                 // the version the customer filled the request against
                 .schemaVersion(quotation.getQuotationRequest().getSchemaVersion())
@@ -228,11 +233,11 @@ public class BookingService {
      * @param vendorId the ID of the vendor.
      * @param status   the status to filter bookings by, or null for all.
      * @return a list of BookingResponse DTOs for the vendor.
-     * @throws OtherServiceNotFoundException if the vendor does not exist.
+     * @throws VendorNotFoundException if the vendor does not exist.
      */
     @Transactional(readOnly = true)
     public List<BookingResponse> getVendorBookings(Integer vendorId, Status status)
-            throws OtherServiceNotFoundException {
+            throws VendorNotFoundException {
 
         validator.validateAndGetVendor(vendorId);
 
@@ -311,22 +316,22 @@ public class BookingService {
      * @param vendorId  the ID of the vendor.
      * @param statusStr the status to filter bookings by, or null for all.
      * @return a list of Booking for the vendor.
-     * @throws GarageNotFoundException if the vendor does not exist.
+     * @throws VendorNotFoundException if the vendor does not exist.
      */
     @Transactional(readOnly = true)
     public List<BookingDetailResponse> getBookingsByVendor(Integer vendorId, String statusStr)
-            throws GarageNotFoundException {
+            throws VendorNotFoundException {
         validator.validateAndGetVendor(vendorId);
 
         if (StringUtils.isBlank(statusStr)) {
             return bookingRepository.findByVendorId(vendorId).stream()
-                    .map(appointmentDetailMapper::entityToResponse)
+                    .map(bookingDetailMapper::entityToResponse)
                     .toList();
         }
 
         Status status = Status.valueOf(statusStr.toUpperCase());
         return bookingRepository.findByVendorIdAndStatus(vendorId, status).stream()
-                .map(appointmentDetailMapper::entityToResponse)
+                .map(bookingDetailMapper::entityToResponse)
                 .toList();
     }
 
@@ -356,36 +361,5 @@ public class BookingService {
         }
 
         return String.format("%s%06d", codePrefix, nextSequence);
-    }
-
-    // Legacy method names for backward compatibility
-    @Deprecated
-    public BookingResponse createCustomerAppointment(CustomerBookingRequest request) {
-        return createCustomerBooking(request);
-    }
-
-    @Deprecated
-    public List<BookingResponse> getOtherServiceAppointment(Integer vendorId, Status status) {
-        return getVendorBookings(vendorId, status);
-    }
-
-    @Deprecated
-    public BookingDetailsResponse getAppointmentsDetails(Integer bookingId) {
-        return getBookingDetails(bookingId);
-    }
-
-    @Deprecated
-    public BookingResponse updateAppointmentStatus(BookingStatusRequest request) {
-        return updateBookingStatus(request);
-    }
-
-    @Deprecated
-    public List<BookingDetailResponse> getAppointmentsByGarage(Integer vendorId, String statusStr) {
-        return getBookingsByVendor(vendorId, statusStr);
-    }
-
-    @Deprecated
-    public String generateAppointmentCode() {
-        return generateBookingCode();
     }
 }

@@ -64,9 +64,12 @@ public class Booking {
     @JoinColumn(name = "schema_version_id")
     private ServiceSchemaVersion schemaVersion;
 
-    /** Comma-separated vendor service ids picked at booking time. */
-    @Column(name = "selected_service_ids")
-    private String selectedServiceIds;
+    @ManyToOne
+    @JoinColumn(name = "vendor_service_id")
+    private VendorService vendorService;
+
+    @Column(name = "selected_vendor_service")
+    private String selectedVendorServiceIds;
 
     @Column(name = "subscription_plan_id")
     private String subscriptionPlanId;

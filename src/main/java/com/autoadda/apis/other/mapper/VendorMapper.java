@@ -12,29 +12,23 @@ public class VendorMapper {
 
     public VendorResponse entityToResponse(Vendor vendor) {
         VendorResponse response = new VendorResponse();
-        response.setId(vendor.getId() != null ? vendor.getId() : null);
-        response.setCompanyBrandName(vendor.getCompanyBrandName() != null ? vendor.getCompanyBrandName() : null);
-        response.setCompanyArabicName(vendor.getCompanyArabicName() != null ? vendor.getCompanyArabicName() : null);
+        response.setId(vendor.getId());
+        response.setCompanyBrandName(vendor.getCompanyBrandName());
+        response.setCompanyArabicName(vendor.getCompanyArabicName());
+        response.setName(vendor.getName());
+        response.setTrnNumber(vendor.getTrnNumber());
+        response.setWebSite(vendor.getWebSite());
+        response.setEmail(vendor.getEmail());
+        response.setPhoneNumber(vendor.getPhoneNumber());
+        response.setMobileNumber(vendor.getMobileNumber());
+        response.setCompanyLogo(vendor.getCompanyLogo());
+        response.setAccountStatus(vendor.getAccountStatus());
+        response.setCreatedAt(vendor.getCreatedAt());
+        response.setCompanyOwnerId(vendor.getCompanyOwner());
         response.setCountryCode(vendor.getCountryCode());
-        response.setName(vendor.getName() != null ? vendor.getName() : null);
-        response.setTradeLicenceNumber(vendor.getTradeLicenceNumber() != null ? vendor.getTradeLicenceNumber() : null);
-        response.setOpeningTime(vendor.getOpeningTime() != null ? vendor.getOpeningTime() : null);
-        response.setClosingTime(vendor.getClosingTime() != null ? vendor.getClosingTime() : null);
-        response.setWorkingDays(vendor.getWorkingDays() != null ? vendor.getWorkingDays() : null);
-        response.setTrnNumber(vendor.getTrnNumber() != null ? vendor.getTrnNumber() : null);
-        response.setWebSite(vendor.getWebSite() != null ? vendor.getWebSite() : null);
-        response.setEmail(vendor.getEmail() != null ? vendor.getEmail() : null);
-        response.setPhoneNumber(vendor.getPhoneNumber() != null ? vendor.getPhoneNumber() : null);
-        response.setMobileNumber(vendor.getMobileNumber() != null ? vendor.getMobileNumber() : null);
-        response.setCompanyLogo(vendor.getCompanyLogo() != null ? vendor.getCompanyLogo() : null);
-        response.setAccountStatus(vendor.getAccountStatus() != null ? vendor.getAccountStatus() : null);
-        response.setCreatedAt(vendor.getCreatedAt() != null ? vendor.getCreatedAt() : null);
-        response.setCompanyOwnerId(vendor.getCompanyOwner() != null ? vendor.getCompanyOwner() : null);
         response.setIsActive(vendor.isActive());
-        response.setCompanyImages(vendor.getCompanyImages() != null ? vendor.getCompanyImages() : null);
-        response.setTradeLicenseAttachment(vendor.getTradeLicenseAttachment() != null ? vendor.getTradeLicenseAttachment() : null);
-        response.setVatCertificate(vendor.getVatCertificate() != null ? vendor.getVatCertificate() : null);
-        response.setCompnayLocation(vendor.getCompanyLocation() != null ? vendor.getCompanyLocation() : null);
+        response.setVatCertificate(vendor.getVatCertificate());
+        response.setCompnayLocation(vendor.getCompanyLocation());
         return response;
     }
 }

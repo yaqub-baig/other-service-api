@@ -19,5 +19,6 @@ public class BookingSlotResponse {
     private Integer maxBookings; // Added field
     private Integer currentBookings; // Added field
     private Integer availableBookings; // Added field
-    private Integer vendorId; // Added field
+    private Integer vendorId;
+    private Integer vendorServiceId;
 }

@@ -1,94 +1,125 @@
 package com.autoadda.apis.other.entity;
 
 import com.autoadda.apis.other.util.PricingType;
+import com.autoadda.apis.other.util.Status;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * A vendor offering a service category: the single vendor ↔ category join.
- * Bookings, booked services and offerings all hang off this row.
- * (Previously split across two entities, VendorService and VendorServiceBridge.)
+ * One service a {@link Vendor} offers (e.g. a car wash, a battery shop).
+ *
+ * <p>A vendor may have many of these, each with its own working days/hours,
+ * capacity, trade licence, branch address, branch images and booking slots.
+ * This is the unit that bookings, the per-service schedule and offerings attach to.
+ * It also carries the vendor's default pricing for the category.</p>
+ *
+ * <p>DB table kept as {@code vendor_service_bridge} for continuity.</p>
  */
 @Entity
-@Table(name = "vendor_service_bridge",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"vendor_id", "service_category_id"}))
+@Table(name = "vendor_service_bridge")
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 public class VendorService {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private Integer id;
 
     @Column(name = "is_active")
-    @Builder.Default
-    private Boolean isActive = true;
+    private Boolean isActive;
 
     @ManyToOne
-    @JoinColumn(name = "vendor_id", nullable = false)
+    @JoinColumn(name = "vendor_id")
     @JsonBackReference("vendor-services")
     private Vendor vendor;
 
     @ManyToOne
-    @JoinColumn(name = "service_category_id", nullable = false)
+    @JoinColumn(name = "service_category_id")
     private ServiceCategory serviceCategory;
 
-    /**
-     * The pricing strategy for this service.
-     */
+    /** {@code VendorServiceType.name()} — redundant with serviceCategory but convenient for filters. */
+    @Column(name = "service_type")
+    private String serviceType;
+
+    // ---- operating window (summary strings; the real schedule is VendorWorkHours) ----
+    @Column(name = "opening_time")
+    private String openingTime;
+
+    @Column(name = "closing_time")
+    private String closingTime;
+
+    @Column(name = "working_days")
+    private String workingDays;
+
+    @Column(name = "concurrent_appointment_capacity")
+    private Integer concurrentAppointmentCapacity;
+
+    // ---- per-service trade licence ----
+    @Column(name = "trade_licence_number")
+    private String tradeLicenceNumber;
+
+    @OneToMany
+    @JoinColumn(name = "service_trade_license")
+    private List<MediaFile> tradeLicenseAttachment = new ArrayList<>();
+
+    // ---- per-branch address + gallery ----
+    @OneToOne
+    @JoinColumn(name = "service_location_id")
+    private Location serviceLocation;
+
+    @OneToMany
+    @JoinColumn(name = "service_images")
+    private List<MediaFile> serviceImages = new ArrayList<>();
+
+    // ---- vendor-level pricing for this category (offerings can override) ----
     @Enumerated(EnumType.STRING)
     @Column(name = "pricing_type", length = 20)
-    @Builder.Default
     private PricingType pricingType = PricingType.FIXED;
 
-    /**
-     * The base/fixed price (used when pricingType is FIXED).
-     */
     @Column(name = "price", precision = 10, scale = 2)
     private BigDecimal price;
 
-    /**
-     * Minimum price (used when pricingType is RANGE).
-     */
     @Column(name = "min_price", precision = 10, scale = 2)
     private BigDecimal minPrice;
 
-    /**
-     * Maximum price (used when pricingType is RANGE).
-     */
     @Column(name = "max_price", precision = 10, scale = 2)
     private BigDecimal maxPrice;
 
-    /**
-     * Currency code (ISO 4217).
-     */
+    /** ISO 4217. */
     @Column(name = "currency", length = 3)
-    @Builder.Default
     private String currency = "AED";
 
-    /**
-     * Description of the service offered by this vendor.
-     */
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    /**
-     * Average rating for this vendor service.
-     */
     @Column(name = "average_rating", precision = 2, scale = 1)
     private BigDecimal averageRating;
 
-    /**
-     * Total number of ratings received.
-     */
     @Column(name = "total_ratings")
-    @Builder.Default
     private Integer totalRatings = 0;
+
+    // ---- lifecycle ----
+    @Column(name = "account_status")
+    private Status accountStatus;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (isActive == null) {
+            isActive = true;
+        }
+    }
 }

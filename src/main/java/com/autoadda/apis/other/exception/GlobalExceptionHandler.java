@@ -133,9 +133,9 @@ public class GlobalExceptionHandler {
 		return buildResponse(ex, HttpStatus.NOT_FOUND, ErrorMessage.ERROR_NOT_FOUND);
 	}
 
-	@ExceptionHandler(GarageNotFoundException.class)
-	public ResponseEntity<GenericResponse> handleGarageNotFound(GarageNotFoundException ex) {
-		log.warn("Garage not found", ex);
+	@ExceptionHandler(VendorNotFoundException.class)
+	public ResponseEntity<GenericResponse> handleVendorNotFound(VendorNotFoundException ex) {
+		log.warn("Vendor not found", ex);
 		return buildResponse(ex, HttpStatus.NOT_FOUND, ErrorMessage.ERROR_NOT_FOUND);
 	}
 

@@ -92,18 +92,18 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 | Before | Now |
 | --- | --- |
 | `GET /os-appointments/other-service/{otherServiceId}` | `GET /bookings/vendor/{vendorId}` |
-| `GET /os-appointments/{otherServiceId}/available-slots` | `GET /bookings/vendor/{vendorId}/available-slots` |
-| `POST /os-appointments/{serviceId}/book?selectedOtherServiceIds=` | `POST /bookings/vendor/{vendorId}/book?selectedServiceIds=` |
-| `PUT /os-appointments/edit/appointment?otherServiceId=` | `PUT /bookings/edit/appointment?vendorId=` |
-| `POST /os-appointments` body field `otherServiceId` | `POST /bookings` body field `vendorId` |
+| `GET /os-appointments/{otherServiceId}/available-slots` | `GET /bookings/{vendorServiceId}/available-slots` |
+| `POST /os-appointments/{serviceId}/book?selectedOtherServiceIds=` | `POST /bookings/{vendorServiceId}/book?selectedVendorServiceIds=` |
+| `PUT /os-appointments/edit/appointment?appointmentId=&otherServiceId=` | `PUT /bookings/edit?bookingId=&serviceId=` |
+| `POST /os-appointments` body field `otherServiceId` (vendor) | `POST /bookings` body field `vendorServiceId` |
 
+  Slots and bookings belong to a vendor service (one service or branch of a vendor), so these paths take a vendor service id.
   The other booking paths (`/status`, `/{appointmentId}`, `/{appointmentId}/cancel`, `/user/bookings`) only change the base.
-- **Changed:** booking responses return `selectedServiceIds` instead of `selectedOtherServiceIds`, and the available-slots response returns `vendorId` instead of `garageId`.
+- **Changed:** booking responses return `selectedVendorServiceIds` instead of `selectedOtherServiceIds`, and the available-slots response returns `vendorServiceId` instead of `garageId`.
 - **Changed:** booking responses return `subscriptionPlanId` instead of `osSubscriptionPlanId`.
 - **Changed (job cards):** the assign request takes `vendorId` instead of `otherServiceId`. Job card responses return `vendorId`, which is now filled in; `otherServiceId` was always `null`.
-- `POST /bookings` accepts `catalogServiceId`. `POST /bookings/vendor/{vendorId}/book` accepts `?catalogServiceId=`.
+- `POST /bookings` accepts `catalogServiceId`. `POST /bookings/{vendorServiceId}/book` accepts `?catalogServiceId=`.
 - A service whose effective mode is REQUIRED can't be booked directly; book from the accepted quote instead. The vendor must offer the service's category.
-- `/vendor/{vendorId}/book` no longer fails when `selectedServiceIds` is omitted.
 
 ## Filters, categories and vendor services (**changed**)
 
@@ -111,7 +111,7 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 - **Removed:** `DELETE /admin/service-filters/{id}/hard`.
 - `DELETE /admin/service-filters/options/{id}` and `DELETE /service-categories/{id}` now deactivate instead of deleting.
 - Categories accept and return `code`, `nameAr`, `descriptionAr`, `displayOrder`, `isActive` and `parentId`.
-- **Changed:** `/vendor-service-bridges` is now `/vendor-services`. The body uses `vendorId` and `serviceCategoryId` instead of `garageId` and `serviceId`. `PUT` takes the same body as `POST` (plus optional `pricingType`, `price`, `minPrice`, `maxPrice`, `currency`, `description`), and `DELETE` deactivates.
+- **Changed:** `/vendor-service-bridges` is now `/vendor-services`. The body uses `vendorId` and `serviceCategoryId` instead of `garageId` and `serviceId` (`serviceId` is still accepted). `PUT` takes the same body as `POST` (plus optional `pricingType`, `price`, `minPrice`, `maxPrice`, `currency`, `description`), and `DELETE` deactivates.
 
 ## Starter data
 

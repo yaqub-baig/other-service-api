@@ -26,8 +26,8 @@ public class VendorHolidayOverride {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne
-    @JoinColumn(name = "vendor_id", referencedColumnName = "id")
-    private Vendor vendor;
+    @JoinColumn(name = "vendor_service_id", referencedColumnName = "id")
+    private VendorService vendorService;
     private LocalDate date;
     private boolean isClosed;
     private LocalTime openTime;

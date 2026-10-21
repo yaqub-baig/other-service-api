@@ -743,7 +743,7 @@ REQUESTED -> CONFIRMED -> SCHEDULED -> WORK_INPROGRESS -> COMPLETED -> DELIVERED
 ### 5.4 Get Available Slots (Manage Capacity)
 
 ```
-GET /bookings/vendor/{vendorId}/available-slots?date=25/04/2026
+GET /bookings/{vendorServiceId}/available-slots?date=25/04/2026
 ```
 
 ---
@@ -1261,8 +1261,8 @@ export const updateAppointmentStatus = (data) =>
 // data = { appointmentId, memberId, memberType: "VENDOR", status, comments }
 
 // Get available slots (manage capacity)
-export const getAvailableSlots = (vendorId, date) =>
-  api.get(`${BOOKING_BASE}/vendor/${vendorId}/available-slots`, {
+export const getAvailableSlots = (vendorServiceId, date) =>
+  api.get(`${BOOKING_BASE}/${vendorServiceId}/available-slots`, {
     params: { date }, // format: dd/MM/yyyy
   });
 ```

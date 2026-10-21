@@ -1,6 +1,6 @@
 package com.autoadda.apis.other.controller;
 
-import com.autoadda.apis.other.request.OtherServiceRequest;
+import com.autoadda.apis.other.request.vendor.VendorCompanyRequest;
 import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.service.VendorManagementService;
@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Vendor company endpoints. A vendor's individual services (with their own
+ * hours, licence, slots) are managed under {@code /vendor-services} and the
+ * per-service controllers such as {@code /vendors/car-wash}.
+ */
 @RestController
 @RequestMapping("/vendors")
 @RequiredArgsConstructor
@@ -19,11 +24,11 @@ public class VendorController {
     private final VendorManagementService vendorService;
 
     @PostMapping
-    public ResponseEntity<VendorProfileResponse> createVendor(
+    public ResponseEntity<VendorProfileResponse> createCompany(
             @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId,
-            @RequestBody OtherServiceRequest request) {
+            @RequestBody VendorCompanyRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(vendorService.createVendor(request, autoAddaId));
+                .body(vendorService.createCompany(request, autoAddaId));
     }
 
     @GetMapping("/all")
@@ -45,11 +50,10 @@ public class VendorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VendorProfileResponse> updateVendor(
+    public ResponseEntity<VendorProfileResponse> updateCompany(
             @PathVariable Integer id,
-            @RequestBody OtherServiceRequest request) {
-        // The autoAddaId from the header is not used in the updated service method, so it can be removed.
-        return ResponseEntity.ok(vendorService.updateVendor(id, request));
+            @RequestBody VendorCompanyRequest request) {
+        return ResponseEntity.ok(vendorService.updateCompany(id, request));
     }
 
     @DeleteMapping("/{id}")
@@ -63,11 +67,6 @@ public class VendorController {
         return ResponseEntity.ok(vendorService.findVendorsByBrandName(name));
     }
 
-    @GetMapping("/service/{serviceType}")
-    public ResponseEntity<List<VendorProfileResponse>> getVendorsByServiceType(@PathVariable String serviceType) {
-        return ResponseEntity.ok(vendorService.findVendorsByServiceType(serviceType));
-    }
-
     @GetMapping("/search")
     public ResponseEntity<List<VendorResponse>> searchVendors(
             @RequestParam(required = false) String city,
@@ -77,4 +76,3 @@ public class VendorController {
         return ResponseEntity.ok(vendorService.searchVendors(city, zip, vendorName, serviceCategoryIds));
     }
 }
-

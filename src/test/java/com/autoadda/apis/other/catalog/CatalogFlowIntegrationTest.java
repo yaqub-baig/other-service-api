@@ -75,8 +75,10 @@ class CatalogFlowIntegrationTest {
         vendor.setName("Quick Lube");
         vendor.setCountryCode("AE");
         vendor = vendorRepository.save(vendor);
-        VendorService vendorService = vendorServiceRepository.save(VendorService.builder()
-                .vendor(vendor).serviceCategory(category).build());
+        VendorService vendorService = new VendorService();
+        vendorService.setVendor(vendor);
+        vendorService.setServiceCategory(category);
+        vendorService = vendorServiceRepository.save(vendorService);
         vendorServiceId = vendorService.getId();
     }
 

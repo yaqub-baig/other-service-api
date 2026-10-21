@@ -43,7 +43,7 @@ public class BookingMapper {
                 response.setVendor(vendorProfileMapper.toVendorProfileResponse(b.getVendor()));
             }
 
-            response.setSelectedServiceIds(b.getSelectedServiceIds());
+            response.setSelectedVendorServiceIds(b.getSelectedVendorServiceIds());
             response.setSubscriptionPlanId(b.getSubscriptionPlanId());
             response.setCustomerId(b.getCustomerId());
             response.setVehicleId(b.getVehicleId());
@@ -53,7 +53,7 @@ public class BookingMapper {
             }
             response.setSchemaVersionId(b.getSchemaVersion() != null ? b.getSchemaVersion().getId() : null);
 
-            // Map nested OsAppointmentSlot
+            // Map nested BookingSlot
             if (b.getSlot() != null) {
                 response.setSlot(bookingSlotMapper.toResponse(b.getSlot()));
             }

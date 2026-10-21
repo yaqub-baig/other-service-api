@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.request;
 import com.autoadda.apis.other.util.PricingType;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -15,7 +16,9 @@ public class VendorServiceRequest {
 	@NotNull(message = "Vendor ID is required")
 	private Integer vendorId;
 
+	/** Service category id; "serviceId" is still accepted for older clients. */
 	@NotNull(message = "Service category ID is required")
+	@JsonAlias("serviceId")
 	private Integer serviceCategoryId;
 
 	private boolean isActive;

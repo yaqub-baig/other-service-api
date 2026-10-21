@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface BookingSlotRepository extends JpaRepository<BookingSlot, Integer> {
 
-    List<BookingSlot> findByVendorIdAndSlotDateGreaterThanEqual(Integer vendorId, LocalDate date);
+    List<BookingSlot> findByVendorServiceIdAndSlotDateGreaterThanEqual(Integer vendorServiceId, LocalDate date);
 
     // Find slots within a time range
     List<BookingSlot> findByStartTimeBetween(LocalTime startTime, LocalTime endTime);
@@ -38,22 +38,22 @@ public interface BookingSlotRepository extends JpaRepository<BookingSlot, Intege
 
     Optional<BookingSlot> findBySlotDateAndStartTime(LocalDate date, LocalTime currentTime);
 
-    List<BookingSlot> findByVendorIdAndSlotDate(Integer vendorId, LocalDate date);
+    List<BookingSlot> findByVendorServiceIdAndSlotDate(Integer vendorServiceId, LocalDate date);
 
-    @Query("SELECT s FROM BookingSlot s WHERE s.vendor.id = :vendorId AND s.slotDate= :slotDate AND s.startTime = :time AND s.currentBookings < s.maxBookings")
-    Optional<BookingSlot> findByVendorAndStartTime(@Param("vendorId") Integer vendorId, @Param("slotDate") LocalDate date, @Param("time") LocalTime time);
+    @Query("SELECT s FROM BookingSlot s WHERE s.vendorService.id = :vendorServiceId AND s.slotDate = :slotDate AND s.startTime = :time AND s.currentBookings < s.maxBookings")
+    Optional<BookingSlot> findByVendorServiceAndStartTime(@Param("vendorServiceId") Integer vendorServiceId, @Param("slotDate") LocalDate date, @Param("time") LocalTime time);
 
-    @Query("SELECT s FROM BookingSlot s WHERE s.vendor.id = :vendorId " +
+    @Query("SELECT s FROM BookingSlot s WHERE s.vendorService.id = :vendorServiceId " +
             "AND s.slotDate >= :startDate AND s.slotDate <= :endDate " +
             "ORDER BY s.slotDate, s.startTime")
     List<BookingSlot> findMonthlySlots(
-            @Param("vendorId") Integer vendorId,
+            @Param("vendorServiceId") Integer vendorServiceId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
-    List<BookingSlot> findAvailableSlotsByVendorId(Integer vendorId);
+    List<BookingSlot> findAvailableSlotsByVendorServiceId(Integer vendorServiceId);
 
-    Optional<BookingSlot> findByVendorIdAndSlotDateAndStartTime(Integer id, LocalDate date, LocalTime currentTime);
+    Optional<BookingSlot> findByVendorServiceIdAndSlotDateAndStartTime(Integer id, LocalDate date, LocalTime currentTime);
 
     @Query("SELECT s FROM BookingSlot s WHERE " +
             "(s.slotDate < :currentDate) OR " +

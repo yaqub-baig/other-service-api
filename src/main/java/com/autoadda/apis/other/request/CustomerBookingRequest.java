@@ -14,8 +14,10 @@ import java.util.List;
 @Setter
 public class CustomerBookingRequest {
     private Integer customerId;
-    private Integer vendorId;
+    /** The VendorService (a specific service a vendor offers) to book against. */
+    private Integer vendorServiceId;
     private Integer vehicleId;
+    /** VendorService ids to record as booked line-items. */
     private List<Integer> serviceIds;
     /** Optional catalog service being booked; services that require a quote are refused here. */
     private Integer catalogServiceId;

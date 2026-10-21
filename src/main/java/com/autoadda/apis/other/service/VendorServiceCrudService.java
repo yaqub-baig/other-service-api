@@ -16,7 +16,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class VendorServiceAssignmentService {
+public class VendorServiceCrudService {
     private final VendorRepository vendorRepository;
     private final ServiceCategoryRepository serviceCategoryRepository;
     private final VendorServiceRepository vendorServiceRepository;

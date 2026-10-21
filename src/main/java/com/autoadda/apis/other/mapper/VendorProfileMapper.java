@@ -17,9 +17,11 @@ import java.util.stream.Collectors;
 public class VendorProfileMapper {
 
     private final MediaFileMapper mediaFileMapper;
+    private final VendorServiceMapper vendorServiceMapper;
 
-    public VendorProfileMapper(MediaFileMapper mediaFileMapper) {
+    public VendorProfileMapper(MediaFileMapper mediaFileMapper, VendorServiceMapper vendorServiceMapper) {
         this.mediaFileMapper = mediaFileMapper;
+        this.vendorServiceMapper = vendorServiceMapper;
     }
 
     public VendorProfileResponse toVendorProfileResponse(Vendor vendor) {
@@ -30,31 +32,29 @@ public class VendorProfileMapper {
         VendorProfileResponse response = new VendorProfileResponse();
         response.setId(vendor.getId());
         response.setCompanyBrandName(vendor.getCompanyBrandName());
+        response.setCompanyArabicName(vendor.getCompanyArabicName());
+        response.setName(vendor.getName());
+        response.setTrnNumber(vendor.getTrnNumber());
         response.setWebSite(vendor.getWebSite());
         response.setEmail(vendor.getEmail());
         response.setPhoneNumber(vendor.getPhoneNumber());
-        response.setOpeningTime(vendor.getOpeningTime());
-        response.setClosingTime(vendor.getClosingTime());
-        response.setWorkingDays(vendor.getWorkingDays());
+        response.setMobileNumber(vendor.getMobileNumber());
+        response.setAccountStatus(vendor.getAccountStatus());
+        response.setServices(vendorServiceMapper.toResponseList(vendor.getServices()));
         response.setCountryCode(vendor.getCountryCode());
 
-        // Map company logo
         if (vendor.getCompanyLogo() != null) {
             response.setCompanyLogo(mediaFileMapper.toMediaFileResponse(vendor.getCompanyLogo()));
         }
-
-        // Map company location
         if (vendor.getCompanyLocation() != null) {
             response.setCompanyLocation(toLocationResponse(vendor.getCompanyLocation()));
         }
-
-        // Map company images
-        if (vendor.getCompanyImages() != null && !vendor.getCompanyImages().isEmpty()) {
-            response.setCompanyImages(vendor.getCompanyImages().stream()
-                                            .map(mediaFileMapper::toMediaFileResponse)
-                                            .collect(Collectors.toList()));
+        if (vendor.getVatCertificate() != null && !vendor.getVatCertificate().isEmpty()) {
+            response.setVatCertificate(vendor.getVatCertificate().stream()
+                    .map(mediaFileMapper::toMediaFileResponse)
+                    .collect(Collectors.toList()));
         } else {
-            response.setCompanyImages(Collections.emptyList());
+            response.setVatCertificate(Collections.emptyList());
         }
 
         return response;

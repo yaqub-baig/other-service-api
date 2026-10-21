@@ -69,8 +69,8 @@ public class BookingSlotService {
                 .toList();
     }
 
-    public List<BookingSlotResponse> getAvailableSlots(Integer vendorId) {
-        return slotRepository.findAvailableSlotsByVendorId(vendorId).stream()
+    public List<BookingSlotResponse> getAvailableSlotsByVendorService(Integer vendorServiceId) {
+        return slotRepository.findAvailableSlotsByVendorServiceId(vendorServiceId).stream()
                 .filter(BookingSlot::isAvailable)
                 .map(slotMapper::toResponse)
                 .toList();
@@ -97,13 +97,13 @@ public class BookingSlotService {
         }
     }
 
-    public BookingSlot findAvailableSlotByVendorIdAndTime(Integer vendorId, LocalDate date, LocalTime time) {
+    public BookingSlot findAvailableSlotByVendorServiceIdAndTime(Integer vendorServiceId, LocalDate date, LocalTime time) {
         return slotRepository
-                .findByVendorAndStartTime(vendorId, date, time)
+                .findByVendorServiceAndStartTime(vendorServiceId, date, time)
                 .orElseThrow(() -> new ResourceNotFoundException("Either slot not found or slot is fully booked"));
     }
 
-    public MonthlyAvailabilityResponse getMonthlyAvailability(Integer vendorId) {
+    public MonthlyAvailabilityResponse getMonthlyAvailability(Integer vendorServiceId) {
         LocalDate today = LocalDate.now();
         LocalDate startDate = today;
         LocalDate endDate = today.plusMonths(2);
@@ -112,7 +112,7 @@ public class BookingSlotService {
         int month = startDate.getMonthValue();
 
         List<BookingSlot> monthlySlots = slotRepository
-                .findMonthlySlots(vendorId, startDate, endDate);
+                .findMonthlySlots(vendorServiceId, startDate, endDate);
 
         Map<LocalDate, List<BookingSlot>> slotsByDate = monthlySlots.stream()
                 .collect(Collectors.groupingBy(BookingSlot::getSlotDate));
@@ -132,7 +132,7 @@ public class BookingSlotService {
         }
 
         return MonthlyAvailabilityResponse.builder()
-                .vendorId(vendorId)
+                .vendorServiceId(vendorServiceId)
                 .year(year)
                 .month(month)
                 .dailyAvailability(dailyAvailability)
