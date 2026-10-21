@@ -109,11 +109,14 @@ public class ServiceCategoryService {
         return serviceCategoryMapper.toResponse(savedCategory);
     }
 
+    /**
+     * Deactivates the category; services, vendors and bookings keep referencing it.
+     */
     public void delete(Integer id) {
-        if (!serviceCategoryRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Service category not found with id: " + id);
-        }
-        serviceCategoryRepository.deleteById(id);
+        ServiceCategory existing = serviceCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service category not found with id: " + id));
+        existing.setIsActive(false);
+        serviceCategoryRepository.save(existing);
     }
 
     public List<AvailableServiceResponse> getByParentId(Integer parentId) {

@@ -1,0 +1,1432 @@
+{
+  "source": "Auto Adda service catalog seed (Middle East), converted from the six-table SQL script",
+  "categories": [
+    {
+      "code": "MAINTENANCE",
+      "name": "Routine Maintenance",
+      "nameAr": "الصيانة الدورية",
+      "displayOrder": 10,
+      "services": [
+        {
+          "code": "OIL_CHANGE",
+          "name": "Engine Oil Change",
+          "nameAr": "تغيير زيت المحرك",
+          "fulfillmentMode": "BOTH",
+          "estimatedDurationMinutes": 45,
+          "displayOrder": 10,
+          "attributes": [
+            {
+              "code": "oil_type",
+              "name": "Oil type",
+              "nameAr": "نوع الزيت",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "fully_synthetic",
+                  "label": "Fully synthetic",
+                  "labelAr": "تخليقي بالكامل"
+                },
+                {
+                  "value": "semi_synthetic",
+                  "label": "Semi-synthetic",
+                  "labelAr": "شبه تخليقي"
+                },
+                {
+                  "value": "mineral",
+                  "label": "Mineral",
+                  "labelAr": "معدني"
+                }
+              ]
+            },
+            {
+              "code": "oil_grade",
+              "name": "Oil viscosity grade",
+              "nameAr": "درجة لزوجة الزيت",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20,
+              "options": [
+                {
+                  "value": "0w20",
+                  "label": "0W-20",
+                  "labelAr": "0W-20"
+                },
+                {
+                  "value": "5w30",
+                  "label": "5W-30",
+                  "labelAr": "5W-30"
+                },
+                {
+                  "value": "5w40",
+                  "label": "5W-40",
+                  "labelAr": "5W-40"
+                },
+                {
+                  "value": "10w40",
+                  "label": "10W-40",
+                  "labelAr": "10W-40"
+                }
+              ]
+            },
+            {
+              "code": "oil_quantity_liters",
+              "name": "Oil quantity",
+              "nameAr": "كمية الزيت",
+              "dataType": "DECIMAL",
+              "inputContext": "PROVIDER",
+              "required": false,
+              "unit": "L",
+              "validationRules": {
+                "minimum": 1,
+                "maximum": 15
+              },
+              "displayOrder": 30
+            },
+            {
+              "code": "replace_filter",
+              "name": "Replace oil filter",
+              "nameAr": "تغيير فلتر الزيت",
+              "dataType": "BOOLEAN",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 40
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "CLEANING_DETAILING",
+      "name": "Washing & Detailing",
+      "nameAr": "الغسيل والتلميع",
+      "displayOrder": 20,
+      "services": [
+        {
+          "code": "CAR_WASH",
+          "name": "Car Wash",
+          "nameAr": "غسيل السيارة",
+          "fulfillmentMode": "BOTH",
+          "estimatedDurationMinutes": 45,
+          "displayOrder": 10,
+          "attributes": [
+            {
+              "code": "wash_package",
+              "name": "Wash package",
+              "nameAr": "باقة الغسيل",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "basic",
+                  "label": "Basic exterior wash",
+                  "labelAr": "غسيل خارجي أساسي"
+                },
+                {
+                  "value": "premium",
+                  "label": "Premium wash",
+                  "labelAr": "غسيل مميز"
+                },
+                {
+                  "value": "full",
+                  "label": "Full wash and vacuum",
+                  "labelAr": "غسيل كامل مع شفط داخلي"
+                }
+              ]
+            },
+            {
+              "code": "vehicle_size",
+              "name": "Vehicle size",
+              "nameAr": "حجم السيارة",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 20,
+              "options": [
+                {
+                  "value": "sedan",
+                  "label": "Sedan",
+                  "labelAr": "سيدان"
+                },
+                {
+                  "value": "suv",
+                  "label": "SUV / 4x4",
+                  "labelAr": "دفع رباعي"
+                },
+                {
+                  "value": "van",
+                  "label": "Van / Minivan",
+                  "labelAr": "فان"
+                }
+              ]
+            },
+            {
+              "code": "interior_cleaning",
+              "name": "Interior cleaning",
+              "nameAr": "تنظيف المقصورة الداخلية",
+              "dataType": "BOOLEAN",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 30
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        },
+        {
+          "code": "INTERIOR_DETAILING",
+          "name": "Interior Detailing",
+          "nameAr": "تنظيف داخلي تفصيلي",
+          "fulfillmentMode": "BOTH",
+          "estimatedDurationMinutes": 150,
+          "displayOrder": 20,
+          "attributes": [
+            {
+              "code": "seat_material",
+              "name": "Seat material",
+              "nameAr": "نوع مادة المقاعد",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "fabric",
+                  "label": "Fabric",
+                  "labelAr": "قماش"
+                },
+                {
+                  "value": "leather",
+                  "label": "Leather",
+                  "labelAr": "جلد"
+                },
+                {
+                  "value": "mixed",
+                  "label": "Mixed",
+                  "labelAr": "مختلط"
+                }
+              ]
+            },
+            {
+              "code": "stain_removal",
+              "name": "Stain removal required",
+              "nameAr": "هل تحتاج إزالة البقع",
+              "dataType": "BOOLEAN",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20
+            },
+            {
+              "code": "customer_notes",
+              "name": "Special instructions",
+              "nameAr": "تعليمات خاصة",
+              "dataType": "STRING",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "validationRules": {
+                "maxLength": 1000
+              },
+              "displayOrder": 30
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "TIRES_WHEELS",
+      "name": "Tires & Wheels",
+      "nameAr": "الإطارات والعجلات",
+      "displayOrder": 30,
+      "services": [
+        {
+          "code": "TIRE_REPLACEMENT",
+          "name": "Tire Replacement",
+          "nameAr": "تغيير الإطارات",
+          "fulfillmentMode": "BOTH",
+          "estimatedDurationMinutes": 75,
+          "displayOrder": 10,
+          "attributes": [
+            {
+              "code": "tire_size",
+              "name": "Tire size",
+              "nameAr": "مقاس الإطار",
+              "dataType": "STRING",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "validationRules": {
+                "maxLength": 30
+              },
+              "displayOrder": 10
+            },
+            {
+              "code": "tire_quantity",
+              "name": "Number of tires",
+              "nameAr": "عدد الإطارات",
+              "dataType": "INTEGER",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "unit": "EA",
+              "validationRules": {
+                "minimum": 1,
+                "maximum": 8
+              },
+              "displayOrder": 20
+            },
+            {
+              "code": "tire_brand",
+              "name": "Preferred tire brand",
+              "nameAr": "ماركة الإطار المفضلة",
+              "dataType": "STRING",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "validationRules": {
+                "maxLength": 80
+              },
+              "displayOrder": 30
+            },
+            {
+              "code": "balancing_required",
+              "name": "Wheel balancing",
+              "nameAr": "ترصيص العجلات",
+              "dataType": "BOOLEAN",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 40
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        },
+        {
+          "code": "WHEEL_ALIGNMENT",
+          "name": "Wheel Alignment",
+          "nameAr": "ضبط زوايا العجلات",
+          "fulfillmentMode": "WORKSHOP",
+          "estimatedDurationMinutes": 60,
+          "displayOrder": 20,
+          "attributes": [
+            {
+              "code": "alignment_type",
+              "name": "Alignment type",
+              "nameAr": "نوع ضبط الزوايا",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "front",
+                  "label": "Front axle",
+                  "labelAr": "المحور الأمامي"
+                },
+                {
+                  "value": "four_wheel",
+                  "label": "Four-wheel alignment",
+                  "labelAr": "ضبط الزوايا للأربع عجلات"
+                }
+              ]
+            },
+            {
+              "code": "pulling_side",
+              "name": "Vehicle pulling to one side",
+              "nameAr": "انحراف السيارة إلى أحد الجانبين",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20,
+              "options": [
+                {
+                  "value": "left",
+                  "label": "Left",
+                  "labelAr": "يسار"
+                },
+                {
+                  "value": "right",
+                  "label": "Right",
+                  "labelAr": "يمين"
+                },
+                {
+                  "value": "none",
+                  "label": "None",
+                  "labelAr": "لا يوجد"
+                }
+              ]
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "ELECTRICAL_EV",
+      "name": "Electrical & EV",
+      "nameAr": "الكهرباء والمركبات الكهربائية",
+      "displayOrder": 40,
+      "services": [
+        {
+          "code": "BATTERY_REPLACEMENT",
+          "name": "12V Battery Replacement",
+          "nameAr": "تغيير بطارية 12 فولت",
+          "fulfillmentMode": "BOTH",
+          "estimatedDurationMinutes": 40,
+          "displayOrder": 10,
+          "attributes": [
+            {
+              "code": "battery_technology",
+              "name": "12V battery technology",
+              "nameAr": "نوع بطارية 12 فولت",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "lead_acid",
+                  "label": "Flooded lead-acid",
+                  "labelAr": "رصاص حمضي تقليدي"
+                },
+                {
+                  "value": "agm",
+                  "label": "AGM",
+                  "labelAr": "AGM"
+                },
+                {
+                  "value": "efb",
+                  "label": "EFB",
+                  "labelAr": "EFB"
+                },
+                {
+                  "value": "unknown",
+                  "label": "Not sure",
+                  "labelAr": "غير معروف"
+                }
+              ]
+            },
+            {
+              "code": "battery_capacity_ah",
+              "name": "Battery capacity",
+              "nameAr": "سعة البطارية",
+              "dataType": "INTEGER",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "unit": "Ah",
+              "validationRules": {
+                "minimum": 20,
+                "maximum": 250
+              },
+              "displayOrder": 20
+            },
+            {
+              "code": "mobile_installation",
+              "name": "Mobile installation requested",
+              "nameAr": "طلب تركيب في الموقع",
+              "dataType": "BOOLEAN",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 30
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        },
+        {
+          "code": "EV_BATTERY_DIAGNOSTICS",
+          "name": "EV Battery Diagnostics",
+          "nameAr": "فحص بطارية السيارة الكهربائية",
+          "fulfillmentMode": "WORKSHOP",
+          "estimatedDurationMinutes": 90,
+          "displayOrder": 20,
+          "attributes": [
+            {
+              "code": "diagnostic_level",
+              "name": "Diagnostic level",
+              "nameAr": "مستوى الفحص",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "basic",
+                  "label": "Basic health check",
+                  "labelAr": "فحص أساسي لصحة البطارية"
+                },
+                {
+                  "value": "advanced",
+                  "label": "Advanced diagnostic scan",
+                  "labelAr": "فحص تشخيصي متقدم"
+                }
+              ]
+            },
+            {
+              "code": "battery_capacity_kwh",
+              "name": "Traction battery capacity",
+              "nameAr": "سعة بطارية الدفع",
+              "dataType": "DECIMAL",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "unit": "kWh",
+              "validationRules": {
+                "minimum": 5,
+                "maximum": 250
+              },
+              "displayOrder": 20
+            },
+            {
+              "code": "warning_message",
+              "name": "Dashboard warning message",
+              "nameAr": "رسالة التحذير على لوحة القيادة",
+              "dataType": "STRING",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "validationRules": {
+                "maxLength": 250
+              },
+              "displayOrder": 30
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "REPAIRS_DIAGNOSTICS",
+      "name": "Repairs & Diagnostics",
+      "nameAr": "الإصلاحات والفحص",
+      "displayOrder": 50,
+      "services": [
+        {
+          "code": "AC_SERVICE",
+          "name": "Air Conditioning Service",
+          "nameAr": "خدمة تكييف السيارة",
+          "fulfillmentMode": "BOTH",
+          "estimatedDurationMinutes": 90,
+          "displayOrder": 10,
+          "attributes": [
+            {
+              "code": "ac_symptoms",
+              "name": "A/C symptoms",
+              "nameAr": "أعراض مشكلة المكيف",
+              "dataType": "MULTI_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "validationRules": {
+                "minItems": 1
+              },
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "weak_cooling",
+                  "label": "Weak cooling",
+                  "labelAr": "تبريد ضعيف"
+                },
+                {
+                  "value": "no_cooling",
+                  "label": "No cooling",
+                  "labelAr": "انعدام التبريد"
+                },
+                {
+                  "value": "bad_smell",
+                  "label": "Bad odor",
+                  "labelAr": "رائحة غير مرغوبة"
+                },
+                {
+                  "value": "noise",
+                  "label": "Unusual noise",
+                  "labelAr": "صوت غير طبيعي"
+                },
+                {
+                  "value": "water_leak",
+                  "label": "Water leakage",
+                  "labelAr": "تسرب ماء"
+                }
+              ]
+            },
+            {
+              "code": "refrigerant_type",
+              "name": "Refrigerant type (if known)",
+              "nameAr": "نوع غاز التبريد إن كان معروفاً",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20,
+              "options": [
+                {
+                  "value": "r134a",
+                  "label": "R-134a",
+                  "labelAr": "R-134a"
+                },
+                {
+                  "value": "r1234yf",
+                  "label": "R-1234yf",
+                  "labelAr": "R-1234yf"
+                },
+                {
+                  "value": "unknown",
+                  "label": "Not sure",
+                  "labelAr": "غير معروف"
+                }
+              ]
+            },
+            {
+              "code": "ac_system_photo",
+              "name": "A/C panel photo",
+              "nameAr": "صورة لوحة التحكم بالمكيف",
+              "dataType": "STRING",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "validationRules": {
+                "maxFiles": 3
+              },
+              "displayOrder": 30,
+              "description": "Photo reference (media file id or URL)"
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        },
+        {
+          "code": "BRAKE_SERVICE",
+          "name": "Brake Inspection & Repair",
+          "nameAr": "فحص وإصلاح الفرامل",
+          "fulfillmentMode": "WORKSHOP",
+          "estimatedDurationMinutes": 90,
+          "displayOrder": 20,
+          "attributes": [
+            {
+              "code": "brake_axle",
+              "name": "Brake axle",
+              "nameAr": "محور الفرامل",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "front",
+                  "label": "Front",
+                  "labelAr": "أمامي"
+                },
+                {
+                  "value": "rear",
+                  "label": "Rear",
+                  "labelAr": "خلفي"
+                },
+                {
+                  "value": "both",
+                  "label": "Both",
+                  "labelAr": "كلاهما"
+                }
+              ]
+            },
+            {
+              "code": "brake_symptoms",
+              "name": "Brake symptoms",
+              "nameAr": "أعراض مشكلة الفرامل",
+              "dataType": "MULTI_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20,
+              "options": [
+                {
+                  "value": "squeal",
+                  "label": "Squealing",
+                  "labelAr": "صرير"
+                },
+                {
+                  "value": "vibration",
+                  "label": "Vibration",
+                  "labelAr": "اهتزاز"
+                },
+                {
+                  "value": "weak_braking",
+                  "label": "Weak braking",
+                  "labelAr": "ضعف الفرملة"
+                },
+                {
+                  "value": "warning_light",
+                  "label": "Brake warning light",
+                  "labelAr": "ضوء تحذير الفرامل"
+                }
+              ]
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        },
+        {
+          "code": "ENGINE_DIAGNOSTICS",
+          "name": "Engine Diagnostics",
+          "nameAr": "فحص المحرك بالكمبيوتر",
+          "fulfillmentMode": "WORKSHOP",
+          "estimatedDurationMinutes": 60,
+          "displayOrder": 30,
+          "attributes": [
+            {
+              "code": "warning_lights",
+              "name": "Dashboard warning lights",
+              "nameAr": "أضواء التحذير في لوحة القيادة",
+              "dataType": "MULTI_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "check_engine",
+                  "label": "Check engine",
+                  "labelAr": "فحص المحرك"
+                },
+                {
+                  "value": "abs",
+                  "label": "ABS",
+                  "labelAr": "ABS"
+                },
+                {
+                  "value": "battery",
+                  "label": "Battery",
+                  "labelAr": "البطارية"
+                },
+                {
+                  "value": "other",
+                  "label": "Other",
+                  "labelAr": "أخرى"
+                }
+              ]
+            },
+            {
+              "code": "scan_report_required",
+              "name": "Request diagnostic report",
+              "nameAr": "طلب تقرير الفحص",
+              "dataType": "BOOLEAN",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "PROTECTION_TINT",
+      "name": "Tinting & Paint Protection",
+      "nameAr": "التظليل وحماية الطلاء",
+      "displayOrder": 60,
+      "services": [
+        {
+          "code": "WINDOW_TINTING",
+          "name": "Window Tinting",
+          "nameAr": "تظليل النوافذ",
+          "fulfillmentMode": "WORKSHOP",
+          "estimatedDurationMinutes": 120,
+          "displayOrder": 10,
+          "attributes": [
+            {
+              "code": "tint_coverage",
+              "name": "Tint coverage",
+              "nameAr": "نطاق التظليل",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "side",
+                  "label": "Side windows",
+                  "labelAr": "النوافذ الجانبية"
+                },
+                {
+                  "value": "rear",
+                  "label": "Rear window",
+                  "labelAr": "النافذة الخلفية"
+                },
+                {
+                  "value": "side_rear",
+                  "label": "Side and rear windows",
+                  "labelAr": "النوافذ الجانبية والخلفية"
+                }
+              ]
+            },
+            {
+              "code": "film_type",
+              "name": "Window film type",
+              "nameAr": "نوع فيلم التظليل",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20,
+              "options": [
+                {
+                  "value": "dyed",
+                  "label": "Dyed film",
+                  "labelAr": "فيلم مصبوغ"
+                },
+                {
+                  "value": "carbon",
+                  "label": "Carbon film",
+                  "labelAr": "فيلم كربوني"
+                },
+                {
+                  "value": "ceramic",
+                  "label": "Ceramic film",
+                  "labelAr": "فيلم سيراميكي"
+                }
+              ]
+            },
+            {
+              "code": "vlt_percent",
+              "name": "Visible light transmission (VLT)",
+              "nameAr": "نسبة نفاذ الضوء المرئي",
+              "dataType": "INTEGER",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "unit": "PCT",
+              "validationRules": {
+                "minimum": 1,
+                "maximum": 100,
+                "marketLegalValidationRequired": true
+              },
+              "displayOrder": 30
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED",
+              "regulatoryNote": "Confirm country/city-specific tint and VLT regulations before offering.",
+              "regulatoryNoteAr": "يجب التحقق من أنظمة التظليل المحلية ونسبة نفاذ الضوء المسموح بها قبل تقديم الخدمة."
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR",
+              "regulatoryNote": "Confirm country/city-specific tint and VLT regulations before offering.",
+              "regulatoryNoteAr": "يجب التحقق من أنظمة التظليل المحلية ونسبة نفاذ الضوء المسموح بها قبل تقديم الخدمة."
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR",
+              "regulatoryNote": "Confirm country/city-specific tint and VLT regulations before offering.",
+              "regulatoryNoteAr": "يجب التحقق من أنظمة التظليل المحلية ونسبة نفاذ الضوء المسموح بها قبل تقديم الخدمة."
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD",
+              "regulatoryNote": "Confirm country/city-specific tint and VLT regulations before offering.",
+              "regulatoryNoteAr": "يجب التحقق من أنظمة التظليل المحلية ونسبة نفاذ الضوء المسموح بها قبل تقديم الخدمة."
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD",
+              "regulatoryNote": "Confirm country/city-specific tint and VLT regulations before offering.",
+              "regulatoryNoteAr": "يجب التحقق من أنظمة التظليل المحلية ونسبة نفاذ الضوء المسموح بها قبل تقديم الخدمة."
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR",
+              "regulatoryNote": "Confirm country/city-specific tint and VLT regulations before offering.",
+              "regulatoryNoteAr": "يجب التحقق من أنظمة التظليل المحلية ونسبة نفاذ الضوء المسموح بها قبل تقديم الخدمة."
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP",
+              "regulatoryNote": "Confirm country/city-specific tint and VLT regulations before offering.",
+              "regulatoryNoteAr": "يجب التحقق من أنظمة التظليل المحلية ونسبة نفاذ الضوء المسموح بها قبل تقديم الخدمة."
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD",
+              "regulatoryNote": "Confirm country/city-specific tint and VLT regulations before offering.",
+              "regulatoryNoteAr": "يجب التحقق من أنظمة التظليل المحلية ونسبة نفاذ الضوء المسموح بها قبل تقديم الخدمة."
+            }
+          ]
+        },
+        {
+          "code": "CERAMIC_COATING",
+          "name": "Ceramic Coating",
+          "nameAr": "طلاء السيراميك الواقي",
+          "fulfillmentMode": "WORKSHOP",
+          "estimatedDurationMinutes": 240,
+          "displayOrder": 20,
+          "attributes": [
+            {
+              "code": "coating_package",
+              "name": "Coating package",
+              "nameAr": "باقة طلاء السيراميك",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "one_year",
+                  "label": "1-year package",
+                  "labelAr": "باقة سنة واحدة"
+                },
+                {
+                  "value": "three_year",
+                  "label": "3-year package",
+                  "labelAr": "باقة ثلاث سنوات"
+                },
+                {
+                  "value": "five_year",
+                  "label": "5-year package",
+                  "labelAr": "باقة خمس سنوات"
+                }
+              ]
+            },
+            {
+              "code": "paint_correction",
+              "name": "Paint correction required",
+              "nameAr": "الحاجة إلى تصحيح الطلاء",
+              "dataType": "BOOLEAN",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        },
+        {
+          "code": "PPF_INSTALLATION",
+          "name": "Paint Protection Film",
+          "nameAr": "تركيب فيلم حماية الطلاء",
+          "fulfillmentMode": "WORKSHOP",
+          "estimatedDurationMinutes": 360,
+          "displayOrder": 30,
+          "attributes": [
+            {
+              "code": "ppf_coverage",
+              "name": "Paint protection coverage",
+              "nameAr": "نطاق حماية الطلاء",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "front_bumper",
+                  "label": "Front bumper",
+                  "labelAr": "الصدام الأمامي"
+                },
+                {
+                  "value": "full_front",
+                  "label": "Full front",
+                  "labelAr": "الواجهة الأمامية بالكامل"
+                },
+                {
+                  "value": "full_body",
+                  "label": "Full body",
+                  "labelAr": "الهيكل بالكامل"
+                }
+              ]
+            },
+            {
+              "code": "film_finish",
+              "name": "Film finish",
+              "nameAr": "تشطيب الفيلم",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20,
+              "options": [
+                {
+                  "value": "gloss",
+                  "label": "Gloss",
+                  "labelAr": "لامع"
+                },
+                {
+                  "value": "matte",
+                  "label": "Matte",
+                  "labelAr": "مطفي"
+                }
+              ]
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "ROADSIDE_ASSISTANCE",
+      "name": "Roadside Assistance",
+      "nameAr": "المساعدة على الطريق",
+      "displayOrder": 70,
+      "services": [
+        {
+          "code": "ROADSIDE_ASSISTANCE",
+          "name": "Roadside Assistance",
+          "nameAr": "خدمة المساعدة على الطريق",
+          "fulfillmentMode": "MOBILE",
+          "estimatedDurationMinutes": 60,
+          "displayOrder": 10,
+          "attributes": [
+            {
+              "code": "assistance_type",
+              "name": "Assistance required",
+              "nameAr": "نوع المساعدة المطلوبة",
+              "dataType": "SINGLE_SELECT",
+              "inputContext": "CUSTOMER",
+              "required": true,
+              "displayOrder": 10,
+              "options": [
+                {
+                  "value": "jump_start",
+                  "label": "Battery jump-start",
+                  "labelAr": "تشغيل البطارية"
+                },
+                {
+                  "value": "flat_tire",
+                  "label": "Flat tire assistance",
+                  "labelAr": "مساعدة عند تعطل الإطار"
+                },
+                {
+                  "value": "towing",
+                  "label": "Towing",
+                  "labelAr": "سحب المركبة"
+                },
+                {
+                  "value": "fuel_delivery",
+                  "label": "Fuel delivery",
+                  "labelAr": "توصيل الوقود"
+                }
+              ]
+            },
+            {
+              "code": "vehicle_can_move",
+              "name": "Can the vehicle move?",
+              "nameAr": "هل يمكن تحريك السيارة؟",
+              "dataType": "BOOLEAN",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "displayOrder": 20
+            },
+            {
+              "code": "additional_details",
+              "name": "Additional details",
+              "nameAr": "تفاصيل إضافية",
+              "dataType": "STRING",
+              "inputContext": "CUSTOMER",
+              "required": false,
+              "validationRules": {
+                "maxLength": 1000
+              },
+              "displayOrder": 30
+            }
+          ],
+          "markets": [
+            {
+              "countryCode": "AE",
+              "currencyCode": "AED"
+            },
+            {
+              "countryCode": "SA",
+              "currencyCode": "SAR"
+            },
+            {
+              "countryCode": "QA",
+              "currencyCode": "QAR"
+            },
+            {
+              "countryCode": "KW",
+              "currencyCode": "KWD"
+            },
+            {
+              "countryCode": "BH",
+              "currencyCode": "BHD"
+            },
+            {
+              "countryCode": "OM",
+              "currencyCode": "OMR"
+            },
+            {
+              "countryCode": "EG",
+              "currencyCode": "EGP"
+            },
+            {
+              "countryCode": "JO",
+              "currencyCode": "JOD"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -40,6 +40,14 @@ public class ServiceFilterDefinition {
     private ServiceCategory serviceCategory;
 
     /**
+     * The attribute this filter searches. When set, filterCode is the attribute's code; filters
+     * without an attribute (e.g. location) do not query offering JSON.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attribute_definition_id")
+    private ServiceAttributeDefinition attributeDefinition;
+
+    /**
      * Unique code for this filter within the service category.
      * Used as the parameter name in search queries. Example: "width", "brand", "city"
      */

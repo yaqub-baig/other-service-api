@@ -108,15 +108,6 @@ public class ServiceAttributeDefinitionController {
     }
 
     /**
-     * Hard delete an attribute definition (admin only).
-     */
-    @DeleteMapping("/{id}/hard")
-    public ResponseEntity<ApiResponse<String>> hardDelete(@PathVariable Long id) {
-        attributeService.hardDelete(id);
-        return ResponseEntity.ok(ApiResponse.success("Attribute definition permanently deleted", null));
-    }
-
-    /**
      * Reactivate a soft-deleted attribute definition.
      */
     @PostMapping("/{id}/reactivate")

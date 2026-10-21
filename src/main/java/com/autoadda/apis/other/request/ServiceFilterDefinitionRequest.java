@@ -18,6 +18,8 @@ public class ServiceFilterDefinitionRequest {
     private Integer serviceCategoryId;
 
     private String filterCode;
+    /** Attribute this filter searches; filterCode defaults to the attribute's code. */
+    private Long attributeDefinitionId;
 
     private String filterLabel;
     private String filterLabelAr;

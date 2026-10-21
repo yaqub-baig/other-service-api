@@ -1,5 +1,7 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.util.AttributeCodes;
+import com.autoadda.apis.other.util.OfferingType;
 import com.autoadda.apis.other.entity.ServiceSchemaVersion;
 import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
@@ -76,6 +78,9 @@ public class ServiceOfferingService {
                 ? serviceCatalogService.getForCategory(request.getServiceId(), vendorService.getServiceCategory().getId())
                 : null;
 
+        OfferingType offeringType = request.getOfferingType() != null ? request.getOfferingType() : OfferingType.SERVICE;
+        requireStockFieldsOnlyForProducts(offeringType, request.getStockStatus(), request.getQuantityAvailable());
+
         // Always validated, so required attributes cannot be skipped by sending none
         validateAttributes(vendorService.getServiceCategory().getId(), catalogService, request.getFilterableAttributes());
         String filterableAttributesJson = null;
@@ -109,6 +114,7 @@ public class ServiceOfferingService {
                 .maxPrice(request.getMaxPrice())
                 .originalPrice(request.getOriginalPrice())
                 .currency(marketService.resolveOfferingCurrency(catalogService, vendorService.getVendor(), request.getCurrency()))
+                .offeringType(offeringType)
                 .stockStatus(request.getStockStatus() != null ? request.getStockStatus() : StockStatus.IN_STOCK)
                 .quantityAvailable(request.getQuantityAvailable())
                 .filterableAttributes(filterableAttributesJson)
@@ -318,6 +324,14 @@ public class ServiceOfferingService {
                     offering.getVendorService().getVendor(),
                     request.getCurrency()));
         }
+        if (request.getOfferingType() != null) {
+            offering.setOfferingType(request.getOfferingType());
+            if (request.getOfferingType() == OfferingType.SERVICE) {
+                offering.setStockStatus(StockStatus.IN_STOCK);
+                offering.setQuantityAvailable(null);
+            }
+        }
+        requireStockFieldsOnlyForProducts(offering.getOfferingType(), request.getStockStatus(), request.getQuantityAvailable());
         if (request.getStockStatus() != null) {
             offering.setStockStatus(request.getStockStatus());
         }
@@ -353,6 +367,7 @@ public class ServiceOfferingService {
     @Transactional
     public ServiceOfferingResponse updateStockStatus(Long id, StockStatus stockStatus, Integer quantity) {
         ServiceOffering offering = findEntityById(id);
+        requireStockFieldsOnlyForProducts(offering.getOfferingType(), stockStatus, quantity);
         offering.setStockStatus(stockStatus);
         if (quantity != null) {
             offering.setQuantityAvailable(quantity);
@@ -384,18 +399,6 @@ public class ServiceOfferingService {
     }
 
     /**
-     * Hard delete an offering.
-     */
-    @Transactional
-    public void hardDelete(Long id) {
-        if (!offeringRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Service offering not found with id: " + id);
-        }
-        offeringRepository.deleteById(id);
-        log.info("Hard deleted service offering with id: {}", id);
-    }
-
-    /**
      * Reactivate a soft-deleted offering.
      */
     @Transactional
@@ -420,6 +423,7 @@ public class ServiceOfferingService {
      */
     @Transactional(readOnly = true)
     public List<ServiceOfferingResponse> filterByAttribute(String attributeCode, String value) {
+        AttributeCodes.requireValid(attributeCode);
         String jsonPath = "$." + attributeCode;
         List<ServiceOffering> offerings = offeringRepository.findByFilterableAttribute(jsonPath, "\"" + value + "\"");
         return offeringMapper.toResponseList(offerings);
@@ -430,6 +434,7 @@ public class ServiceOfferingService {
      */
     @Transactional(readOnly = true)
     public List<ServiceOfferingResponse> filterByAttributes(Map<String, Object> attributes) {
+        attributes.keySet().forEach(AttributeCodes::requireValid);
         String jsonFragment = convertToJson(attributes);
         List<ServiceOffering> offerings = offeringRepository.findByFilterableAttributesContaining(jsonFragment);
         return offeringMapper.toResponseList(offerings);
@@ -476,6 +481,13 @@ public class ServiceOfferingService {
         List<ServiceAttributeDefinition> definitions = attributeDefinitionService.resolveAttributes(
                 categoryId, catalogService != null ? catalogService.getId() : null);
         attributeValidator.validateOrThrow(fieldSpecFactory.forOffering(definitions), attributes);
+    }
+
+    private static void requireStockFieldsOnlyForProducts(OfferingType type, StockStatus stockStatus, Integer quantity) {
+        boolean setsStock = (stockStatus != null && stockStatus != StockStatus.IN_STOCK) || quantity != null;
+        if (type == OfferingType.SERVICE && setsStock) {
+            throw new BusinessException("Stock status and quantity apply to PRODUCT offerings only");
+        }
     }
 
     private ServiceSchemaVersion liveVersion(CatalogService catalogService) {

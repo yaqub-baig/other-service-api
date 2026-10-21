@@ -22,6 +22,7 @@ public class ServiceFilterDefinitionResponse {
     private Integer serviceCategoryId;
     private String serviceCategoryName;
     private String filterCode;
+    private Long attributeDefinitionId;
     private String filterLabel; // follows Accept-Language
     private String filterLabelAr;
     private FilterType filterType;

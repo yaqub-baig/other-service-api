@@ -107,15 +107,6 @@ public class ServiceFilterDefinitionController {
     }
 
     /**
-     * Hard delete a filter definition (admin only).
-     */
-    @DeleteMapping("/{id}/hard")
-    public ResponseEntity<ApiResponse<Void>> hardDelete(@PathVariable Long id) {
-        filterService.hardDelete(id);
-        return ResponseEntity.ok(ApiResponse.success("Filter definition permanently deleted", null));
-    }
-
-    /**
      * Reactivate a soft-deleted filter definition.
      */
     @PostMapping("/{id}/reactivate")

@@ -25,6 +25,7 @@ public class ServiceFilterDefinitionMapper {
             response.setServiceCategoryId(e.getServiceCategory() != null ? e.getServiceCategory().getId() : null);
             response.setServiceCategoryName(e.getServiceCategory() != null ? e.getServiceCategory().getName() : null);
             response.setFilterCode(e.getFilterCode());
+            response.setAttributeDefinitionId(e.getAttributeDefinition() != null ? e.getAttributeDefinition().getId() : null);
             response.setFilterLabel(Localized.pick(e.getFilterLabel(), e.getFilterLabelAr()));
             response.setFilterLabelAr(e.getFilterLabelAr());
             response.setFilterType(e.getFilterType());

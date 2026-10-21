@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.response;
 
+import com.autoadda.apis.other.util.OfferingType;
 import com.autoadda.apis.other.util.PricingType;
 import com.autoadda.apis.other.util.StockStatus;
 import lombok.AllArgsConstructor;
@@ -30,6 +31,7 @@ public class ServiceOfferingResponse {
     private String serviceName;
     private Integer schemaVersionId;
     private Integer schemaVersionNo;
+    private OfferingType offeringType;
     private String offeringName;
     private String shortDescription;
     private String description;

@@ -46,7 +46,7 @@ public class ServiceCategoryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> delete(@PathVariable Integer id) {
         serviceCategoryService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success("Service category deleted successfully", null));
+        return ResponseEntity.ok(ApiResponse.success("Service category deactivated", null));
     }
 
     @GetMapping("/parent/{parentId}")

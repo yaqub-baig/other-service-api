@@ -36,6 +36,8 @@ public class ServiceAttributeDefinitionRequest {
     private Boolean isFilterable;
 
     private Boolean isSearchable;
+    /** Keep an index for this attribute on offerings (hot search filter). */
+    private Boolean isIndexed;
 
     private Integer displayOrder;
 

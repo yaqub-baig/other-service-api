@@ -1,5 +1,7 @@
 package com.autoadda.apis.other.repository;
 
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -41,4 +43,11 @@ public interface ServiceAttributeDefinitionRepository extends JpaRepository<Serv
     List<ServiceAttributeDefinition> findByServiceCategoryIdAndIsActiveTrue(Integer serviceCategoryId);
 
     List<ServiceAttributeDefinition> findByIsActiveTrueOrderByServiceCategoryIdAscDisplayOrderAsc();
+
+    /**
+     * Codes of active attributes, optionally for one category: the whitelist for JSON search paths.
+     */
+    @Query("SELECT DISTINCT a.attributeCode FROM ServiceAttributeDefinition a WHERE a.isActive = true " +
+           "AND (:categoryId IS NULL OR a.serviceCategory.id = :categoryId)")
+    List<String> findActiveCodes(@Param("categoryId") Integer categoryId);
 }

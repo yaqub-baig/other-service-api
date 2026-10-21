@@ -41,6 +41,7 @@ public class ServiceOfferingMapper {
                 response.setSchemaVersionId(e.getSchemaVersion().getId());
                 response.setSchemaVersionNo(e.getSchemaVersion().getVersionNo());
             }
+            response.setOfferingType(e.getOfferingType());
             response.setOfferingName(e.getOfferingName());
             response.setShortDescription(e.getShortDescription());
             response.setDescription(e.getDescription());

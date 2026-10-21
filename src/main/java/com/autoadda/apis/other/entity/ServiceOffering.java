@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.entity;
 
+import com.autoadda.apis.other.util.OfferingType;
 import com.autoadda.apis.other.util.PricingType;
 import com.autoadda.apis.other.util.StockStatus;
 import jakarta.persistence.*;
@@ -94,6 +95,14 @@ public class ServiceOffering {
      */
     @Column(name = "sku", length = 50, unique = true)
     private String sku;
+
+    /**
+     * SERVICE (work performed) or PRODUCT (a physical item). Stock fields apply to PRODUCT only.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "offering_type", nullable = false, length = 20)
+    @Builder.Default
+    private OfferingType offeringType = OfferingType.SERVICE;
 
     /**
      * The pricing strategy for this offering.

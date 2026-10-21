@@ -30,6 +30,7 @@ public class ServiceAttributeDefinitionResponse {
     private Boolean isRequired;
     private Boolean isFilterable;
     private Boolean isSearchable;
+    private Boolean isIndexed;
     private Integer displayOrder;
     private String description;
     private String defaultValue;

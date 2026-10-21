@@ -76,15 +76,6 @@ public class ServiceOfferingController {
     }
 
     /**
-     * Hard delete an offering (admin only).
-     */
-    @DeleteMapping("/{id}/hard")
-    public ResponseEntity<ApiResponse<Void>> hardDelete(@PathVariable Long id) {
-        offeringService.hardDelete(id);
-        return ResponseEntity.ok(ApiResponse.success("Service offering permanently deleted", null));
-    }
-
-    /**
      * Reactivate a soft-deleted offering.
      */
     @PostMapping("/{id}/reactivate")

@@ -1,5 +1,8 @@
 package com.autoadda.apis.other.service;
 
+import org.springframework.context.ApplicationEventPublisher;
+import com.autoadda.apis.other.search.OfferingAttributeIndexer;
+import com.autoadda.apis.other.util.AttributeCodes;
 import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import com.autoadda.apis.other.entity.ServiceCategory;
@@ -38,6 +41,7 @@ public class ServiceAttributeDefinitionService {
     private final ServiceCatalogService serviceCatalogService;
     private final ObjectMapper objectMapper;
     private final SchemaVersionService schemaVersionService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Create a new attribute definition for a service category.
@@ -62,6 +66,7 @@ public class ServiceAttributeDefinitionService {
         ServiceSchemaVersion draft = catalogService != null
                 ? schemaVersionService.getOrCreateDraft(catalogService.getId(), null)
                 : null;
+        AttributeCodes.requireValid(request.getAttributeCode());
         ensureCodeIsFree(categoryId, draft, request.getAttributeCode());
 
         ServiceAttributeDefinition attribute = ServiceAttributeDefinition.builder()
@@ -77,6 +82,7 @@ public class ServiceAttributeDefinitionService {
                 .isRequired(request.getIsRequired() != null ? request.getIsRequired() : false)
                 .isFilterable(request.getIsFilterable() != null ? request.getIsFilterable() : false)
                 .isSearchable(request.getIsSearchable() != null ? request.getIsSearchable() : false)
+                .isIndexed(request.getIsIndexed() != null ? request.getIsIndexed() : false)
                 .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
                 .description(request.getDescription())
                 .defaultValue(request.getDefaultValue())
@@ -88,6 +94,9 @@ public class ServiceAttributeDefinitionService {
         checkDefinition(attribute);
 
         ServiceAttributeDefinition savedAttribute = attributeRepository.save(attribute);
+        if (Boolean.TRUE.equals(savedAttribute.getIsIndexed())) {
+            eventPublisher.publishEvent(new OfferingAttributeIndexer.IndexedAttributesChanged());
+        }
         return attributeMapper.toResponse(savedAttribute);
     }
 
@@ -161,6 +170,7 @@ public class ServiceAttributeDefinitionService {
         // If changing attribute code, check for duplicates
         if (request.getAttributeCode() != null &&
                 !request.getAttributeCode().equals(attribute.getAttributeCode())) {
+            AttributeCodes.requireValid(request.getAttributeCode());
             ensureCodeIsFree(attribute.getServiceCategory().getId(), attribute.getSchemaVersion(),
                     request.getAttributeCode());
             attribute.setAttributeCode(request.getAttributeCode());
@@ -190,6 +200,9 @@ public class ServiceAttributeDefinitionService {
         if (request.getIsSearchable() != null) {
             attribute.setIsSearchable(request.getIsSearchable());
         }
+        if (request.getIsIndexed() != null) {
+            attribute.setIsIndexed(request.getIsIndexed());
+        }
         if (request.getDisplayOrder() != null) {
             attribute.setDisplayOrder(request.getDisplayOrder());
         }
@@ -211,6 +224,9 @@ public class ServiceAttributeDefinitionService {
         checkDefinition(attribute);
 
         ServiceAttributeDefinition updatedAttribute = attributeRepository.save(attribute);
+        if (request.getIsIndexed() != null) {
+            eventPublisher.publishEvent(new OfferingAttributeIndexer.IndexedAttributesChanged());
+        }
         return attributeMapper.toResponse(updatedAttribute);
     }
 
@@ -224,16 +240,6 @@ public class ServiceAttributeDefinitionService {
         attribute.setIsActive(false);
         attributeRepository.save(attribute);
         log.info("Soft deleted attribute definition with id: {}", id);
-    }
-
-    /**
-     * Hard delete an attribute definition.
-     */
-    @Transactional
-    public void hardDelete(Long id) {
-        schemaVersionService.requireEditable(getById1(id));
-        attributeRepository.deleteById(id);
-        log.info("Hard deleted attribute definition with id: {}", id);
     }
 
     /**

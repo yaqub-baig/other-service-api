@@ -1,5 +1,9 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.util.AttributeCodes;
+import com.autoadda.apis.other.repository.ServiceAttributeDefinitionRepository;
+import com.autoadda.apis.other.exception.BusinessException;
+import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import com.autoadda.apis.other.entity.FilterOption;
 import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.entity.ServiceFilterDefinition;
@@ -30,6 +34,7 @@ public class ServiceFilterDefinitionService {
     private final FilterOptionRepository optionRepository;
     private final ServiceCategoryRepository serviceCategoryRepository;
     private final ServiceFilterDefinitionMapper filterMapper;
+    private final ServiceAttributeDefinitionRepository attributeRepository;
 
     /**
      * Create a new filter definition for a service category.
@@ -41,16 +46,23 @@ public class ServiceFilterDefinitionService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Service category not found with id: " + request.getServiceCategoryId()));
 
+        ServiceAttributeDefinition attribute = linkedAttribute(request.getAttributeDefinitionId(), category.getId());
+        String filterCode = attribute != null ? attribute.getAttributeCode() : request.getFilterCode();
+        if (attribute != null && request.getFilterCode() != null && !request.getFilterCode().equals(filterCode)) {
+            throw new BusinessException("filterCode must match the linked attribute's code '" + filterCode + "'");
+        }
+        AttributeCodes.requireValid(filterCode);
+
         // Check for duplicate filter code
-        if (filterRepository.existsByServiceCategoryIdAndFilterCode(
-                request.getServiceCategoryId(), request.getFilterCode())) {
+        if (filterRepository.existsByServiceCategoryIdAndFilterCode(request.getServiceCategoryId(), filterCode)) {
             throw new AlreadyExistsException(
-                    "Filter with code '" + request.getFilterCode() + "' already exists for this category");
+                    "Filter with code '" + filterCode + "' already exists for this category");
         }
 
         ServiceFilterDefinition filter = ServiceFilterDefinition.builder()
                 .serviceCategory(category)
-                .filterCode(request.getFilterCode())
+                .attributeDefinition(attribute)
+                .filterCode(filterCode)
                 .filterLabel(request.getFilterLabel())
                 .filterLabelAr(request.getFilterLabelAr())
                 .filterType(request.getFilterType())
@@ -148,9 +160,20 @@ public class ServiceFilterDefinitionService {
     public ServiceFilterDefinitionResponse update(Long id, ServiceFilterDefinitionRequest request) {
         ServiceFilterDefinition filter = findEntityById(id);
 
+        if (request.getAttributeDefinitionId() != null) {
+            ServiceAttributeDefinition attribute = linkedAttribute(request.getAttributeDefinitionId(),
+                    filter.getServiceCategory().getId());
+            filter.setAttributeDefinition(attribute);
+            request.setFilterCode(attribute.getAttributeCode());
+        } else if (request.getFilterCode() != null && filter.getAttributeDefinition() != null
+                && !request.getFilterCode().equals(filter.getAttributeDefinition().getAttributeCode())) {
+            throw new BusinessException("filterCode must match the linked attribute's code");
+        }
+
         // If changing filter code, check for duplicates
         if (request.getFilterCode() != null &&
                 !request.getFilterCode().equals(filter.getFilterCode())) {
+            AttributeCodes.requireValid(request.getFilterCode());
             if (filterRepository.existsByServiceCategoryIdAndFilterCode(
                     filter.getServiceCategory().getId(), request.getFilterCode())) {
                 throw new AlreadyExistsException(
@@ -272,15 +295,27 @@ public class ServiceFilterDefinitionService {
     }
 
     /**
-     * Delete an option.
+     * Deactivate an option (kept so offerings and saved searches using the value stay readable).
      */
     @Transactional
     public void deleteOption(Long optionId) {
-        if (!optionRepository.existsById(optionId)) {
-            throw new ResourceNotFoundException("Filter option not found with id: " + optionId);
+        FilterOption option = optionRepository.findById(optionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Filter option not found with id: " + optionId));
+        option.setIsActive(false);
+        optionRepository.save(option);
+        log.info("Deactivated filter option with id: {}", optionId);
+    }
+
+    private ServiceAttributeDefinition linkedAttribute(Long attributeId, Integer categoryId) {
+        if (attributeId == null) {
+            return null;
         }
-        optionRepository.deleteById(optionId);
-        log.info("Deleted filter option with id: {}", optionId);
+        ServiceAttributeDefinition attribute = attributeRepository.findById(attributeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Attribute definition not found with id: " + attributeId));
+        if (!attribute.getServiceCategory().getId().equals(categoryId)) {
+            throw new BusinessException("Attribute " + attributeId + " does not belong to category " + categoryId);
+        }
+        return attribute;
     }
 
     /**
@@ -307,18 +342,6 @@ public class ServiceFilterDefinitionService {
         filter.setIsActive(false);
         filterRepository.save(filter);
         log.info("Soft deleted filter definition with id: {}", id);
-    }
-
-    /**
-     * Hard delete a filter definition.
-     */
-    @Transactional
-    public void hardDelete(Long id) {
-        if (!filterRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Filter definition not found with id: " + id);
-        }
-        filterRepository.deleteById(id);
-        log.info("Hard deleted filter definition with id: {}", id);
     }
 
     /**

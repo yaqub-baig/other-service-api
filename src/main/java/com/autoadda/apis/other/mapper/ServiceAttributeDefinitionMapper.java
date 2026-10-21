@@ -43,6 +43,7 @@ public class ServiceAttributeDefinitionMapper {
             response.setIsRequired(e.getIsRequired());
             response.setIsFilterable(e.getIsFilterable());
             response.setIsSearchable(e.getIsSearchable());
+            response.setIsIndexed(e.getIsIndexed());
             response.setDisplayOrder(e.getDisplayOrder());
             response.setDescription(Localized.pick(e.getDescription(), e.getDescriptionAr()));
             response.setDefaultValue(e.getDefaultValue());

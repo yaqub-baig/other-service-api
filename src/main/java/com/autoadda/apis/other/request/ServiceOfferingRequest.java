@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.request;
 
+import com.autoadda.apis.other.util.OfferingType;
 import com.autoadda.apis.other.util.PricingType;
 import com.autoadda.apis.other.util.StockStatus;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,11 @@ public class ServiceOfferingRequest {
      * Catalog service this offering sells (optional). Must belong to the vendor service's category.
      */
     private Integer serviceId;
+
+    /**
+     * SERVICE (default) or PRODUCT. Stock status and quantity may only be set on PRODUCT offerings.
+     */
+    private OfferingType offeringType;
 
     /**
      * Name of the offering.

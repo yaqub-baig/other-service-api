@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.request;
 
+import com.autoadda.apis.other.util.OfferingType;
 import com.autoadda.apis.other.util.PricingType;
 import com.autoadda.apis.other.util.StockStatus;
 import lombok.AllArgsConstructor;
@@ -125,6 +126,11 @@ public class OfferingSearchRequest {
      * Filter by catalog service.
      */
     private Integer serviceId;
+
+    /**
+     * SERVICE or PRODUCT.
+     */
+    private OfferingType offeringType;
 
     // ==================== Rating Filters ====================
 

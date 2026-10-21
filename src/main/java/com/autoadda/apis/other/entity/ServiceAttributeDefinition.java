@@ -102,6 +102,14 @@ public class ServiceAttributeDefinition {
     private Boolean isSearchable = false;
 
     /**
+     * Hot filter: on MySQL the service keeps a generated, indexed column for this code on
+     * service_offerings (see OfferingAttributeIndexer). Only meaningful for filterable attributes.
+     */
+    @Column(name = "is_indexed", nullable = false)
+    @Builder.Default
+    private Boolean isIndexed = false;
+
+    /**
      * Order in which this attribute appears in forms and displays.
      */
     @Column(name = "display_order")

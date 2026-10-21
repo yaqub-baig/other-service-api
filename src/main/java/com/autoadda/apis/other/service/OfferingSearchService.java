@@ -1,5 +1,9 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.util.AttributeCodes;
+import com.autoadda.apis.other.search.OfferingAttributeIndexer;
+import com.autoadda.apis.other.repository.ServiceAttributeDefinitionRepository;
+import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.util.Localized;
 import com.autoadda.apis.other.entity.ServiceFilterDefinition;
 import com.autoadda.apis.other.entity.ServiceOffering;
@@ -35,6 +39,8 @@ public class OfferingSearchService {
     private final EntityManager entityManager;
     private final ServiceFilterDefinitionRepository filterDefinitionRepository;
     private final ObjectMapper objectMapper;
+    private final ServiceAttributeDefinitionRepository attributeRepository;
+    private final OfferingAttributeIndexer attributeIndexer;
 
     // Earth's radius in kilometers for distance calculations
     private static final double EARTH_RADIUS_KM = 6371.0;
@@ -46,8 +52,11 @@ public class OfferingSearchService {
     public OfferingSearchResponse search(OfferingSearchRequest request) {
         long startTime = System.currentTimeMillis();
 
+        // Only codes of real attributes may reach the SQL as JSON paths
+        Set<String> knownCodes = new HashSet<>(attributeRepository.findActiveCodes(request.getCategoryId()));
+
         // Build and execute the main query
-        SearchQueryBuilder queryBuilder = new SearchQueryBuilder(request);
+        SearchQueryBuilder queryBuilder = new SearchQueryBuilder(request, knownCodes);
         String countSql = queryBuilder.buildCountQuery();
         String searchSql = queryBuilder.buildSearchQuery();
         Map<String, Object> params = queryBuilder.getParameters();
@@ -72,7 +81,7 @@ public class OfferingSearchService {
         // Build facets if requested
         Map<String, List<FacetValue>> facets = null;
         if (Boolean.TRUE.equals(request.getIncludeFacets()) && request.getCategoryId() != null) {
-            facets = buildFacets(request.getCategoryId(), queryBuilder.buildFacetBaseQuery(), params);
+            facets = buildFacets(request.getCategoryId(), queryBuilder.buildFacetBaseQuery(), params, knownCodes);
         }
 
         // Get price range
@@ -302,19 +311,35 @@ public class OfferingSearchService {
         });
     }
 
+    /**
+     * SQL expression for an attribute value: the indexed generated column when there is one,
+     * otherwise a JSON lookup. Callers must pass a validated, known attribute code.
+     */
+    private String attributeExpression(String attributeCode) {
+        String column = attributeIndexer.columnFor(attributeCode);
+        return column != null
+                ? "o." + column
+                : "JSON_UNQUOTE(JSON_EXTRACT(o.filterable_attributes, '$." + attributeCode + "'))";
+    }
+
     private Map<String, List<FacetValue>> buildFacets(Integer categoryId, String baseQuery,
-                                                       Map<String, Object> params) {
+                                                       Map<String, Object> params, Set<String> knownCodes) {
         Map<String, List<FacetValue>> facets = new LinkedHashMap<>();
 
         List<ServiceFilterDefinition> filterDefs =
                 filterDefinitionRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
 
         for (ServiceFilterDefinition filterDef : filterDefs) {
-            String facetSql = "SELECT JSON_UNQUOTE(JSON_EXTRACT(o.filterable_attributes, '$." +
-                    filterDef.getFilterCode() + "')) as val, COUNT(*) as cnt " +
+            String code = filterDef.getFilterCode();
+            // Filters that are not attributes (e.g. location) have no JSON value to facet on
+            if (!AttributeCodes.isValid(code) || !knownCodes.contains(code)) {
+                continue;
+            }
+            String expression = attributeExpression(code);
+            String facetSql = "SELECT " + expression + " as val, COUNT(*) as cnt " +
                     "FROM (" + baseQuery + ") AS filtered " +
                     "JOIN service_offerings o ON filtered.id = o.id " +
-                    "WHERE JSON_EXTRACT(o.filterable_attributes, '$." + filterDef.getFilterCode() + "') IS NOT NULL " +
+                    "WHERE " + expression + " IS NOT NULL " +
                     "GROUP BY val ORDER BY cnt DESC LIMIT 50";
 
             try {
@@ -372,9 +397,11 @@ public class OfferingSearchService {
         private final StringBuilder joinClause = new StringBuilder();
         private boolean hasGeoJoin = false;
         private boolean hasVendorJoin = false;
+        private final Set<String> knownCodes;
 
-        public SearchQueryBuilder(OfferingSearchRequest request) {
+        public SearchQueryBuilder(OfferingSearchRequest request, Set<String> knownCodes) {
             this.request = request;
+            this.knownCodes = knownCodes;
             buildClauses();
         }
 
@@ -393,6 +420,11 @@ public class OfferingSearchService {
             if (request.getCategoryId() != null) {
                 whereClause.append("AND vs.service_category_id = :categoryId ");
                 parameters.put("categoryId", request.getCategoryId());
+            }
+
+            if (request.getOfferingType() != null) {
+                whereClause.append("AND o.offering_type = :offeringType ");
+                parameters.put("offeringType", request.getOfferingType().name());
             }
 
             // Catalog service filter
@@ -475,23 +507,33 @@ public class OfferingSearchService {
                 for (Map.Entry<String, Object> entry : request.getAttributes().entrySet()) {
                     String attrCode = entry.getKey();
                     Object attrValue = entry.getValue();
+                    if (!AttributeCodes.isValid(attrCode) || !knownCodes.contains(attrCode)) {
+                        throw new BusinessException("Unknown search attribute '" + attrCode + "'");
+                    }
+                    if (attrValue == null) {
+                        continue;
+                    }
+                    String expression = attributeExpression(attrCode);
 
                     if (attrValue instanceof List) {
                         // Multi-select: any of the values
                         @SuppressWarnings("unchecked")
-                        List<Object> values = (List<Object>) attrValue;
+                        List<Object> values = ((List<Object>) attrValue).stream().filter(Objects::nonNull).toList();
+                        if (values.isEmpty()) {
+                            continue;
+                        }
                         whereClause.append("AND (");
                         for (int i = 0; i < values.size(); i++) {
                             if (i > 0) whereClause.append(" OR ");
                             String paramName = "attr_" + attrIndex + "_" + i;
-                            whereClause.append("JSON_UNQUOTE(JSON_EXTRACT(o.filterable_attributes, '$.").append(attrCode).append("')) = :").append(paramName);
+                            whereClause.append(expression).append(" = :").append(paramName);
                             parameters.put(paramName, values.get(i).toString());
                         }
                         whereClause.append(") ");
                     } else {
                         // Single value
                         String paramName = "attr_" + attrIndex;
-                        whereClause.append("AND JSON_UNQUOTE(JSON_EXTRACT(o.filterable_attributes, '$.").append(attrCode).append("')) = :").append(paramName).append(" ");
+                        whereClause.append("AND ").append(expression).append(" = :").append(paramName).append(" ");
                         parameters.put(paramName, attrValue.toString());
                     }
                     attrIndex++;
@@ -575,7 +617,8 @@ public class OfferingSearchService {
                     sql.append("o.price ").append(sortDir);
                     break;
                 case "rating":
-                    sql.append("o.average_rating DESC NULLS LAST");
+                    // MySQL has no NULLS LAST; sort unrated offerings after rated ones
+                    sql.append("o.average_rating IS NULL, o.average_rating DESC");
                     break;
                 case "popularity":
                     sql.append("o.total_orders DESC");
