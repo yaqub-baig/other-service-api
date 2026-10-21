@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.Booking;
 import com.autoadda.apis.other.entity.BookedService;
 import com.autoadda.apis.other.entity.BookingStatusActivity;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
 public class BookingService {
 
     private final BookingRepository bookingRepository;
+    private final ServiceCatalogService serviceCatalogService;
     private final BookingStatusActivityRepository appointmentActivityRepo;
     private final BookedServiceRepository serviceRepo;
     private final VendorRepository vendorRepository;
@@ -71,9 +73,14 @@ public class BookingService {
         Vendor vendor = vendorRepository.findById(request.getOtherServiceId())
                 .orElseThrow(() -> new OtherServiceNotFoundException("Vendor not found"));
 
+        CatalogService catalogService = request.getCatalogServiceId() != null
+                ? serviceCatalogService.getForDirectBooking(request.getCatalogServiceId(), vendor)
+                : null;
+
         // Create booking
         Booking booking = Booking.builder()
                 .vendor(vendor)
+                .catalogService(catalogService)
                 .vehicleId(request.getVehicleId())
                 .customerId(request.getCustomerId())
                 .scheduleDate(request.getScheduleDate())
@@ -177,6 +184,7 @@ public class BookingService {
         Booking booking = Booking.builder()
                 .appointmentReferenceId(bookingCode)
                 .vendor(quotation.getVendor())
+                .catalogService(quotation.getQuotationRequest().getCatalogService())
                 .customerId(request.getCustomerId())
                 .vehicleId(request.getVehicleId())
                 .scheduleDate(request.getScheduleDate())

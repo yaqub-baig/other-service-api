@@ -24,6 +24,8 @@ public class ServiceAttributeDefinitionRequest {
     private String attributeCode;
 
     private String attributeName;
+    private String attributeNameAr;
+    private String descriptionAr;
 
     private DataType dataType;
 

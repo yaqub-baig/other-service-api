@@ -22,7 +22,8 @@ public class ServiceFilterDefinitionResponse {
     private Integer serviceCategoryId;
     private String serviceCategoryName;
     private String filterCode;
-    private String filterLabel;
+    private String filterLabel; // follows Accept-Language
+    private String filterLabelAr;
     private FilterType filterType;
     private DataSourceType dataSource;
     private String dataSourceConfig;

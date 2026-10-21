@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.mapper;
 
+import com.autoadda.apis.other.util.Localized;
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import com.autoadda.apis.other.response.ServiceAttributeDefinitionResponse;
 import org.springframework.stereotype.Component;
@@ -29,14 +30,16 @@ public class ServiceAttributeDefinitionMapper {
                 response.setServiceCode(e.getCatalogService().getCode());
             }
             response.setAttributeCode(e.getAttributeCode());
-            response.setAttributeName(e.getAttributeName());
+            response.setAttributeName(Localized.pick(e.getAttributeName(), e.getAttributeNameAr()));
+            response.setAttributeNameAr(e.getAttributeNameAr());
+            response.setDescriptionAr(e.getDescriptionAr());
             response.setDataType(e.getDataType());
             response.setUnit(e.getUnit());
             response.setIsRequired(e.getIsRequired());
             response.setIsFilterable(e.getIsFilterable());
             response.setIsSearchable(e.getIsSearchable());
             response.setDisplayOrder(e.getDisplayOrder());
-            response.setDescription(e.getDescription());
+            response.setDescription(Localized.pick(e.getDescription(), e.getDescriptionAr()));
             response.setDefaultValue(e.getDefaultValue());
             response.setValidationRules(e.getValidationRules());
             response.setOptions(e.getOptions());

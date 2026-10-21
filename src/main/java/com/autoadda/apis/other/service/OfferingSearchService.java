@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.util.Localized;
 import com.autoadda.apis.other.entity.ServiceFilterDefinition;
 import com.autoadda.apis.other.entity.ServiceOffering;
 import com.autoadda.apis.other.repository.ServiceFilterDefinitionRepository;
@@ -146,7 +147,7 @@ public class OfferingSearchService {
                     .filter(opt -> Boolean.TRUE.equals(opt.getIsActive()))
                     .map(opt -> FacetValue.builder()
                             .value(opt.getOptionValue())
-                            .label(opt.getOptionLabel())
+                            .label(Localized.pick(opt.getOptionLabel(), opt.getOptionLabelAr()))
                             .count(0L) // Count will be populated during actual search
                             .selected(false)
                             .build())

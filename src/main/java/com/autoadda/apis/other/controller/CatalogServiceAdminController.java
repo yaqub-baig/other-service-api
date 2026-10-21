@@ -69,6 +69,14 @@ public class CatalogServiceAdminController {
         return ResponseEntity.ok(ApiResponse.success("Market saved", marketService.upsert(id, request)));
     }
 
+    /**
+     * Drop the service's own quotation mode so it follows its category's scope again.
+     */
+    @PostMapping("/{id}/quotation-mode/reset")
+    public ResponseEntity<ApiResponse<CatalogServiceResponse>> resetQuotationMode(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.success("Quotation mode reset", serviceCatalogService.clearQuotationMode(id)));
+    }
+
     @PostMapping("/{id}/deactivate")
     public ResponseEntity<ApiResponse<CatalogServiceResponse>> deactivate(@PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success("Service deactivated", serviceCatalogService.setActive(id, false)));

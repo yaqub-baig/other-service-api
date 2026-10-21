@@ -20,6 +20,7 @@ public class ServiceFilterDefinitionRequest {
     private String filterCode;
 
     private String filterLabel;
+    private String filterLabelAr;
 
     private FilterType filterType;
 

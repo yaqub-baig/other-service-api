@@ -52,6 +52,7 @@ public class ServiceFilterDefinitionService {
                 .serviceCategory(category)
                 .filterCode(request.getFilterCode())
                 .filterLabel(request.getFilterLabel())
+                .filterLabelAr(request.getFilterLabelAr())
                 .filterType(request.getFilterType())
                 .dataSource(request.getDataSource() != null ? request.getDataSource() : DataSourceType.STATIC)
                 .dataSourceConfig(request.getDataSourceConfig())
@@ -161,6 +162,9 @@ public class ServiceFilterDefinitionService {
         if (request.getFilterLabel() != null) {
             filter.setFilterLabel(request.getFilterLabel());
         }
+        if (request.getFilterLabelAr() != null) {
+            filter.setFilterLabelAr(request.getFilterLabelAr());
+        }
         if (request.getFilterType() != null) {
             filter.setFilterType(request.getFilterType());
         }
@@ -240,6 +244,9 @@ public class ServiceFilterDefinitionService {
         }
         if (request.getOptionLabel() != null) {
             option.setOptionLabel(request.getOptionLabel());
+        }
+        if (request.getOptionLabelAr() != null) {
+            option.setOptionLabelAr(request.getOptionLabelAr());
         }
         if (request.getDisplayOrder() != null) {
             option.setDisplayOrder(request.getDisplayOrder());
@@ -348,6 +355,7 @@ public class ServiceFilterDefinitionService {
         return FilterOption.builder()
                 .optionValue(request.getOptionValue())
                 .optionLabel(request.getOptionLabel())
+                .optionLabelAr(request.getOptionLabelAr())
                 .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
                 .isDefault(request.getIsDefault() != null ? request.getIsDefault() : false)
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)

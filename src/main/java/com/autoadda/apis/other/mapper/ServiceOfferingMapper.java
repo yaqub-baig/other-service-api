@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.mapper;
 
+import com.autoadda.apis.other.util.Localized;
 import com.autoadda.apis.other.entity.ServiceOffering;
 import com.autoadda.apis.other.response.ServiceOfferingResponse;
 import org.springframework.stereotype.Component;
@@ -34,7 +35,7 @@ public class ServiceOfferingMapper {
             if (e.getCatalogService() != null) {
                 response.setServiceId(e.getCatalogService().getId());
                 response.setServiceCode(e.getCatalogService().getCode());
-                response.setServiceName(e.getCatalogService().getName());
+                response.setServiceName(Localized.pick(e.getCatalogService().getName(), e.getCatalogService().getNameAr()));
             }
             response.setOfferingName(e.getOfferingName());
             response.setShortDescription(e.getShortDescription());

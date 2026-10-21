@@ -15,7 +15,8 @@ import lombok.NoArgsConstructor;
 public class FilterOptionResponse {
     private Long id;
     private String optionValue;
-    private String optionLabel;
+    private String optionLabel; // follows Accept-Language
+    private String optionLabelAr;
     private Integer displayOrder;
     private Boolean isDefault;
     private Boolean isActive;

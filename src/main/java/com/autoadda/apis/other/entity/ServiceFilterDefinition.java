@@ -52,6 +52,9 @@ public class ServiceFilterDefinition {
     @Column(name = "filter_label", nullable = false, length = 100)
     private String filterLabel;
 
+    @Column(name = "filter_label_ar", length = 100)
+    private String filterLabelAr;
+
     /**
      * Type of filter UI component.
      */

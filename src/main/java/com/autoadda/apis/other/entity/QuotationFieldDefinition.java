@@ -48,6 +48,9 @@ public class QuotationFieldDefinition {
     @Column(name = "label", nullable = false, length = 100)
     private String label;
 
+    @Column(name = "label_ar", length = 100)
+    private String labelAr;
+
     /**
      * Type of input field.
      */
@@ -75,11 +78,17 @@ public class QuotationFieldDefinition {
     @Column(name = "placeholder", length = 200)
     private String placeholder;
 
+    @Column(name = "placeholder_ar", length = 200)
+    private String placeholderAr;
+
     /**
      * Help text/description for the field.
      */
     @Column(name = "help_text", length = 500)
     private String helpText;
+
+    @Column(name = "help_text_ar", length = 500)
+    private String helpTextAr;
 
     /**
      * Default value for the field.

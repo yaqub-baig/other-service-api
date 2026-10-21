@@ -54,6 +54,9 @@ public class ServiceAttributeDefinition {
     @Column(name = "attribute_name", nullable = false, length = 100)
     private String attributeName;
 
+    @Column(name = "attribute_name_ar", length = 100)
+    private String attributeNameAr;
+
     /**
      * Data type of this attribute value.
      */
@@ -100,6 +103,9 @@ public class ServiceAttributeDefinition {
      */
     @Column(name = "description", length = 500)
     private String description;
+
+    @Column(name = "description_ar", length = 500)
+    private String descriptionAr;
 
     /**
      * Default value for this attribute (stored as string, parsed based on dataType).

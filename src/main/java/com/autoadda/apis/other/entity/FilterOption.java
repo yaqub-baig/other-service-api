@@ -42,6 +42,9 @@ public class FilterOption {
     @Column(name = "option_label", nullable = false, length = 150)
     private String optionLabel;
 
+    @Column(name = "option_label_ar", length = 150)
+    private String optionLabelAr;
+
     /**
      * Order in which this option appears in the list.
      */

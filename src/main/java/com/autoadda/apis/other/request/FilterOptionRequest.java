@@ -16,6 +16,7 @@ public class FilterOptionRequest {
     private String optionValue;
 
     private String optionLabel;
+    private String optionLabelAr;
 
     private Integer displayOrder;
 

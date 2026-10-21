@@ -25,6 +25,12 @@ public class ServiceCategory {
     private String name;
     private String description;
 
+    @Column(name = "name_ar", length = 150)
+    private String nameAr;
+
+    @Column(name = "description_ar", columnDefinition = "TEXT")
+    private String descriptionAr;
+
     @Column(name = "display_order")
     private Integer displayOrder = 0;
 

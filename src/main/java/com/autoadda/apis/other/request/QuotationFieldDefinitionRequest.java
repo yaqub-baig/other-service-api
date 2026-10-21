@@ -16,6 +16,9 @@ public class QuotationFieldDefinitionRequest {
     private Integer serviceId;
     private String fieldCode;
     private String label;
+    private String labelAr;
+    private String placeholderAr;
+    private String helpTextAr;
     private FieldType fieldType;
     private Boolean isRequired;
     private Integer displayOrder;

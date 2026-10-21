@@ -17,7 +17,10 @@ public class QuotationFieldDefinitionResponse {
     private Integer serviceId;
     private String serviceCode;
     private String fieldCode;
-    private String label;
+    private String label; // label/placeholder/helpText follow Accept-Language
+    private String labelAr;
+    private String placeholderAr;
+    private String helpTextAr;
     private FieldType fieldType;
     private Boolean isRequired;
     private Integer displayOrder;

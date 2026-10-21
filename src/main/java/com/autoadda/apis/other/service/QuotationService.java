@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.util.QuotationMode;
 import com.autoadda.apis.other.validation.AttributeValidator;
 import com.autoadda.apis.other.validation.FieldSpecFactory;
 import com.autoadda.apis.other.entity.*;
@@ -40,6 +41,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class QuotationService {
 
+    private static final int DEFAULT_EXPIRY_HOURS = 48;
+
     private final QuotationRequestRepository requestRepository;
     private final QuotationRequestFieldValueRepository fieldValueRepository;
     private final VendorQuotationRepository vendorQuotationRepository;
@@ -57,6 +60,7 @@ public class QuotationService {
     private final ServiceCatalogService serviceCatalogService;
     private final AttributeValidator attributeValidator;
     private final FieldSpecFactory fieldSpecFactory;
+    private final QuotationModeResolver quotationModeResolver;
 
     // ==================== Customer Request Operations ====================
 
@@ -74,13 +78,16 @@ public class QuotationService {
                 ? serviceCatalogService.getForCategory(submission.getServiceId(), submission.getServiceCategoryId())
                 : null;
 
-        // Service-level scope wins over the category default
-        QuotationScopeDefinition scope = quotationAdminService.resolveScope(submission.getServiceCategoryId(), submission.getServiceId())
-                .orElseThrow(() -> new BusinessException("Quotation is not configured for this service category"));
-
-        if (!scope.getIsQuotationEnabled()) {
-            throw new BusinessException("Quotation is not enabled for this service category");
+        // The service's quotation mode wins over the category's scope
+        if (quotationModeResolver.effectiveMode(submission.getServiceCategoryId(), catalogService) == QuotationMode.DIRECT) {
+            throw new BusinessException(catalogService != null
+                    ? "Service " + catalogService.getCode() + " is booked directly; quotation requests are not accepted"
+                    : "Quotation is not enabled for this service category");
         }
+        // Expiry and broadcast settings: service scope, then category scope, then defaults
+        QuotationScopeDefinition scope = quotationAdminService
+                .resolveScope(submission.getServiceCategoryId(), submission.getServiceId())
+                .orElse(null);
 
         // Validate required fields
         List<QuotationFieldDefinition> formFields =
@@ -91,7 +98,8 @@ public class QuotationService {
         String quotationNumber = generateQuotationNumber();
 
         // Calculate expiry time
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(scope.getAutoExpiryHours());
+        int expiryHours = scope != null && scope.getAutoExpiryHours() != null ? scope.getAutoExpiryHours() : DEFAULT_EXPIRY_HOURS;
+        LocalDateTime expiresAt = LocalDateTime.now().plusHours(expiryHours);
 
         // Create the request
         QuotationRequest request = QuotationRequest.builder()
@@ -476,7 +484,7 @@ public class QuotationService {
         QuotationScopeDefinition scope = quotationAdminService
                 .resolveScope(request.getServiceCategory().getId(),
                         request.getCatalogService() != null ? request.getCatalogService().getId() : null)
-                .orElseThrow(() -> new BusinessException("Quotation scope not configured"));
+                .orElse(null);
 
         // Find matching vendors
         // In a real implementation, this would use location-based queries
@@ -485,7 +493,7 @@ public class QuotationService {
                 request.getCity(),
                 request.getLatitude(),
                 request.getLongitude(),
-                scope.getMaxBroadcastVendors());
+                scope != null ? scope.getMaxBroadcastVendors() : null);
 
         // Update request status
         request.setStatus(QuotationRequestStatus.SENT_TO_VENDORS);

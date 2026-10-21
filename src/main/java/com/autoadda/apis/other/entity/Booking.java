@@ -49,6 +49,13 @@ public class Booking {
     @JoinColumn(name = "vendor_id")
     private Vendor vendor;
 
+    /**
+     * Catalog service booked (optional for bookings made before services existed).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id")
+    private CatalogService catalogService;
+
     @Column(name = "selected_other_service")
     private String selectedOtherServiceIds;
 

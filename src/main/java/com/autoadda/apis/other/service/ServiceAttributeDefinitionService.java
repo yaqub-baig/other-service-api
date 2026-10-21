@@ -63,6 +63,8 @@ public class ServiceAttributeDefinitionService {
                 .catalogService(catalogService)
                 .attributeCode(request.getAttributeCode())
                 .attributeName(request.getAttributeName())
+                .attributeNameAr(request.getAttributeNameAr())
+                .descriptionAr(request.getDescriptionAr())
                 .dataType(request.getDataType())
                 .unit(request.getUnit())
                 .isRequired(request.getIsRequired() != null ? request.getIsRequired() : false)
@@ -158,6 +160,12 @@ public class ServiceAttributeDefinitionService {
 
         if (request.getAttributeName() != null) {
             attribute.setAttributeName(request.getAttributeName());
+        }
+        if (request.getAttributeNameAr() != null) {
+            attribute.setAttributeNameAr(request.getAttributeNameAr());
+        }
+        if (request.getDescriptionAr() != null) {
+            attribute.setDescriptionAr(request.getDescriptionAr());
         }
         if (request.getDataType() != null) {
             attribute.setDataType(request.getDataType());

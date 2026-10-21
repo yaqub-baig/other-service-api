@@ -244,6 +244,9 @@ public class QuotationAdminService {
                 .catalogService(catalogService)
                 .fieldCode(request.getFieldCode())
                 .label(request.getLabel())
+                .labelAr(request.getLabelAr())
+                .placeholderAr(request.getPlaceholderAr())
+                .helpTextAr(request.getHelpTextAr())
                 .fieldType(request.getFieldType())
                 .isRequired(request.getIsRequired() != null ? request.getIsRequired() : true)
                 .displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0)
@@ -279,6 +282,15 @@ public class QuotationAdminService {
 
         if (request.getLabel() != null) {
             field.setLabel(request.getLabel());
+        }
+        if (request.getLabelAr() != null) {
+            field.setLabelAr(request.getLabelAr());
+        }
+        if (request.getPlaceholderAr() != null) {
+            field.setPlaceholderAr(request.getPlaceholderAr());
+        }
+        if (request.getHelpTextAr() != null) {
+            field.setHelpTextAr(request.getHelpTextAr());
         }
         if (request.getFieldType() != null) {
             field.setFieldType(request.getFieldType());

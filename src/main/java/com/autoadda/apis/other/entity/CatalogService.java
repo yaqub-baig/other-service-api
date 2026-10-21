@@ -1,6 +1,7 @@
 package com.autoadda.apis.other.entity;
 
 import com.autoadda.apis.other.util.FulfillmentMode;
+import com.autoadda.apis.other.util.QuotationMode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,6 +42,19 @@ public class CatalogService {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "name_ar", length = 180)
+    private String nameAr;
+
+    @Column(name = "description_ar", columnDefinition = "TEXT")
+    private String descriptionAr;
+
+    /**
+     * Overrides the category's quotation scope for this service. Null means "use the category".
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "quotation_mode", length = 20)
+    private QuotationMode quotationMode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "fulfillment_mode", nullable = false, length = 20)

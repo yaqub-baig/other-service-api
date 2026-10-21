@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.mapper;
 
+import com.autoadda.apis.other.util.Localized;
 import com.autoadda.apis.other.entity.FilterOption;
 import com.autoadda.apis.other.entity.ServiceFilterDefinition;
 import com.autoadda.apis.other.response.FilterOptionResponse;
@@ -24,7 +25,8 @@ public class ServiceFilterDefinitionMapper {
             response.setServiceCategoryId(e.getServiceCategory() != null ? e.getServiceCategory().getId() : null);
             response.setServiceCategoryName(e.getServiceCategory() != null ? e.getServiceCategory().getName() : null);
             response.setFilterCode(e.getFilterCode());
-            response.setFilterLabel(e.getFilterLabel());
+            response.setFilterLabel(Localized.pick(e.getFilterLabel(), e.getFilterLabelAr()));
+            response.setFilterLabelAr(e.getFilterLabelAr());
             response.setFilterType(e.getFilterType());
             response.setDataSource(e.getDataSource());
             response.setDataSourceConfig(e.getDataSourceConfig());
@@ -59,7 +61,8 @@ public class ServiceFilterDefinitionMapper {
             FilterOptionResponse response = new FilterOptionResponse();
             response.setId(e.getId());
             response.setOptionValue(e.getOptionValue());
-            response.setOptionLabel(e.getOptionLabel());
+            response.setOptionLabel(Localized.pick(e.getOptionLabel(), e.getOptionLabelAr()));
+            response.setOptionLabelAr(e.getOptionLabelAr());
             response.setDisplayOrder(e.getDisplayOrder());
             response.setIsDefault(e.getIsDefault());
             response.setIsActive(e.getIsActive());

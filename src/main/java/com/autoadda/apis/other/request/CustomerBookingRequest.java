@@ -17,6 +17,8 @@ public class CustomerBookingRequest {
     private Integer otherServiceId;
     private Integer vehicleId;
     private List<Integer> serviceIds;
+    /** Optional catalog service being booked; services that require a quote are refused here. */
+    private Integer catalogServiceId;
     private LocalDate scheduleDate;
     private LocalTime serviceStartTime;
     private LocalTime serviceEndTime;

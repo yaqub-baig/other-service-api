@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.Booking;
 import com.autoadda.apis.other.entity.BookedService;
 import com.autoadda.apis.other.entity.BookingSlot;
@@ -33,6 +34,7 @@ import java.util.*;
 public class VendorSlotService {
 
     private final VendorWorkHoursRepository workingHoursRepo;
+    private final ServiceCatalogService serviceCatalogService;
     private final VendorBreakTimeRepository breakRepo;
     private final VendorHolidayOverrideRepository holidayRepo;
     private final BookingRepository bookingRepo;
@@ -125,6 +127,15 @@ public class VendorSlotService {
      */
     @Transactional
     public BookingDetailResponse bookSlot(Integer vendorId, Integer vehicleId, LocalDate date, LocalTime time, String autoAddaId, String selectedServiceIds) {
+        return bookSlot(vendorId, vehicleId, date, time, autoAddaId, selectedServiceIds, null);
+    }
+
+    /**
+     * Books a slot; when catalogServiceId is given the service must be bookable directly with this vendor.
+     */
+    @Transactional
+    public BookingDetailResponse bookSlot(Integer vendorId, Integer vehicleId, LocalDate date, LocalTime time,
+                                          String autoAddaId, String selectedServiceIds, Integer catalogServiceId) {
         Integer userId = Integer.parseInt(autoAddaId);
         BookingSlot slot = slotService.findAvailableSlotByVendorIdAndTime(vendorId, date, time);
 
@@ -134,9 +145,13 @@ public class VendorSlotService {
 
         Vendor vendor = vendorRepository.findById(vendorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor not found"));
+        CatalogService catalogService = catalogServiceId != null
+                ? serviceCatalogService.getForDirectBooking(catalogServiceId, vendor)
+                : null;
 
         Booking booking = Booking.builder()
                 .vendor(vendor)
+                .catalogService(catalogService)
                 .scheduleDate(date)
                 .serviceStartTime(time)
                 .status(Status.CONFIRMED)
@@ -156,6 +171,9 @@ public class VendorSlotService {
     }
 
     private void generateBookingServices(Booking booking, String selectedServiceIds, Integer vendorId) {
+        if (selectedServiceIds == null || selectedServiceIds.isBlank()) {
+            return;
+        }
         List<Integer> serviceIds = Arrays.stream(selectedServiceIds.split(","))
                 .map(Integer::parseInt)
                 .toList();

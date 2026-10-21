@@ -18,7 +18,9 @@ public class ServiceAttributeDefinitionResponse {
     private Integer serviceId;
     private String serviceCode;
     private String attributeCode;
-    private String attributeName;
+    private String attributeName; // follows Accept-Language
+    private String attributeNameAr;
+    private String descriptionAr;
     private DataType dataType;
     private String unit;
     private Boolean isRequired;
