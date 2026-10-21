@@ -23,7 +23,7 @@ public class BookingResponse {
     private String comments;
     private LocalDate insert_tms;
     private VendorProfileResponse vendor; // Nested DTO for vendor details
-    private String selectedOtherServiceIds;
+    private String selectedServiceIds;
     private String osSubscriptionPlanId;
     private Integer customerId;
     private Integer vehicleId;

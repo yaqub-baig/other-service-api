@@ -73,7 +73,7 @@ public class BookingController {
 
         List<Map<String, Object>> slots = appointmentSlotService.getAvailableSlotsWithDetails(vendorId, date);
         Map<String, Object> res = new HashMap<>();
-        res.put("garageId", vendorId);
+        res.put("vendorId", vendorId);
         res.put("date", date);
         res.put("availableSlots", slots);
         return ResponseEntity.ok(res);

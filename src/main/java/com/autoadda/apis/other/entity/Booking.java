@@ -64,8 +64,9 @@ public class Booking {
     @JoinColumn(name = "schema_version_id")
     private ServiceSchemaVersion schemaVersion;
 
-    @Column(name = "selected_other_service")
-    private String selectedOtherServiceIds;
+    /** Comma-separated vendor service ids picked at booking time. */
+    @Column(name = "selected_service_ids")
+    private String selectedServiceIds;
 
     @Column(name = "os_subscription_plan_id")
     private String osSubscriptionPlanId;

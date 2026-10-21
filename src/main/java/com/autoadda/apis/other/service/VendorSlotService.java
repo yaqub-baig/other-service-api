@@ -162,7 +162,7 @@ public class VendorSlotService {
                 .comments("Booked via platform")
                 .vehicleId(vehicleId)
                 .customerId(userId)
-                .selectedOtherServiceIds(selectedServiceIds)
+                .selectedServiceIds(selectedServiceIds)
                 .appointmentReferenceId(bookingService.generateBookingCode())
                 .slot(slot)
                 .insert_tms(DateHelper.dbDate())

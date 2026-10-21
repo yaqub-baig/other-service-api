@@ -364,7 +364,7 @@ GET /bookings/vendor/{vendorId}/available-slots?date=25/04/2026
 **Response:**
 ```json
 {
-  "garageId": 1,
+  "vendorId": 1,
   "date": "2026-04-25",
   "availableSlots": [
     {

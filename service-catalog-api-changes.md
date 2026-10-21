@@ -98,6 +98,8 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 | `POST /os-appointments` body field `otherServiceId` | `POST /bookings` body field `vendorId` |
 
   The other booking paths (`/status`, `/{appointmentId}`, `/{appointmentId}/cancel`, `/user/bookings`) only change the base.
+- **Changed:** booking responses return `selectedServiceIds` instead of `selectedOtherServiceIds`, and the available-slots response returns `vendorId` instead of `garageId`.
+- **Changed (job cards):** the assign request takes `vendorId` instead of `otherServiceId`. Job card responses return `vendorId`, which is now filled in; `otherServiceId` was always `null`.
 - `POST /bookings` accepts `catalogServiceId`. `POST /bookings/vendor/{vendorId}/book` accepts `?catalogServiceId=`.
 - A service whose effective mode is REQUIRED can't be booked directly; book from the accepted quote instead. The vendor must offer the service's category.
 - `/vendor/{vendorId}/book` no longer fails when `selectedServiceIds` is omitted.

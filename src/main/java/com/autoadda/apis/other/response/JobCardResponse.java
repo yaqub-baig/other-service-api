@@ -20,7 +20,7 @@ public class JobCardResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
-    private Integer otherServiceId;
+    private Integer vendorId;
     private Integer technicianId;
     private Integer appointmentId;
     private Integer appointmentServiceId;
