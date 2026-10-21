@@ -15,6 +15,7 @@ public class VendorMapper {
         response.setId(vendor.getId() != null ? vendor.getId() : null);
         response.setCompanyBrandName(vendor.getCompanyBrandName() != null ? vendor.getCompanyBrandName() : null);
         response.setCompanyArabicName(vendor.getCompanyArabicName() != null ? vendor.getCompanyArabicName() : null);
+        response.setCountryCode(vendor.getCountryCode());
         response.setName(vendor.getName() != null ? vendor.getName() : null);
         response.setTradeLicenceNumber(vendor.getTradeLicenceNumber() != null ? vendor.getTradeLicenceNumber() : null);
         response.setOpeningTime(vendor.getOpeningTime() != null ? vendor.getOpeningTime() : null);

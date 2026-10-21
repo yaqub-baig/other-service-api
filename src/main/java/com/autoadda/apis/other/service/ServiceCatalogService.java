@@ -11,6 +11,7 @@ import com.autoadda.apis.other.repository.ServiceCategoryRepository;
 import com.autoadda.apis.other.request.CatalogServiceRequest;
 import com.autoadda.apis.other.response.CatalogServiceResponse;
 import com.autoadda.apis.other.util.FulfillmentMode;
+import com.autoadda.apis.other.util.IsoCodes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -109,6 +110,15 @@ public class ServiceCatalogService {
                     : catalogServiceRepository.findAllByOrderByDisplayOrderAsc();
         }
         return catalogServiceMapper.toResponseList(services);
+    }
+
+    /**
+     * Active services a customer in the given country can book.
+     */
+    @Transactional(readOnly = true)
+    public List<CatalogServiceResponse> listAvailableInCountry(Integer categoryId, String countryCode) {
+        return catalogServiceMapper.toResponseList(
+                catalogServiceRepository.findAvailableInCountry(categoryId, IsoCodes.country(countryCode)));
     }
 
     /**

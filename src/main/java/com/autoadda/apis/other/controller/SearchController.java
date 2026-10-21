@@ -63,6 +63,8 @@ public class SearchController {
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String area,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) Integer serviceId,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng,
             @RequestParam(required = false) Double radius,
@@ -78,6 +80,8 @@ public class SearchController {
                 .maxPrice(maxPrice != null ? java.math.BigDecimal.valueOf(maxPrice) : null)
                 .city(city)
                 .area(area)
+                .countryCode(country)
+                .serviceId(serviceId)
                 .latitude(lat)
                 .longitude(lng)
                 .radiusKm(radius)

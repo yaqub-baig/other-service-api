@@ -70,6 +70,12 @@ public class Vendor {
     @Column(name = "service_type")
     private String serviceType;
 
+    /**
+     * ISO 3166-1 alpha-2 country the vendor operates in; decides which services and currency apply.
+     */
+    @Column(name = "country_code", length = 2)
+    private String countryCode;
+
     @JsonManagedReference("vendor-services")
     @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VendorService> services = new ArrayList<>();

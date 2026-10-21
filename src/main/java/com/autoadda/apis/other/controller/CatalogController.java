@@ -11,6 +11,7 @@ import java.util.List;
 
 /**
  * Customer-facing, read-only view of the service catalog (active services only).
+ * Pass ?country=AE to see only the services offered in that country.
  */
 @RestController
 @RequestMapping("/catalog")
@@ -21,8 +22,11 @@ public class CatalogController {
 
     @GetMapping("/services")
     public ResponseEntity<ApiResponse<List<CatalogServiceResponse>>> listServices(
-            @RequestParam(required = false) Integer categoryId) {
-        return ResponseEntity.ok(ApiResponse.success(serviceCatalogService.list(categoryId, true)));
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) String country) {
+        return ResponseEntity.ok(ApiResponse.success(country != null
+                ? serviceCatalogService.listAvailableInCountry(categoryId, country)
+                : serviceCatalogService.list(categoryId, true)));
     }
 
     @GetMapping("/services/{id}")

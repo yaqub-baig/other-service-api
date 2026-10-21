@@ -50,6 +50,7 @@ public class ServiceOfferingService {
     private final ServiceAttributeDefinitionService attributeDefinitionService;
     private final AttributeValidator attributeValidator;
     private final FieldSpecFactory fieldSpecFactory;
+    private final MarketService marketService;
 
     /**
      * Create a new service offering.
@@ -104,7 +105,7 @@ public class ServiceOfferingService {
                 .minPrice(request.getMinPrice())
                 .maxPrice(request.getMaxPrice())
                 .originalPrice(request.getOriginalPrice())
-                .currency(request.getCurrency() != null ? request.getCurrency() : "AED")
+                .currency(marketService.resolveOfferingCurrency(catalogService, vendorService.getVendor(), request.getCurrency()))
                 .stockStatus(request.getStockStatus() != null ? request.getStockStatus() : StockStatus.IN_STOCK)
                 .quantityAvailable(request.getQuantityAvailable())
                 .filterableAttributes(filterableAttributesJson)
@@ -307,8 +308,10 @@ public class ServiceOfferingService {
         if (request.getOriginalPrice() != null) {
             offering.setOriginalPrice(request.getOriginalPrice());
         }
-        if (request.getCurrency() != null) {
-            offering.setCurrency(request.getCurrency());
+        if (request.getCurrency() != null || request.getServiceId() != null) {
+            offering.setCurrency(marketService.resolveOfferingCurrency(offering.getCatalogService(),
+                    offering.getVendorService().getVendor(),
+                    request.getCurrency()));
         }
         if (request.getStockStatus() != null) {
             offering.setStockStatus(request.getStockStatus());

@@ -36,6 +36,7 @@ public class VendorProfileMapper {
         response.setOpeningTime(vendor.getOpeningTime());
         response.setClosingTime(vendor.getClosingTime());
         response.setWorkingDays(vendor.getWorkingDays());
+        response.setCountryCode(vendor.getCountryCode());
 
         // Map company logo
         if (vendor.getCompanyLogo() != null) {

@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.util.IsoCodes;
 
 import com.autoadda.apis.other.entity.Location;
 import com.autoadda.apis.other.entity.MediaFile;
@@ -45,6 +46,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     private final VendorServiceBridgeService vendorServiceBridgeService;
     private final VendorMapper vendorMapper;
     private final VendorProfileMapper vendorProfileMapper;
+    private final MarketService marketService;
 
     private Vendor mapToEntity(OtherServiceRequest request) {
         Vendor vendor = new Vendor();
@@ -61,6 +63,9 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         vendor.setWebSite(request.getWebSite());
         vendor.setAccountStatus(Status.PENDING);
         vendor.setCompanyArabicName(request.getCompanyArabicName());
+        vendor.setCountryCode(request.getCountryCode() != null
+                ? IsoCodes.country(request.getCountryCode())
+                : marketService.getDefaultCountry());
         vendor.setCreatedAt(LocalDateTime.now());
         return vendor;
     }
@@ -155,6 +160,9 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         // Update other fields if provided
         if (request.getCompanyArabicName() != null) {
             existing.setCompanyArabicName(request.getCompanyArabicName());
+        }
+        if (request.getCountryCode() != null) {
+            existing.setCountryCode(IsoCodes.country(request.getCountryCode()));
         }
         if (request.getCompanyBrandName() != null) {
             existing.setCompanyBrandName(request.getCompanyBrandName());

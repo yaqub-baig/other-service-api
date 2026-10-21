@@ -17,6 +17,7 @@ public class VendorResponse {
     private Integer id;
     private String companyBrandName;
     private String companyArabicName;
+    private String countryCode;
     private String name;
     private String tradeLicenceNumber;
     private String openingTime;

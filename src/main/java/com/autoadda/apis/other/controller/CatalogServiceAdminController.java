@@ -1,8 +1,11 @@
 package com.autoadda.apis.other.controller;
 
 import com.autoadda.apis.other.request.CatalogServiceRequest;
+import com.autoadda.apis.other.request.MarketAvailabilityRequest;
 import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.CatalogServiceResponse;
+import com.autoadda.apis.other.response.MarketAvailabilityResponse;
+import com.autoadda.apis.other.service.MarketService;
 import com.autoadda.apis.other.service.ServiceCatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +24,7 @@ import java.util.List;
 public class CatalogServiceAdminController {
 
     private final ServiceCatalogService serviceCatalogService;
+    private final MarketService marketService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<CatalogServiceResponse>> create(@RequestBody CatalogServiceRequest request) {
@@ -49,6 +53,20 @@ public class CatalogServiceAdminController {
     public ResponseEntity<ApiResponse<CatalogServiceResponse>> update(@PathVariable Integer id,
                                                                        @RequestBody CatalogServiceRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Service updated", serviceCatalogService.update(id, request)));
+    }
+
+    @GetMapping("/{id}/markets")
+    public ResponseEntity<ApiResponse<List<MarketAvailabilityResponse>>> listMarkets(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.success(marketService.listForService(id)));
+    }
+
+    /**
+     * Create or update the service's availability and currency in one country.
+     */
+    @PutMapping("/{id}/markets")
+    public ResponseEntity<ApiResponse<MarketAvailabilityResponse>> upsertMarket(@PathVariable Integer id,
+                                                                                @RequestBody MarketAvailabilityRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Market saved", marketService.upsert(id, request)));
     }
 
     @PostMapping("/{id}/deactivate")

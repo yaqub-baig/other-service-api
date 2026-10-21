@@ -19,6 +19,7 @@ public class VendorProfileResponse {
     private String openingTime;
     private String closingTime;
     private String workingDays;
+    private String countryCode;
     private MediaFileResponse companyLogo;
     private LocationResponse companyLocation;
     private List<MediaFileResponse> companyImages;

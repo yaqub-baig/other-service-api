@@ -23,6 +23,8 @@ public class OtherServiceRequest {
     private LocationRequest companyLocation;
     private List<Integer> osServiceIds;
     private String tradeLicenceNumber;
+    /** ISO 3166-1 alpha-2, e.g. "AE". Defaults to catalog.default-country when omitted. */
+    private String countryCode;
     private String openingTime;
     private String closingTime;
     private String workingDays;

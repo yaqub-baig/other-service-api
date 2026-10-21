@@ -115,6 +115,17 @@ public class OfferingSearchRequest {
      */
     private String area;
 
+    /**
+     * ISO country code, e.g. "AE". Only vendors in that country, and only catalog services
+     * available there, are returned.
+     */
+    private String countryCode;
+
+    /**
+     * Filter by catalog service.
+     */
+    private Integer serviceId;
+
     // ==================== Rating Filters ====================
 
     /**

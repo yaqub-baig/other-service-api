@@ -6,6 +6,7 @@ import com.autoadda.apis.other.repository.ServiceFilterDefinitionRepository;
 import com.autoadda.apis.other.request.OfferingSearchRequest;
 import com.autoadda.apis.other.response.OfferingSearchResponse;
 import com.autoadda.apis.other.response.OfferingSearchResponse.*;
+import com.autoadda.apis.other.util.IsoCodes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -369,6 +370,7 @@ public class OfferingSearchService {
         private final StringBuilder whereClause = new StringBuilder();
         private final StringBuilder joinClause = new StringBuilder();
         private boolean hasGeoJoin = false;
+        private boolean hasVendorJoin = false;
 
         public SearchQueryBuilder(OfferingSearchRequest request) {
             this.request = request;
@@ -390,6 +392,21 @@ public class OfferingSearchService {
             if (request.getCategoryId() != null) {
                 whereClause.append("AND vs.service_category_id = :categoryId ");
                 parameters.put("categoryId", request.getCategoryId());
+            }
+
+            // Catalog service filter
+            if (request.getServiceId() != null) {
+                whereClause.append("AND o.service_id = :serviceId ");
+                parameters.put("serviceId", request.getServiceId());
+            }
+
+            // Country: vendor operates there, and a catalog service (if any) is available there
+            if (request.getCountryCode() != null && !request.getCountryCode().isBlank()) {
+                addVendorJoin();
+                whereClause.append("AND v.country_code = :countryCode ");
+                whereClause.append("AND (o.service_id IS NULL OR EXISTS (SELECT 1 FROM service_market_availability m ");
+                whereClause.append("WHERE m.service_id = o.service_id AND m.country_code = :countryCode AND m.is_available = true)) ");
+                parameters.put("countryCode", IsoCodes.country(request.getCountryCode()));
             }
 
             // Vendor filter
@@ -496,9 +513,16 @@ public class OfferingSearchService {
             }
         }
 
+        private void addVendorJoin() {
+            if (!hasVendorJoin) {
+                joinClause.append("JOIN vendor v ON vs.vendor_id = v.id ");
+                hasVendorJoin = true;
+            }
+        }
+
         private void addGeoJoin() {
             if (!hasGeoJoin) {
-                joinClause.append("JOIN vendor v ON vs.vendor_id = v.id ");
+                addVendorJoin();
                 joinClause.append("JOIN location l ON v.company_location_id = l.id ");
                 hasGeoJoin = true;
             }
