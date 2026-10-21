@@ -18,6 +18,10 @@ public class QuotationFieldDefinitionMapper {
             response.setId(e.getId());
             response.setServiceCategoryId(e.getServiceCategory().getId());
             response.setServiceCategoryName(e.getServiceCategory().getName());
+            if (e.getCatalogService() != null) {
+                response.setServiceId(e.getCatalogService().getId());
+                response.setServiceCode(e.getCatalogService().getCode());
+            }
             response.setFieldCode(e.getFieldCode());
             response.setLabel(e.getLabel());
             response.setFieldType(e.getFieldType());

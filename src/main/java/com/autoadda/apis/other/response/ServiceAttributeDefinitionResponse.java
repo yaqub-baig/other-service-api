@@ -14,6 +14,8 @@ public class ServiceAttributeDefinitionResponse {
     private Long id;
     private Integer serviceCategoryId;
     private String serviceCategoryName;
+    private Integer serviceId;
+    private String serviceCode;
     private String attributeCode;
     private String attributeName;
     private DataType dataType;

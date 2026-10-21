@@ -67,6 +67,11 @@ public class ServiceAttributeDefinitionController {
     /**
      * Get attribute by ID.
      */
+    @GetMapping("/service/{serviceId}")
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getByService(@PathVariable Integer serviceId) {
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getByService(serviceId)));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ServiceAttributeDefinitionResponse>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(attributeService.getById(id)));

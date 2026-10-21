@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "quotation_field_definitions",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"service_category_id", "field_code"}))
+       indexes = @Index(name = "idx_qfield_category_service", columnList = "service_category_id, service_id"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,6 +27,13 @@ public class QuotationFieldDefinition {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "service_category_id", nullable = false)
     private ServiceCategory serviceCategory;
+
+    /**
+     * Catalog service this row belongs to. Null means it applies to the whole category (default).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id")
+    private CatalogService catalogService;
 
     /**
      * Unique code for this field within the service category.

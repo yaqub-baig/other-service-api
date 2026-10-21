@@ -1,8 +1,10 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
+import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.ServiceAttributeDefinitionMapper;
 import com.autoadda.apis.other.repository.ServiceAttributeDefinitionRepository;
@@ -24,26 +26,32 @@ public class ServiceAttributeDefinitionService {
     private final ServiceAttributeDefinitionRepository attributeRepository;
     private final ServiceCategoryRepository serviceCategoryRepository;
     private final ServiceAttributeDefinitionMapper attributeMapper; // Inject mapper
+    private final ServiceCatalogService serviceCatalogService;
 
     /**
      * Create a new attribute definition for a service category.
      */
     @Transactional
     public ServiceAttributeDefinitionResponse create(ServiceAttributeDefinitionRequest request) {
-        // Validate service category exists
-        ServiceCategory category = serviceCategoryRepository.findById(request.getServiceCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Service category not found with id: " + request.getServiceCategoryId()));
-
-        // Check for duplicate attribute code
-        if (attributeRepository.existsByServiceCategoryIdAndAttributeCode(
-                request.getServiceCategoryId(), request.getAttributeCode())) {
-            throw new AlreadyExistsException(
-                    "Attribute with code '" + request.getAttributeCode() + "' already exists for this category");
+        // A service-level attribute takes its category from the service
+        CatalogService catalogService = request.getServiceId() != null
+                ? serviceCatalogService.getForCategory(request.getServiceId(), request.getServiceCategoryId())
+                : null;
+        Integer categoryId = catalogService != null
+                ? catalogService.getServiceCategory().getId()
+                : request.getServiceCategoryId();
+        if (categoryId == null) {
+            throw new BusinessException("serviceCategoryId or serviceId is required");
         }
+        ServiceCategory category = serviceCategoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Service category not found with id: " + categoryId));
+
+        ensureCodeIsFree(categoryId, catalogService, request.getAttributeCode());
 
         ServiceAttributeDefinition attribute = ServiceAttributeDefinition.builder()
                 .serviceCategory(category)
+                .catalogService(catalogService)
                 .attributeCode(request.getAttributeCode())
                 .attributeName(request.getAttributeName())
                 .dataType(request.getDataType())
@@ -67,7 +75,7 @@ public class ServiceAttributeDefinitionService {
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinitionResponse> getByServiceCategory(Integer serviceCategoryId) {
-        return attributeMapper.toResponseList(attributeRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId));
+        return attributeMapper.toResponseList(attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId));
     }
 
     /**
@@ -75,7 +83,7 @@ public class ServiceAttributeDefinitionService {
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinitionResponse> getAllByServiceCategory(Integer serviceCategoryId) {
-        return attributeMapper.toResponseList(attributeRepository.findByServiceCategoryIdOrderByDisplayOrderAsc(serviceCategoryId));
+        return attributeMapper.toResponseList(attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullOrderByDisplayOrderAsc(serviceCategoryId));
     }
 
     /**
@@ -83,7 +91,7 @@ public class ServiceAttributeDefinitionService {
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinitionResponse> getFilterableByServiceCategory(Integer serviceCategoryId) {
-        return attributeMapper.toResponseList(attributeRepository.findByServiceCategoryIdAndIsFilterableTrueAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId));
+        return attributeMapper.toResponseList(attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsFilterableTrueAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId));
     }
 
     /**
@@ -91,7 +99,7 @@ public class ServiceAttributeDefinitionService {
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinitionResponse> getRequiredByServiceCategory(Integer serviceCategoryId) {
-        return attributeMapper.toResponseList(attributeRepository.findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId));
+        return attributeMapper.toResponseList(attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(serviceCategoryId));
     }
 
     /**
@@ -114,7 +122,7 @@ public class ServiceAttributeDefinitionService {
      */
     @Transactional(readOnly = true)
     public ServiceAttributeDefinitionResponse getByCode(Integer serviceCategoryId, String attributeCode) {
-        return attributeRepository.findByServiceCategoryIdAndAttributeCode(serviceCategoryId, attributeCode)
+        return attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndAttributeCode(serviceCategoryId, attributeCode)
                 .map(attributeMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Attribute not found with code: " + attributeCode + " in category: " + serviceCategoryId));
@@ -131,11 +139,8 @@ public class ServiceAttributeDefinitionService {
         // If changing attribute code, check for duplicates
         if (request.getAttributeCode() != null &&
                 !request.getAttributeCode().equals(attribute.getAttributeCode())) {
-            if (attributeRepository.existsByServiceCategoryIdAndAttributeCode(
-                    attribute.getServiceCategory().getId(), request.getAttributeCode())) {
-                throw new AlreadyExistsException(
-                        "Attribute with code '" + request.getAttributeCode() + "' already exists for this category");
-            }
+            ensureCodeIsFree(attribute.getServiceCategory().getId(), attribute.getCatalogService(),
+                    request.getAttributeCode());
             attribute.setAttributeCode(request.getAttributeCode());
         }
 
@@ -207,6 +212,24 @@ public class ServiceAttributeDefinitionService {
         attribute.setIsActive(true);
         ServiceAttributeDefinition reactivatedAttribute = attributeRepository.save(attribute);
         return attributeMapper.toResponse(reactivatedAttribute);
+    }
+
+    /**
+     * Active attributes defined directly on a catalog service.
+     */
+    @Transactional(readOnly = true)
+    public List<ServiceAttributeDefinitionResponse> getByService(Integer serviceId) {
+        return attributeMapper.toResponseList(attributeRepository.findByCatalogServiceIdAndIsActiveTrueOrderByDisplayOrderAsc(serviceId));
+    }
+
+    private void ensureCodeIsFree(Integer categoryId, CatalogService catalogService, String attributeCode) {
+        boolean taken = catalogService != null
+                ? attributeRepository.existsByCatalogServiceIdAndAttributeCode(catalogService.getId(), attributeCode)
+                : attributeRepository.existsByServiceCategoryIdAndCatalogServiceIsNullAndAttributeCode(categoryId, attributeCode);
+        if (taken) {
+            throw new AlreadyExistsException("Attribute with code '" + attributeCode + "' already exists for this "
+                    + (catalogService != null ? "service" : "category"));
+        }
     }
 
     /**

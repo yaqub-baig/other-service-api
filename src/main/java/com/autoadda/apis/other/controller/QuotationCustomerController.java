@@ -161,8 +161,10 @@ public class QuotationCustomerController {
      * Used by frontend to render the quotation request form.
      */
     @GetMapping("/form/category/{categoryId}")
-    public ResponseEntity<ApiResponse<List<QuotationFieldDefinitionResponse>>> getQuotationFormFields(@PathVariable Integer categoryId) {
-        List<QuotationFieldDefinitionResponse> fields = adminService.getFieldsForCategory(categoryId);
+    public ResponseEntity<ApiResponse<List<QuotationFieldDefinitionResponse>>> getQuotationFormFields(
+            @PathVariable Integer categoryId,
+            @RequestParam(required = false) Integer serviceId) {
+        List<QuotationFieldDefinitionResponse> fields = adminService.getFieldsForService(categoryId, serviceId);
         return ResponseEntity.ok(ApiResponse.success(fields));
     }
 
@@ -170,8 +172,10 @@ public class QuotationCustomerController {
      * Check if quotation is available for a category.
      */
     @GetMapping("/check/category/{categoryId}")
-    public ResponseEntity<ApiResponse<Boolean>> checkQuotationAvailable(@PathVariable Integer categoryId) {
-        boolean enabled = adminService.isQuotationEnabled(categoryId);
+    public ResponseEntity<ApiResponse<Boolean>> checkQuotationAvailable(
+            @PathVariable Integer categoryId,
+            @RequestParam(required = false) Integer serviceId) {
+        boolean enabled = adminService.isQuotationEnabled(categoryId, serviceId);
         return ResponseEntity.ok(ApiResponse.success(enabled));
     }
 

@@ -12,6 +12,8 @@ import java.util.Map;
 @Data
 public class QuotationFieldDefinitionRequest {
     private Integer serviceCategoryId;
+    /** Optional: scope this to one catalog service instead of the whole category. */
+    private Integer serviceId;
     private String fieldCode;
     private String label;
     private FieldType fieldType;

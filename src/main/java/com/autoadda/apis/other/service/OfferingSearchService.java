@@ -108,7 +108,7 @@ public class OfferingSearchService {
     public List<String> getAutocompleteSuggestions(String query, Integer categoryId, int limit) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT DISTINCT o.offering_name FROM service_offerings o ");
-        sql.append("JOIN vendor_service vs ON o.vendor_service_id = vs.id ");
+        sql.append("JOIN vendor_service_bridge vs ON o.vendor_service_id = vs.id ");
         sql.append("WHERE o.is_active = true ");
         sql.append("AND LOWER(o.offering_name) LIKE LOWER(:query) ");
 
@@ -171,7 +171,7 @@ public class OfferingSearchService {
         sql.append("sin(radians(:lat)) * sin(radians(l.latitude)) ");
         sql.append(") ) AS distance ");
         sql.append("FROM service_offerings o ");
-        sql.append("JOIN vendor_service vs ON o.vendor_service_id = vs.id ");
+        sql.append("JOIN vendor_service_bridge vs ON o.vendor_service_id = vs.id ");
         sql.append("JOIN vendor v ON vs.vendor_id = v.id ");
         sql.append("JOIN location l ON v.company_location_id = l.id ");
         sql.append("WHERE o.is_active = true ");
@@ -381,7 +381,7 @@ public class OfferingSearchService {
 
         private void buildClauses() {
             // Base join to vendor_service
-            joinClause.append("JOIN vendor_service vs ON o.vendor_service_id = vs.id ");
+            joinClause.append("JOIN vendor_service_bridge vs ON o.vendor_service_id = vs.id ");
 
             // Always filter active offerings
             whereClause.append("o.is_active = true ");

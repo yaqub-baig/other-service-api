@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "service_attribute_definitions",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"service_category_id", "attribute_code"}))
+       indexes = @Index(name = "idx_attr_category_service", columnList = "service_category_id, service_id"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,6 +32,13 @@ public class ServiceAttributeDefinition {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_category_id", nullable = false)
     private ServiceCategory serviceCategory;
+
+    /**
+     * Catalog service this row belongs to. Null means it applies to the whole category (default).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id")
+    private CatalogService catalogService;
 
     /**
      * Unique code for this attribute within the service category.

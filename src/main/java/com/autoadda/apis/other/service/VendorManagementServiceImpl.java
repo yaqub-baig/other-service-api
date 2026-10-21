@@ -5,7 +5,7 @@ import com.autoadda.apis.other.entity.Location;
 import com.autoadda.apis.other.entity.MediaFile;
 import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.entity.Vendor;
-import com.autoadda.apis.other.entity.VendorServiceBridge;
+import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.VendorMapper;
@@ -111,18 +111,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         }
 
         Vendor saved = vendorRepository.save(vendor);
-        List<VendorServiceBridge> vendorServices = new ArrayList<>();
-        if (request.getOsServiceIds() != null && !request.getOsServiceIds().isEmpty()) {
-            request.getOsServiceIds().forEach(sId -> {
-                serviceCategoryRepository.findById(sId)
-                        .map(serviceCategory -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
-                                new GarageServiceRequest(saved.getId(), serviceCategory.getId(), TRUE)))
-                        .map(vendorServices::add)
-                        .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category"));
-            });
-        }
-
-        saved.setServices(vendorServices);
+        syncVendorServices(request, saved);
         Vendor finalVendor = vendorRepository.save(saved);
         return vendorProfileMapper.toVendorProfileResponse(finalVendor);
     }
@@ -263,10 +252,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
             });
         }
 
-        List<VendorServiceBridge> vendorServiceBridges = handleVendorServices(request, existing);
-
-        existing.getServices().clear();
-        existing.getServices().addAll(vendorServiceBridges);
+        syncVendorServices(request, existing);
 
         Vendor updatedVendor = vendorRepository.save(existing);
         return vendorProfileMapper.toVendorProfileResponse(updatedVendor);
@@ -278,18 +264,25 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         });
     }
 
-    private List<VendorServiceBridge> handleVendorServices(OtherServiceRequest request, Vendor vendor) {
-        List<VendorServiceBridge> vendorServices = new ArrayList<>();
-        if (request.getOsServiceIds() != null && !request.getOsServiceIds().isEmpty()) {
-            request.getOsServiceIds().forEach(sId -> {
-                serviceCategoryRepository.findById(sId)
-                        .map(serviceCategory -> vendorServiceBridgeService.createVendorServiceBridgeEntity(
-                                new GarageServiceRequest(vendor.getId(), serviceCategory.getId(), TRUE)))
-                        .map(vendorServices::add)
-                        .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category"));
-            });
+    /**
+     * Makes the vendor's active categories match request.osServiceIds. Rows are never deleted:
+     * bookings and offerings reference them, so categories dropped from the request are deactivated.
+     */
+    private void syncVendorServices(OtherServiceRequest request, Vendor vendor) {
+        if (request.getOsServiceIds() == null) {
+            return;
         }
-        return vendorServices;
+        Set<Integer> requested = new LinkedHashSet<>(request.getOsServiceIds());
+        for (VendorService existing : vendor.getServices()) {
+            Integer categoryId = existing.getServiceCategory().getId();
+            existing.setIsActive(requested.remove(categoryId));
+        }
+        for (Integer categoryId : requested) {
+            serviceCategoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category"));
+            vendor.getServices().add(vendorServiceBridgeService.createVendorServiceBridgeEntity(
+                    GarageServiceRequest.builder().garageId(vendor.getId()).serviceId(categoryId).isActive(TRUE).build()));
+        }
     }
 
     @Override
@@ -394,7 +387,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
 
             if (serviceCategoryIds != null && !serviceCategoryIds.isEmpty()) {
                 List<Integer> vendorServiceIds = vendor.getServices().stream()
-                        .map(VendorServiceBridge::getServiceCategory)
+                        .map(VendorService::getServiceCategory)
                         .map(ServiceCategory::getId)
                         .toList();
 

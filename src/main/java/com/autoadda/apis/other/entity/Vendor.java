@@ -72,7 +72,7 @@ public class Vendor {
 
     @JsonManagedReference("vendor-services")
     @OneToMany(mappedBy = "vendor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<VendorServiceBridge> services = new ArrayList<>();
+    private List<VendorService> services = new ArrayList<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

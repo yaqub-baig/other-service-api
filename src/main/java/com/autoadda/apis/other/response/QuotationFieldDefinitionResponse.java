@@ -14,6 +14,8 @@ public class QuotationFieldDefinitionResponse {
     private Integer id;
     private Integer serviceCategoryId; // Only ID to avoid circular dependency
     private String serviceCategoryName; // For display purposes
+    private Integer serviceId;
+    private String serviceCode;
     private String fieldCode;
     private String label;
     private FieldType fieldType;

@@ -11,6 +11,8 @@ import java.util.Map;
 @Data
 public class QuotationRequestSubmission {
     private Integer serviceCategoryId;
+    /** Optional catalog service; its quotation scope and fields override the category's. */
+    private Integer serviceId;
     private Integer customerId;
     private ServiceLocationType serviceLocationType;
     private String city;

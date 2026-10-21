@@ -13,6 +13,11 @@ import lombok.NoArgsConstructor;
 public class ServiceAttributeDefinitionRequest {
 
     private Integer serviceCategoryId;
+    /**
+     * Optional: makes this a service-level attribute instead of a category default.
+     * When set, serviceCategoryId may be omitted and is taken from the service.
+     */
+    private Integer serviceId;
 
     private String attributeCode;
 

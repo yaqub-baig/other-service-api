@@ -41,6 +41,7 @@ public class ServiceOfferingService {
     private final ObjectMapper objectMapper;
     private final ServiceOfferingMapper offeringMapper;
     private final ServiceAttributeDefinitionMapper attributeMapper;
+    private final ServiceCatalogService serviceCatalogService;
 
     /**
      * Create a new service offering.
@@ -81,6 +82,9 @@ public class ServiceOfferingService {
 
         ServiceOffering offering = ServiceOffering.builder()
                 .vendorService(vendorService)
+                .catalogService(request.getServiceId() != null
+                        ? serviceCatalogService.getForCategory(request.getServiceId(), vendorService.getServiceCategory().getId())
+                        : null)
                 .offeringName(request.getOfferingName())
                 .shortDescription(request.getShortDescription())
                 .description(request.getDescription())
@@ -258,6 +262,10 @@ public class ServiceOfferingService {
             offering.setSku(request.getSku());
         }
 
+        if (request.getServiceId() != null) {
+            offering.setCatalogService(serviceCatalogService.getForCategory(
+                    request.getServiceId(), offering.getVendorService().getServiceCategory().getId()));
+        }
         if (request.getOfferingName() != null) {
             offering.setOfferingName(request.getOfferingName());
         }
@@ -410,7 +418,7 @@ public class ServiceOfferingService {
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinitionResponse> getAttributeDefinitions(Integer categoryId) {
-        List<ServiceAttributeDefinition> attributes = attributeRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+        List<ServiceAttributeDefinition> attributes = attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
         return attributeMapper.toResponseList(attributes);
     }
 
@@ -419,7 +427,7 @@ public class ServiceOfferingService {
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinitionResponse> getRequiredAttributeDefinitions(Integer categoryId) {
-        List<ServiceAttributeDefinition> attributes = attributeRepository.findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+        List<ServiceAttributeDefinition> attributes = attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
         return attributeMapper.toResponseList(attributes);
     }
 
@@ -445,7 +453,7 @@ public class ServiceOfferingService {
     private void validateFilterableAttributes(Integer categoryId, Map<String, Object> attributes) {
         // Get required attributes for this category
         List<ServiceAttributeDefinition> requiredAttributes =
-                attributeRepository.findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+                attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
 
         // Check all required attributes are present
         for (ServiceAttributeDefinition attr : requiredAttributes) {
@@ -457,7 +465,7 @@ public class ServiceOfferingService {
 
         // Validate attribute codes exist in definitions
         List<ServiceAttributeDefinition> allAttributes =
-                attributeRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+                attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
 
         for (String attrCode : attributes.keySet()) {
             boolean found = allAttributes.stream()

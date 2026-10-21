@@ -30,6 +30,11 @@ public class QuotationRequestMapper {
             response.setId(e.getId());
             response.setQuotationNumber(e.getQuotationNumber());
             response.setServiceCategory(serviceCategoryMapper.toResponse(e.getServiceCategory()));
+            if (e.getCatalogService() != null) {
+                response.setServiceId(e.getCatalogService().getId());
+                response.setServiceCode(e.getCatalogService().getCode());
+                response.setServiceName(e.getCatalogService().getName());
+            }
             response.setCustomerId(e.getCustomerId());
             response.setServiceLocationType(e.getServiceLocationType());
             response.setCity(e.getCity());

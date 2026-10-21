@@ -1,6 +1,6 @@
 package com.autoadda.apis.other.mapper;
 
-import com.autoadda.apis.other.entity.VendorServiceBridge;
+import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.response.VendorServiceBridgeResponse;
 import org.springframework.stereotype.Component;
 
@@ -10,12 +10,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Manual mapper for VendorServiceBridge entity.
+ * Manual mapper for VendorService entity.
  */
 @Component
 public class VendorServiceBridgeMapper {
 
-    public VendorServiceBridgeResponse toResponse(VendorServiceBridge entity) {
+    public VendorServiceBridgeResponse toResponse(VendorService entity) {
         return Optional.ofNullable(entity).map(e -> {
             VendorServiceBridgeResponse response = new VendorServiceBridgeResponse();
             response.setId(e.getId());
@@ -24,11 +24,17 @@ public class VendorServiceBridgeMapper {
             response.setVendorName(e.getVendor() != null ? e.getVendor().getName() : null);
             response.setServiceCategoryId(e.getServiceCategory() != null ? e.getServiceCategory().getId() : null);
             response.setServiceCategoryName(e.getServiceCategory() != null ? e.getServiceCategory().getName() : null);
+            response.setPricingType(e.getPricingType());
+            response.setPrice(e.getPrice());
+            response.setMinPrice(e.getMinPrice());
+            response.setMaxPrice(e.getMaxPrice());
+            response.setCurrency(e.getCurrency());
+            response.setDescription(e.getDescription());
             return response;
         }).orElse(null);
     }
 
-    public List<VendorServiceBridgeResponse> toResponseList(List<VendorServiceBridge> entities) {
+    public List<VendorServiceBridgeResponse> toResponseList(List<VendorService> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }

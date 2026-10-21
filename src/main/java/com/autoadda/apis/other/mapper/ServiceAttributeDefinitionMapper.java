@@ -24,6 +24,10 @@ public class ServiceAttributeDefinitionMapper {
             response.setId(e.getId());
             response.setServiceCategoryId(e.getServiceCategory() != null ? e.getServiceCategory().getId() : null);
             response.setServiceCategoryName(e.getServiceCategory() != null ? e.getServiceCategory().getName() : null);
+            if (e.getCatalogService() != null) {
+                response.setServiceId(e.getCatalogService().getId());
+                response.setServiceCode(e.getCatalogService().getCode());
+            }
             response.setAttributeCode(e.getAttributeCode());
             response.setAttributeName(e.getAttributeName());
             response.setDataType(e.getDataType());

@@ -16,8 +16,20 @@ public class ServiceCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    /**
+     * Stable machine code, e.g. "TIRES_WHEELS". Optional for categories created before codes existed.
+     */
+    @Column(name = "code", unique = true, length = 60)
+    private String code;
+
     private String name;
     private String description;
+
+    @Column(name = "display_order")
+    private Integer displayOrder = 0;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
 
     @OneToOne
     @JoinColumn(name = "image")

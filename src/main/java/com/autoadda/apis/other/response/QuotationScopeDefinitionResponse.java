@@ -14,6 +14,8 @@ public class QuotationScopeDefinitionResponse {
     private Integer id;
     private Integer serviceCategoryId; // Only ID to avoid circular dependency
     private String serviceCategoryName; // For display purposes
+    private Integer serviceId;
+    private String serviceCode;
     private Boolean isQuotationEnabled;
     private QuotationType quotationType;
     private Integer autoExpiryHours;

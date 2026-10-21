@@ -2,58 +2,43 @@ package com.autoadda.apis.other.repository;
 
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * "Category default" methods only see rows with no catalog service; service-level rows are read
+ * through the CatalogServiceId methods.
+ */
 @Repository
 public interface ServiceAttributeDefinitionRepository extends JpaRepository<ServiceAttributeDefinition, Long> {
 
-    /**
-     * Find all attributes for a service category.
-     */
-    List<ServiceAttributeDefinition> findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(Integer serviceCategoryId);
+    // ---- category defaults (catalogService IS NULL) ----
 
-    /**
-     * Find all active attributes for a service category.
-     */
-    List<ServiceAttributeDefinition> findByServiceCategoryIdOrderByDisplayOrderAsc(Integer serviceCategoryId);
+    List<ServiceAttributeDefinition> findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(Integer serviceCategoryId);
 
-    /**
-     * Find filterable attributes for a service category.
-     */
-    List<ServiceAttributeDefinition> findByServiceCategoryIdAndIsFilterableTrueAndIsActiveTrueOrderByDisplayOrderAsc(Integer serviceCategoryId);
+    List<ServiceAttributeDefinition> findByServiceCategoryIdAndCatalogServiceIsNullOrderByDisplayOrderAsc(Integer serviceCategoryId);
 
-    /**
-     * Find required attributes for a service category.
-     */
-    List<ServiceAttributeDefinition> findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(Integer serviceCategoryId);
+    List<ServiceAttributeDefinition> findByServiceCategoryIdAndCatalogServiceIsNullAndIsFilterableTrueAndIsActiveTrueOrderByDisplayOrderAsc(Integer serviceCategoryId);
 
-    /**
-     * Find searchable attributes for a service category.
-     */
-    List<ServiceAttributeDefinition> findByServiceCategoryIdAndIsSearchableTrueAndIsActiveTrueOrderByDisplayOrderAsc(Integer serviceCategoryId);
+    List<ServiceAttributeDefinition> findByServiceCategoryIdAndCatalogServiceIsNullAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(Integer serviceCategoryId);
 
-    /**
-     * Find attribute by code within a service category.
-     */
-    Optional<ServiceAttributeDefinition> findByServiceCategoryIdAndAttributeCode(Integer serviceCategoryId, String attributeCode);
+    Optional<ServiceAttributeDefinition> findByServiceCategoryIdAndCatalogServiceIsNullAndAttributeCode(Integer serviceCategoryId, String attributeCode);
 
-    /**
-     * Check if attribute code exists within a service category.
-     */
-    boolean existsByServiceCategoryIdAndAttributeCode(Integer serviceCategoryId, String attributeCode);
+    boolean existsByServiceCategoryIdAndCatalogServiceIsNullAndAttributeCode(Integer serviceCategoryId, String attributeCode);
 
-    /**
-     * Find all active attributes across all categories.
-     */
+    // ---- service-level ----
+
+    List<ServiceAttributeDefinition> findByCatalogServiceIdAndIsActiveTrueOrderByDisplayOrderAsc(Integer catalogServiceId);
+
+    List<ServiceAttributeDefinition> findByCatalogServiceIdOrderByDisplayOrderAsc(Integer catalogServiceId);
+
+    boolean existsByCatalogServiceIdAndAttributeCode(Integer catalogServiceId, String attributeCode);
+
+    // ---- any level ----
+
+    List<ServiceAttributeDefinition> findByServiceCategoryIdAndIsActiveTrue(Integer serviceCategoryId);
+
     List<ServiceAttributeDefinition> findByIsActiveTrueOrderByServiceCategoryIdAscDisplayOrderAsc();
-
-    /**
-     * Count attributes for a service category.
-     */
-    long countByServiceCategoryIdAndIsActiveTrue(Integer serviceCategoryId);
 }

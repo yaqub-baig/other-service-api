@@ -51,6 +51,8 @@ public class QuotationService {
     private final QuotationRequestFieldValueMapper quotationRequestFieldValueMapper; // Inject mapper
     private final VendorQuotationMapper vendorQuotationMapper; // Inject mapper
     private final VendorQuotationLineItemMapper vendorQuotationLineItemMapper; // Inject mapper
+    private final QuotationAdminService quotationAdminService;
+    private final ServiceCatalogService serviceCatalogService;
 
     // ==================== Customer Request Operations ====================
 
@@ -64,8 +66,12 @@ public class QuotationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Service category not found with id: " + submission.getServiceCategoryId()));
 
-        // Check if quotation is enabled for this category
-        QuotationScopeDefinition scope = scopeRepository.findByServiceCategoryIdAndIsActiveTrue(submission.getServiceCategoryId())
+        CatalogService catalogService = submission.getServiceId() != null
+                ? serviceCatalogService.getForCategory(submission.getServiceId(), submission.getServiceCategoryId())
+                : null;
+
+        // Service-level scope wins over the category default
+        QuotationScopeDefinition scope = quotationAdminService.resolveScope(submission.getServiceCategoryId(), submission.getServiceId())
                 .orElseThrow(() -> new BusinessException("Quotation is not configured for this service category"));
 
         if (!scope.getIsQuotationEnabled()) {
@@ -73,7 +79,9 @@ public class QuotationService {
         }
 
         // Validate required fields
-        validateRequiredFields(submission.getServiceCategoryId(), submission.getFieldValues());
+        List<QuotationFieldDefinition> formFields =
+                quotationAdminService.resolveFields(submission.getServiceCategoryId(), submission.getServiceId());
+        validateRequiredFields(formFields, submission.getFieldValues());
 
         // Generate unique quotation number
         String quotationNumber = generateQuotationNumber();
@@ -85,6 +93,7 @@ public class QuotationService {
         QuotationRequest request = QuotationRequest.builder()
                 .quotationNumber(quotationNumber)
                 .serviceCategory(category)
+                .catalogService(catalogService)
                 .customerId(submission.getCustomerId())
                 .serviceLocationType(submission.getServiceLocationType())
                 .city(submission.getCity())
@@ -102,8 +111,9 @@ public class QuotationService {
         // Save field values
         if (submission.getFieldValues() != null) {
             for (Map.Entry<String, Object> entry : submission.getFieldValues().entrySet()) {
-                QuotationFieldDefinition fieldDef = fieldDefinitionRepository
-                        .findByServiceCategoryIdAndFieldCode(submission.getServiceCategoryId(), entry.getKey())
+                QuotationFieldDefinition fieldDef = formFields.stream()
+                        .filter(f -> f.getFieldCode().equals(entry.getKey()))
+                        .findFirst()
                         .orElse(null);
 
                 QuotationRequestFieldValue fieldValue = QuotationRequestFieldValue.builder()
@@ -459,8 +469,9 @@ public class QuotationService {
             throw new BusinessException("Can only broadcast requests with REQUESTED status");
         }
 
-        QuotationScopeDefinition scope = scopeRepository
-                .findByServiceCategoryIdAndIsActiveTrue(request.getServiceCategory().getId())
+        QuotationScopeDefinition scope = quotationAdminService
+                .resolveScope(request.getServiceCategory().getId(),
+                        request.getCatalogService() != null ? request.getCatalogService().getId() : null)
                 .orElseThrow(() -> new BusinessException("Quotation scope not configured"));
 
         // Find matching vendors
@@ -534,9 +545,10 @@ public class QuotationService {
 
     // ==================== Helper Methods ====================
 
-    private void validateRequiredFields(Integer categoryId, Map<String, Object> fieldValues) {
-        List<QuotationFieldDefinition> requiredFields = fieldDefinitionRepository
-                .findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId);
+    private void validateRequiredFields(List<QuotationFieldDefinition> formFields, Map<String, Object> fieldValues) {
+        List<QuotationFieldDefinition> requiredFields = formFields.stream()
+                .filter(f -> Boolean.TRUE.equals(f.getIsRequired()))
+                .toList();
 
         for (QuotationFieldDefinition field : requiredFields) {
             if (fieldValues == null || !fieldValues.containsKey(field.getFieldCode()) ||

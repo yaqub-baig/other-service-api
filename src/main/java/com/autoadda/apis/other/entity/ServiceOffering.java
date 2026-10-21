@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 @Table(name = "service_offerings",
        indexes = {
            @Index(name = "idx_offering_vendor_service", columnList = "vendor_service_id"),
+           @Index(name = "idx_offering_service", columnList = "service_id"),
            @Index(name = "idx_offering_sku", columnList = "sku"),
            @Index(name = "idx_offering_status", columnList = "stock_status"),
            @Index(name = "idx_offering_active", columnList = "is_active")
@@ -52,6 +53,14 @@ public class ServiceOffering {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vendor_service_id", nullable = false)
     private VendorService vendorService;
+
+    /**
+     * Catalog service this offering sells, e.g. "Tire Replacement". Optional so category-only
+     * offerings keep working.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id")
+    private CatalogService catalogService;
 
     /**
      * Name of the offering (displayed to customers).

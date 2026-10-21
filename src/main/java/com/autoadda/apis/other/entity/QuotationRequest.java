@@ -43,6 +43,13 @@ public class QuotationRequest {
     private ServiceCategory serviceCategory;
 
     /**
+     * Catalog service the customer wants quoted (optional; category-only requests still work).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id")
+    private CatalogService catalogService;
+
+    /**
      * Customer ID from the user service.
      */
     @Column(name = "customer_id", nullable = false)

@@ -1,7 +1,6 @@
 package com.autoadda.apis.other.controller;
 
 
-import com.autoadda.apis.other.entity.VendorServiceBridge;
 import com.autoadda.apis.other.request.GarageServiceRequest;
 import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.VendorServiceBridgeResponse;
@@ -33,15 +32,15 @@ public class VendorServiceBridgeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<VendorServiceBridgeResponse>> update(@PathVariable Integer id, @RequestBody VendorServiceBridge updated) {
-        VendorServiceBridgeResponse response = vendorServiceBridgeService.updateVendorServiceBridge(id, updated);
+    public ResponseEntity<ApiResponse<VendorServiceBridgeResponse>> update(@PathVariable Integer id, @RequestBody GarageServiceRequest request) {
+        VendorServiceBridgeResponse response = vendorServiceBridgeService.updateVendorServiceBridge(id, request);
         return ResponseEntity.ok(ApiResponse.success("Vendor service bridge updated", response));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
         vendorServiceBridgeService.deleteVendorServiceBridge(id);
-        return ResponseEntity.ok(ApiResponse.success("Vendor service bridge deleted", null));
+        return ResponseEntity.ok(ApiResponse.success("Vendor service bridge deactivated", null));
     }
 
     @GetMapping

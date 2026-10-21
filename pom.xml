@@ -86,6 +86,13 @@
         </dependency>
 
 
+        <!-- Test: in-memory DB so the context and JPA mappings can boot without MySQL -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Test: JUnit + TestNG + Mockito -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

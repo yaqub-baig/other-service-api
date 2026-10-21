@@ -23,9 +23,16 @@ public class QuotationScopeDefinition {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "service_category_id", unique = true)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "service_category_id", nullable = false)
     private ServiceCategory serviceCategory;
+
+    /**
+     * Catalog service this row belongs to. Null means it applies to the whole category (default).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id")
+    private CatalogService catalogService;
 
     /**
      * Whether quotation feature is enabled for this category.

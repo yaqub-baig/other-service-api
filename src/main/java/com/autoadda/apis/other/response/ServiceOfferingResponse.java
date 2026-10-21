@@ -25,6 +25,9 @@ public class ServiceOfferingResponse {
     private String vendorName;
     private Integer serviceCategoryId;
     private String serviceCategoryName;
+    private Integer serviceId;
+    private String serviceCode;
+    private String serviceName;
     private String offeringName;
     private String shortDescription;
     private String description;

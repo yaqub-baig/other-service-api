@@ -31,6 +31,11 @@ public class ServiceOfferingMapper {
                     ? e.getVendorService().getServiceCategory().getId() : null);
             response.setServiceCategoryName(e.getVendorService() != null && e.getVendorService().getServiceCategory() != null
                     ? e.getVendorService().getServiceCategory().getName() : null);
+            if (e.getCatalogService() != null) {
+                response.setServiceId(e.getCatalogService().getId());
+                response.setServiceCode(e.getCatalogService().getCode());
+                response.setServiceName(e.getCatalogService().getName());
+            }
             response.setOfferingName(e.getOfferingName());
             response.setShortDescription(e.getShortDescription());
             response.setDescription(e.getDescription());

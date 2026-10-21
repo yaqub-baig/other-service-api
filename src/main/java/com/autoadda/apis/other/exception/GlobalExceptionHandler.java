@@ -144,6 +144,12 @@ public class GlobalExceptionHandler {
 		return buildResponse(ex, HttpStatus.NOT_FOUND, ErrorMessage.ERROR_NOT_FOUND);
 	}
 
+	@ExceptionHandler(BusinessException.class)
+	public ResponseEntity<GenericResponse> handleBusiness(BusinessException ex) {
+		log.warn("Business rule violation: {}", ex.getMessage());
+		return buildResponse(ex, HttpStatus.BAD_REQUEST, ex.getMessage());
+	}
+
 	@ExceptionHandler(ConflictException.class)
 	public ResponseEntity<GenericResponse> handleConflict(ConflictException ex) {
 		log.warn("Conflict error", ex);

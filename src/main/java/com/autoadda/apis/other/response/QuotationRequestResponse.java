@@ -16,6 +16,9 @@ public class QuotationRequestResponse {
     private Integer id;
     private String quotationNumber;
     private AvailableServiceResponse serviceCategory; // Nested DTO
+    private Integer serviceId;
+    private String serviceCode;
+    private String serviceName;
     private Integer customerId;
     private ServiceLocationType serviceLocationType;
     private String city;

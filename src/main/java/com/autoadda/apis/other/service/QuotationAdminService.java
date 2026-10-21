@@ -1,9 +1,11 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.QuotationFieldDefinition;
 import com.autoadda.apis.other.entity.QuotationScopeDefinition;
 import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
+import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.QuotationFieldDefinitionMapper;
 import com.autoadda.apis.other.mapper.QuotationScopeDefinitionMapper;
@@ -22,7 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Service for admin-level operations on quotation configurations.
@@ -39,21 +45,35 @@ public class QuotationAdminService {
     private final ObjectMapper objectMapper;
     private final QuotationScopeDefinitionMapper scopeMapper; // Inject mapper
     private final QuotationFieldDefinitionMapper fieldMapper; // Inject mapper
+    private final ServiceCatalogService serviceCatalogService;
 
     // ==================== Scope Definition Operations ====================
 
     /**
-     * Create or update scope definition for a service category.
+     * Create or update the scope definition for a service category, or for one catalog service
+     * when serviceId is set (that scope then overrides the category default).
      */
     @Transactional
     public QuotationScopeDefinitionResponse saveScopeDefinition(QuotationScopeDefinitionRequest request) {
-        ServiceCategory category = categoryRepository.findById(request.getServiceCategoryId())
+        CatalogService catalogService = request.getServiceId() != null
+                ? serviceCatalogService.getForCategory(request.getServiceId(), request.getServiceCategoryId())
+                : null;
+        Integer categoryId = catalogService != null
+                ? catalogService.getServiceCategory().getId()
+                : request.getServiceCategoryId();
+        if (categoryId == null) {
+            throw new BusinessException("serviceCategoryId or serviceId is required");
+        }
+        ServiceCategory category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Service category not found with id: " + request.getServiceCategoryId()));
+                        "Service category not found with id: " + categoryId));
 
-        QuotationScopeDefinition scope = scopeRepository.findByServiceCategoryId(request.getServiceCategoryId())
+        QuotationScopeDefinition scope = (catalogService != null
+                ? scopeRepository.findByCatalogServiceId(catalogService.getId())
+                : scopeRepository.findByServiceCategoryIdAndCatalogServiceIsNull(categoryId))
                 .orElse(QuotationScopeDefinition.builder()
                         .serviceCategory(category)
+                        .catalogService(catalogService)
                         .build());
 
         scope.setIsQuotationEnabled(request.getIsQuotationEnabled() != null ? request.getIsQuotationEnabled() : false);
@@ -70,11 +90,49 @@ public class QuotationAdminService {
     }
 
     /**
+     * The scope that applies to a request: the service's own scope when it has one, otherwise the
+     * category default. Empty when neither is configured.
+     */
+    @Transactional(readOnly = true)
+    public Optional<QuotationScopeDefinition> resolveScope(Integer categoryId, Integer serviceId) {
+        if (serviceId != null) {
+            Optional<QuotationScopeDefinition> serviceScope = scopeRepository.findByCatalogServiceIdAndIsActiveTrue(serviceId);
+            if (serviceScope.isPresent()) {
+                return serviceScope;
+            }
+        }
+        return scopeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrue(categoryId);
+    }
+
+    /**
+     * The form fields for a request: the service's own fields, plus category defaults whose code
+     * the service does not redefine.
+     */
+    @Transactional(readOnly = true)
+    public List<QuotationFieldDefinition> resolveFields(Integer categoryId, Integer serviceId) {
+        Map<String, QuotationFieldDefinition> byCode = new LinkedHashMap<>();
+        if (serviceId != null) {
+            fieldRepository.findByCatalogServiceIdAndIsActiveTrueOrderByDisplayOrderAsc(serviceId)
+                    .forEach(f -> byCode.put(f.getFieldCode(), f));
+        }
+        fieldRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId)
+                .forEach(f -> byCode.putIfAbsent(f.getFieldCode(), f));
+        return byCode.values().stream()
+                .sorted(Comparator.comparing(f -> f.getDisplayOrder() != null ? f.getDisplayOrder() : 0))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuotationFieldDefinitionResponse> getFieldsForService(Integer categoryId, Integer serviceId) {
+        return fieldMapper.toResponseList(resolveFields(categoryId, serviceId));
+    }
+
+    /**
      * Get scope definition for a service category.
      */
     @Transactional(readOnly = true)
     public QuotationScopeDefinitionResponse getScopeDefinitionForCategory(Integer categoryId) {
-        return scopeRepository.findByServiceCategoryIdAndIsActiveTrue(categoryId)
+        return scopeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrue(categoryId)
                 .map(scopeMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Quotation scope not configured for category: " + categoryId));
@@ -82,7 +140,7 @@ public class QuotationAdminService {
 
     @Transactional(readOnly = true)
     public QuotationScopeDefinition getScopeDefinitionForCategory1(Integer categoryId) {
-        return scopeRepository.findByServiceCategoryIdAndIsActiveTrue(categoryId)
+        return scopeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrue(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Quotation scope not configured for category: " + categoryId));
     }
@@ -111,7 +169,12 @@ public class QuotationAdminService {
      */
     @Transactional(readOnly = true)
     public boolean isQuotationEnabled(Integer categoryId) {
-        return scopeRepository.findByServiceCategoryIdAndIsActiveTrue(categoryId)
+        return isQuotationEnabled(categoryId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isQuotationEnabled(Integer categoryId, Integer serviceId) {
+        return resolveScope(categoryId, serviceId)
                 .map(QuotationScopeDefinition::getIsQuotationEnabled)
                 .orElse(false);
     }
@@ -153,15 +216,20 @@ public class QuotationAdminService {
      */
     @Transactional
     public QuotationFieldDefinitionResponse createFieldDefinition(QuotationFieldDefinitionRequest request) {
-        ServiceCategory category = categoryRepository.findById(request.getServiceCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Service category not found with id: " + request.getServiceCategoryId()));
-
-        // Check for duplicate field code
-        if (fieldRepository.existsByServiceCategoryIdAndFieldCode(request.getServiceCategoryId(), request.getFieldCode())) {
-            throw new AlreadyExistsException(
-                    "Field with code '" + request.getFieldCode() + "' already exists for this category");
+        CatalogService catalogService = request.getServiceId() != null
+                ? serviceCatalogService.getForCategory(request.getServiceId(), request.getServiceCategoryId())
+                : null;
+        Integer categoryId = catalogService != null
+                ? catalogService.getServiceCategory().getId()
+                : request.getServiceCategoryId();
+        if (categoryId == null) {
+            throw new BusinessException("serviceCategoryId or serviceId is required");
         }
+        ServiceCategory category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Service category not found with id: " + categoryId));
+
+        ensureFieldCodeIsFree(categoryId, catalogService, request.getFieldCode());
 
         // Get depends on field if specified
         QuotationFieldDefinition dependsOn = null;
@@ -173,6 +241,7 @@ public class QuotationAdminService {
 
         QuotationFieldDefinition field = QuotationFieldDefinition.builder()
                 .serviceCategory(category)
+                .catalogService(catalogService)
                 .fieldCode(request.getFieldCode())
                 .label(request.getLabel())
                 .fieldType(request.getFieldType())
@@ -204,11 +273,7 @@ public class QuotationAdminService {
 
         // Check for duplicate field code if changing
         if (request.getFieldCode() != null && !request.getFieldCode().equals(field.getFieldCode())) {
-            if (fieldRepository.existsByServiceCategoryIdAndFieldCode(
-                    field.getServiceCategory().getId(), request.getFieldCode())) {
-                throw new AlreadyExistsException(
-                        "Field with code '" + request.getFieldCode() + "' already exists for this category");
-            }
+            ensureFieldCodeIsFree(field.getServiceCategory().getId(), field.getCatalogService(), request.getFieldCode());
             field.setFieldCode(request.getFieldCode());
         }
 
@@ -259,7 +324,7 @@ public class QuotationAdminService {
      */
     @Transactional(readOnly = true)
     public List<QuotationFieldDefinitionResponse> getFieldsForCategory(Integer categoryId) {
-        return fieldMapper.toResponseList(fieldRepository.findByServiceCategoryIdAndIsActiveTrueOrderByDisplayOrderAsc(categoryId));
+        return fieldMapper.toResponseList(fieldRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId));
     }
 
     /**
@@ -267,7 +332,7 @@ public class QuotationAdminService {
      */
     @Transactional(readOnly = true)
     public List<QuotationFieldDefinitionResponse> getRequiredFieldsForCategory(Integer categoryId) {
-        return fieldMapper.toResponseList(fieldRepository.findByServiceCategoryIdAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId));
+        return fieldMapper.toResponseList(fieldRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsRequiredTrueAndIsActiveTrueOrderByDisplayOrderAsc(categoryId));
     }
 
     /**
@@ -326,6 +391,16 @@ public class QuotationAdminService {
     }
 
     // ==================== Helper Methods ====================
+
+    private void ensureFieldCodeIsFree(Integer categoryId, CatalogService catalogService, String fieldCode) {
+        boolean taken = catalogService != null
+                ? fieldRepository.existsByCatalogServiceIdAndFieldCode(catalogService.getId(), fieldCode)
+                : fieldRepository.existsByServiceCategoryIdAndCatalogServiceIsNullAndFieldCode(categoryId, fieldCode);
+        if (taken) {
+            throw new AlreadyExistsException("Field with code '" + fieldCode + "' already exists for this "
+                    + (catalogService != null ? "service" : "category"));
+        }
+    }
 
     private String convertToJson(Object obj) {
         if (obj == null) {

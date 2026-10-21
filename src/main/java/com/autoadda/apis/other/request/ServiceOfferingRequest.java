@@ -23,6 +23,11 @@ public class ServiceOfferingRequest {
     private Integer vendorServiceId;
 
     /**
+     * Catalog service this offering sells (optional). Must belong to the vendor service's category.
+     */
+    private Integer serviceId;
+
+    /**
      * Name of the offering.
      * Example: "MRF ZLX 185/65 R15 Tubeless Car Tyre"
      */

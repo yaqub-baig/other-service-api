@@ -9,6 +9,8 @@ import lombok.Data;
 @Data
 public class QuotationScopeDefinitionRequest {
     private Integer serviceCategoryId;
+    /** Optional: scope this to one catalog service instead of the whole category. */
+    private Integer serviceId;
     private Boolean isQuotationEnabled;
     private QuotationType quotationType;
     private Integer autoExpiryHours;
