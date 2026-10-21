@@ -1,5 +1,5 @@
 # ===========================================
-# Multi-stage Dockerfile for Garage Service
+# Multi-stage Dockerfile for Other Service API
 # ===========================================
 
 # ============================================
@@ -46,16 +46,15 @@ RUN mkdir -p /app/documents /app/logs /uploaded-files/photos /uploaded-files/doc
 USER spring:spring
 
 # Expose port
-EXPOSE 8020
+EXPOSE 9010
 
-## Set environment variable inside container
-ENV SPRING_DATASOURCE_URL=jdbc:mysql://103.211.202.187:3306/auto_adda_other_service?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-ENV SPRING_DATASOURCE_USERNAME=adminmylstech_user
-ENV SPRING_DATASOURCE_PASSWORD=Mylstech@100
+# Database connection is supplied at runtime, never baked into the image:
+#   docker run -e SPRING_DATASOURCE_URL=... -e SPRING_DATASOURCE_USERNAME=... -e SPRING_DATASOURCE_PASSWORD=... <image>
+ENV SPRING_PROFILES_ACTIVE=prod
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8020/api/v1/actuator/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:9010/api/v1/actuator/health || exit 1
 
 # JVM optimization flags
 ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseStringDeduplication -Djava.security.egd=file:/dev/./urandom"
