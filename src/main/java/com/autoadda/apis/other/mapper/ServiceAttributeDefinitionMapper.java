@@ -29,6 +29,11 @@ public class ServiceAttributeDefinitionMapper {
                 response.setServiceId(e.getCatalogService().getId());
                 response.setServiceCode(e.getCatalogService().getCode());
             }
+            if (e.getSchemaVersion() != null) {
+                response.setSchemaVersionId(e.getSchemaVersion().getId());
+                response.setSchemaVersionNo(e.getSchemaVersion().getVersionNo());
+                response.setSchemaVersionStatus(e.getSchemaVersion().getStatus());
+            }
             response.setAttributeCode(e.getAttributeCode());
             response.setAttributeName(Localized.pick(e.getAttributeName(), e.getAttributeNameAr()));
             response.setAttributeNameAr(e.getAttributeNameAr());

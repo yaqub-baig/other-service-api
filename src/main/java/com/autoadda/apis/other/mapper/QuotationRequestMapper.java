@@ -35,6 +35,7 @@ public class QuotationRequestMapper {
                 response.setServiceCode(e.getCatalogService().getCode());
                 response.setServiceName(e.getCatalogService().getName());
             }
+            response.setSchemaVersionId(e.getSchemaVersion() != null ? e.getSchemaVersion().getId() : null);
             response.setCustomerId(e.getCustomerId());
             response.setServiceLocationType(e.getServiceLocationType());
             response.setCity(e.getCity());

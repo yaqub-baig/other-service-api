@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * "Category default" methods only see rows with no catalog service; service-level rows are read
- * through the CatalogServiceId methods.
+ * "Category default" methods only see rows with no catalog service; service-level rows belong to a
+ * schema version and are read through the SchemaVersionId methods.
  */
 @Repository
 public interface ServiceAttributeDefinitionRepository extends JpaRepository<ServiceAttributeDefinition, Long> {
@@ -28,13 +28,13 @@ public interface ServiceAttributeDefinitionRepository extends JpaRepository<Serv
 
     boolean existsByServiceCategoryIdAndCatalogServiceIsNullAndAttributeCode(Integer serviceCategoryId, String attributeCode);
 
-    // ---- service-level ----
+    // ---- schema versions ----
 
-    List<ServiceAttributeDefinition> findByCatalogServiceIdAndIsActiveTrueOrderByDisplayOrderAsc(Integer catalogServiceId);
+    List<ServiceAttributeDefinition> findBySchemaVersionIdAndIsActiveTrueOrderByDisplayOrderAsc(Integer schemaVersionId);
 
-    List<ServiceAttributeDefinition> findByCatalogServiceIdOrderByDisplayOrderAsc(Integer catalogServiceId);
+    List<ServiceAttributeDefinition> findBySchemaVersionIdOrderByDisplayOrderAsc(Integer schemaVersionId);
 
-    boolean existsByCatalogServiceIdAndAttributeCode(Integer catalogServiceId, String attributeCode);
+    boolean existsBySchemaVersionIdAndAttributeCode(Integer schemaVersionId, String attributeCode);
 
     // ---- any level ----
 

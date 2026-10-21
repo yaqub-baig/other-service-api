@@ -47,6 +47,11 @@ public class BookingMapper {
             response.setOsSubscriptionPlanId(b.getOsSubscriptionPlanId());
             response.setCustomerId(b.getCustomerId());
             response.setVehicleId(b.getVehicleId());
+            if (b.getCatalogService() != null) {
+                response.setServiceId(b.getCatalogService().getId());
+                response.setServiceCode(b.getCatalogService().getCode());
+            }
+            response.setSchemaVersionId(b.getSchemaVersion() != null ? b.getSchemaVersion().getId() : null);
 
             // Map nested OsAppointmentSlot
             if (b.getSlot() != null) {

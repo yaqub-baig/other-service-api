@@ -27,6 +27,9 @@ public class BookingResponse {
     private String osSubscriptionPlanId;
     private Integer customerId;
     private Integer vehicleId;
+    private Integer serviceId;
+    private String serviceCode;
+    private Integer schemaVersionId;
     private BookingSlotResponse slot; // Nested DTO for slot details
     private TechnicianResponse technician; // Nested DTO for technician details
     private String referenceType;

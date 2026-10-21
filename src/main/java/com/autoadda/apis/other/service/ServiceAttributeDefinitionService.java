@@ -3,6 +3,7 @@ package com.autoadda.apis.other.service;
 import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import com.autoadda.apis.other.entity.ServiceCategory;
+import com.autoadda.apis.other.entity.ServiceSchemaVersion;
 import com.autoadda.apis.other.exception.AlreadyExistsException;
 import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
@@ -36,6 +37,7 @@ public class ServiceAttributeDefinitionService {
     private final ServiceAttributeDefinitionMapper attributeMapper; // Inject mapper
     private final ServiceCatalogService serviceCatalogService;
     private final ObjectMapper objectMapper;
+    private final SchemaVersionService schemaVersionService;
 
     /**
      * Create a new attribute definition for a service category.
@@ -56,11 +58,16 @@ public class ServiceAttributeDefinitionService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Service category not found with id: " + categoryId));
 
-        ensureCodeIsFree(categoryId, catalogService, request.getAttributeCode());
+        // Service-level attributes always go into the service's open draft (opened if needed)
+        ServiceSchemaVersion draft = catalogService != null
+                ? schemaVersionService.getOrCreateDraft(catalogService.getId(), null)
+                : null;
+        ensureCodeIsFree(categoryId, draft, request.getAttributeCode());
 
         ServiceAttributeDefinition attribute = ServiceAttributeDefinition.builder()
                 .serviceCategory(category)
                 .catalogService(catalogService)
+                .schemaVersion(draft)
                 .attributeCode(request.getAttributeCode())
                 .attributeName(request.getAttributeName())
                 .attributeNameAr(request.getAttributeNameAr())
@@ -149,11 +156,12 @@ public class ServiceAttributeDefinitionService {
     public ServiceAttributeDefinitionResponse update(Long id, ServiceAttributeDefinitionRequest request) {
         ServiceAttributeDefinition attribute = attributeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute definition not found with id: " + id));
+        schemaVersionService.requireEditable(attribute);
 
         // If changing attribute code, check for duplicates
         if (request.getAttributeCode() != null &&
                 !request.getAttributeCode().equals(attribute.getAttributeCode())) {
-            ensureCodeIsFree(attribute.getServiceCategory().getId(), attribute.getCatalogService(),
+            ensureCodeIsFree(attribute.getServiceCategory().getId(), attribute.getSchemaVersion(),
                     request.getAttributeCode());
             attribute.setAttributeCode(request.getAttributeCode());
         }
@@ -212,6 +220,7 @@ public class ServiceAttributeDefinitionService {
     @Transactional
     public void delete(Long id) {
         ServiceAttributeDefinition attribute = getById1(id);
+        schemaVersionService.requireEditable(attribute);
         attribute.setIsActive(false);
         attributeRepository.save(attribute);
         log.info("Soft deleted attribute definition with id: {}", id);
@@ -222,9 +231,7 @@ public class ServiceAttributeDefinitionService {
      */
     @Transactional
     public void hardDelete(Long id) {
-        if (!attributeRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Attribute definition not found with id: " + id);
-        }
+        schemaVersionService.requireEditable(getById1(id));
         attributeRepository.deleteById(id);
         log.info("Hard deleted attribute definition with id: {}", id);
     }
@@ -236,29 +243,41 @@ public class ServiceAttributeDefinitionService {
     public ServiceAttributeDefinitionResponse reactivate(Long id) {
         ServiceAttributeDefinition attribute = attributeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Attribute definition not found with id: " + id));
+        schemaVersionService.requireEditable(attribute);
         attribute.setIsActive(true);
         ServiceAttributeDefinition reactivatedAttribute = attributeRepository.save(attribute);
         return attributeMapper.toResponse(reactivatedAttribute);
     }
 
     /**
-     * Active attributes defined directly on a catalog service.
+     * Attributes of the service's newest schema version: the open draft if there is one,
+     * otherwise the published version.
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinitionResponse> getByService(Integer serviceId) {
-        return attributeMapper.toResponseList(attributeRepository.findByCatalogServiceIdAndIsActiveTrueOrderByDisplayOrderAsc(serviceId));
+        return schemaVersionService.latest(serviceId)
+                .map(v -> attributeMapper.toResponseList(attributeRepository.findBySchemaVersionIdOrderByDisplayOrderAsc(v.getId())))
+                .orElse(List.of());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServiceAttributeDefinitionResponse> getByVersion(Integer serviceId, Integer versionId) {
+        schemaVersionService.getForService(serviceId, versionId);
+        return attributeMapper.toResponseList(attributeRepository.findBySchemaVersionIdOrderByDisplayOrderAsc(versionId));
     }
 
     /**
-     * The attributes that apply to an offering or request: the service's own attributes, plus the
-     * category defaults whose code the service does not redefine. Ordered by display order.
+     * The attributes that apply to an offering or request: the service's published schema version,
+     * plus the category defaults whose code that version does not redefine. Drafts are not live.
+     * Ordered by display order.
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinition> resolveAttributes(Integer categoryId, Integer serviceId) {
         Map<String, ServiceAttributeDefinition> byCode = new LinkedHashMap<>();
         if (serviceId != null) {
-            attributeRepository.findByCatalogServiceIdAndIsActiveTrueOrderByDisplayOrderAsc(serviceId)
-                    .forEach(a -> byCode.put(a.getAttributeCode(), a));
+            schemaVersionService.currentPublished(serviceId).ifPresent(live ->
+                    attributeRepository.findBySchemaVersionIdAndIsActiveTrueOrderByDisplayOrderAsc(live.getId())
+                            .forEach(a -> byCode.put(a.getAttributeCode(), a)));
         }
         attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId)
                 .forEach(a -> byCode.putIfAbsent(a.getAttributeCode(), a));
@@ -312,13 +331,13 @@ public class ServiceAttributeDefinitionService {
         }
     }
 
-    private void ensureCodeIsFree(Integer categoryId, CatalogService catalogService, String attributeCode) {
-        boolean taken = catalogService != null
-                ? attributeRepository.existsByCatalogServiceIdAndAttributeCode(catalogService.getId(), attributeCode)
+    private void ensureCodeIsFree(Integer categoryId, ServiceSchemaVersion version, String attributeCode) {
+        boolean taken = version != null
+                ? attributeRepository.existsBySchemaVersionIdAndAttributeCode(version.getId(), attributeCode)
                 : attributeRepository.existsByServiceCategoryIdAndCatalogServiceIsNullAndAttributeCode(categoryId, attributeCode);
         if (taken) {
-            throw new AlreadyExistsException("Attribute with code '" + attributeCode + "' already exists for this "
-                    + (catalogService != null ? "service" : "category"));
+            throw new AlreadyExistsException("Attribute with code '" + attributeCode + "' already exists in this "
+                    + (version != null ? "schema version" : "category"));
         }
     }
 

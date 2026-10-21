@@ -19,6 +19,7 @@ public class QuotationRequestResponse {
     private Integer serviceId;
     private String serviceCode;
     private String serviceName;
+    private Integer schemaVersionId;
     private Integer customerId;
     private ServiceLocationType serviceLocationType;
     private String city;

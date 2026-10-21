@@ -28,6 +28,8 @@ public class ServiceOfferingResponse {
     private Integer serviceId;
     private String serviceCode;
     private String serviceName;
+    private Integer schemaVersionId;
+    private Integer schemaVersionNo;
     private String offeringName;
     private String shortDescription;
     private String description;

@@ -61,6 +61,7 @@ public class QuotationService {
     private final AttributeValidator attributeValidator;
     private final FieldSpecFactory fieldSpecFactory;
     private final QuotationModeResolver quotationModeResolver;
+    private final SchemaVersionService schemaVersionService;
 
     // ==================== Customer Request Operations ====================
 
@@ -106,6 +107,9 @@ public class QuotationService {
                 .quotationNumber(quotationNumber)
                 .serviceCategory(category)
                 .catalogService(catalogService)
+                .schemaVersion(catalogService != null
+                        ? schemaVersionService.currentPublished(catalogService.getId()).orElse(null)
+                        : null)
                 .customerId(submission.getCustomerId())
                 .serviceLocationType(submission.getServiceLocationType())
                 .city(submission.getCity())

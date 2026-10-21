@@ -35,6 +35,7 @@ public class VendorSlotService {
 
     private final VendorWorkHoursRepository workingHoursRepo;
     private final ServiceCatalogService serviceCatalogService;
+    private final SchemaVersionService schemaVersionService;
     private final VendorBreakTimeRepository breakRepo;
     private final VendorHolidayOverrideRepository holidayRepo;
     private final BookingRepository bookingRepo;
@@ -152,6 +153,9 @@ public class VendorSlotService {
         Booking booking = Booking.builder()
                 .vendor(vendor)
                 .catalogService(catalogService)
+                .schemaVersion(catalogService != null
+                        ? schemaVersionService.currentPublished(catalogService.getId()).orElse(null)
+                        : null)
                 .scheduleDate(date)
                 .serviceStartTime(time)
                 .status(Status.CONFIRMED)

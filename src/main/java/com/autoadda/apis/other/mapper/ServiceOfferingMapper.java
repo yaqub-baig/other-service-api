@@ -37,6 +37,10 @@ public class ServiceOfferingMapper {
                 response.setServiceCode(e.getCatalogService().getCode());
                 response.setServiceName(Localized.pick(e.getCatalogService().getName(), e.getCatalogService().getNameAr()));
             }
+            if (e.getSchemaVersion() != null) {
+                response.setSchemaVersionId(e.getSchemaVersion().getId());
+                response.setSchemaVersionNo(e.getSchemaVersion().getVersionNo());
+            }
             response.setOfferingName(e.getOfferingName());
             response.setShortDescription(e.getShortDescription());
             response.setDescription(e.getDescription());

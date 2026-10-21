@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.entity.ServiceSchemaVersion;
 import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.Booking;
 import com.autoadda.apis.other.entity.BookedService;
@@ -46,6 +47,7 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final ServiceCatalogService serviceCatalogService;
+    private final SchemaVersionService schemaVersionService;
     private final BookingStatusActivityRepository appointmentActivityRepo;
     private final BookedServiceRepository serviceRepo;
     private final VendorRepository vendorRepository;
@@ -81,6 +83,7 @@ public class BookingService {
         Booking booking = Booking.builder()
                 .vendor(vendor)
                 .catalogService(catalogService)
+                .schemaVersion(liveVersion(catalogService))
                 .vehicleId(request.getVehicleId())
                 .customerId(request.getCustomerId())
                 .scheduleDate(request.getScheduleDate())
@@ -185,6 +188,8 @@ public class BookingService {
                 .appointmentReferenceId(bookingCode)
                 .vendor(quotation.getVendor())
                 .catalogService(quotation.getQuotationRequest().getCatalogService())
+                // the version the customer filled the request against
+                .schemaVersion(quotation.getQuotationRequest().getSchemaVersion())
                 .customerId(request.getCustomerId())
                 .vehicleId(request.getVehicleId())
                 .scheduleDate(request.getScheduleDate())
@@ -323,6 +328,12 @@ public class BookingService {
         return bookingRepository.findByVendorIdAndStatus(vendorId, status).stream()
                 .map(appointmentDetailMapper::entityToResponse)
                 .toList();
+    }
+
+    private ServiceSchemaVersion liveVersion(CatalogService catalogService) {
+        return catalogService != null
+                ? schemaVersionService.currentPublished(catalogService.getId()).orElse(null)
+                : null;
     }
 
     public String generateBookingCode() {

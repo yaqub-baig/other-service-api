@@ -56,6 +56,14 @@ public class Booking {
     @JoinColumn(name = "service_id")
     private CatalogService catalogService;
 
+    /**
+     * Schema version of the catalog service this was validated against. Stays put when a newer
+     * version is published.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schema_version_id")
+    private ServiceSchemaVersion schemaVersion;
+
     @Column(name = "selected_other_service")
     private String selectedOtherServiceIds;
 

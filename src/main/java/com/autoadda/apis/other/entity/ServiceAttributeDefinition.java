@@ -18,7 +18,10 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "service_attribute_definitions",
-       indexes = @Index(name = "idx_attr_category_service", columnList = "service_category_id, service_id"))
+       indexes = {
+           @Index(name = "idx_attr_category_service", columnList = "service_category_id, service_id"),
+           @Index(name = "idx_attr_schema_version", columnList = "schema_version_id, display_order")
+       })
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,6 +43,13 @@ public class ServiceAttributeDefinition {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id")
     private CatalogService catalogService;
+
+    /**
+     * Schema version a service-level attribute belongs to. Null for category defaults.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schema_version_id")
+    private ServiceSchemaVersion schemaVersion;
 
     /**
      * Unique code for this attribute within the service category.

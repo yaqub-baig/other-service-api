@@ -50,6 +50,14 @@ public class QuotationRequest {
     private CatalogService catalogService;
 
     /**
+     * Schema version of the catalog service this was validated against. Stays put when a newer
+     * version is published.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schema_version_id")
+    private ServiceSchemaVersion schemaVersion;
+
+    /**
      * Customer ID from the user service.
      */
     @Column(name = "customer_id", nullable = false)

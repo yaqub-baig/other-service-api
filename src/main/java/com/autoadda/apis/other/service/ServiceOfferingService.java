@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.entity.ServiceSchemaVersion;
 import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.ServiceAttributeDefinition;
 import com.autoadda.apis.other.entity.ServiceOffering;
@@ -51,6 +52,7 @@ public class ServiceOfferingService {
     private final AttributeValidator attributeValidator;
     private final FieldSpecFactory fieldSpecFactory;
     private final MarketService marketService;
+    private final SchemaVersionService schemaVersionService;
 
     /**
      * Create a new service offering.
@@ -96,6 +98,7 @@ public class ServiceOfferingService {
         ServiceOffering offering = ServiceOffering.builder()
                 .vendorService(vendorService)
                 .catalogService(catalogService)
+                .schemaVersion(liveVersion(catalogService))
                 .offeringName(request.getOfferingName())
                 .shortDescription(request.getShortDescription())
                 .description(request.getDescription())
@@ -283,6 +286,8 @@ public class ServiceOfferingService {
                     ? request.getFilterableAttributes()
                     : readJsonMap(offering.getFilterableAttributes());
             validateAttributes(categoryId, offering.getCatalogService(), attributes);
+            // Re-validated against the live schema, so record that version
+            offering.setSchemaVersion(liveVersion(offering.getCatalogService()));
         }
         if (request.getOfferingName() != null) {
             offering.setOfferingName(request.getOfferingName());
@@ -471,6 +476,12 @@ public class ServiceOfferingService {
         List<ServiceAttributeDefinition> definitions = attributeDefinitionService.resolveAttributes(
                 categoryId, catalogService != null ? catalogService.getId() : null);
         attributeValidator.validateOrThrow(fieldSpecFactory.forOffering(definitions), attributes);
+    }
+
+    private ServiceSchemaVersion liveVersion(CatalogService catalogService) {
+        return catalogService != null
+                ? schemaVersionService.currentPublished(catalogService.getId()).orElse(null)
+                : null;
     }
 
     private Map<String, Object> readJsonMap(String json) {

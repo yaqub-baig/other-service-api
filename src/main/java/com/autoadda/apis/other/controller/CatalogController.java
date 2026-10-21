@@ -2,6 +2,8 @@ package com.autoadda.apis.other.controller;
 
 import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.CatalogServiceResponse;
+import com.autoadda.apis.other.response.ServiceAttributeDefinitionResponse;
+import com.autoadda.apis.other.service.ServiceAttributeDefinitionService;
 import com.autoadda.apis.other.service.ServiceCatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.util.List;
 public class CatalogController {
 
     private final ServiceCatalogService serviceCatalogService;
+    private final ServiceAttributeDefinitionService attributeService;
 
     @GetMapping("/services")
     public ResponseEntity<ApiResponse<List<CatalogServiceResponse>>> listServices(
@@ -27,6 +30,16 @@ public class CatalogController {
         return ResponseEntity.ok(ApiResponse.success(country != null
                 ? serviceCatalogService.listAvailableInCountry(categoryId, country)
                 : serviceCatalogService.list(categoryId, true)));
+    }
+
+    /**
+     * The live attribute form for a service: its published schema plus category defaults.
+     * Each attribute carries schemaVersionId (null for category defaults).
+     */
+    @GetMapping("/services/{id}/attributes")
+    public ResponseEntity<ApiResponse<List<ServiceAttributeDefinitionResponse>>> getServiceAttributes(@PathVariable Integer id) {
+        CatalogServiceResponse service = serviceCatalogService.getById(id);
+        return ResponseEntity.ok(ApiResponse.success(attributeService.getResolved(service.getServiceCategoryId(), id)));
     }
 
     @GetMapping("/services/{id}")

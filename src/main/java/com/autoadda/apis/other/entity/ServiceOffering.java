@@ -63,6 +63,14 @@ public class ServiceOffering {
     private CatalogService catalogService;
 
     /**
+     * Schema version of the catalog service this was validated against. Stays put when a newer
+     * version is published.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schema_version_id")
+    private ServiceSchemaVersion schemaVersion;
+
+    /**
      * Name of the offering (displayed to customers).
      * Example: "MRF ZLX 185/65 R15 Tubeless Car Tyre"
      */

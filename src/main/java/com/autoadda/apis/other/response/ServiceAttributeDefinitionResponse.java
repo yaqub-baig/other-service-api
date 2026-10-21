@@ -2,6 +2,7 @@ package com.autoadda.apis.other.response;
 
 import com.autoadda.apis.other.util.DataType;
 import com.autoadda.apis.other.util.InputContext;
+import com.autoadda.apis.other.util.SchemaVersionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,6 +18,9 @@ public class ServiceAttributeDefinitionResponse {
     private String serviceCategoryName;
     private Integer serviceId;
     private String serviceCode;
+    private Integer schemaVersionId;
+    private Integer schemaVersionNo;
+    private SchemaVersionStatus schemaVersionStatus;
     private String attributeCode;
     private String attributeName; // follows Accept-Language
     private String attributeNameAr;
