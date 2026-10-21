@@ -706,7 +706,7 @@ Content-Type: application/json
 DELETE /vendors/{id}
 ```
 
-### 6.8 Vendor Service Bridges (Admin)
+### 6.8 Vendor Services (Admin)
 
 **Base Path:** `/vendor-services`
 
@@ -1282,37 +1282,37 @@ export const deleteVendor = (id) =>
 
 ---
 
-### 11.8 Vendor Service Bridge APIs
+### 11.8 Vendor Service APIs
 
 ```javascript
-// api/admin/vendorServiceBridgeApi.js
+// api/admin/vendorServiceApi.js
 import api from '../axiosInstance';
 
 const VENDOR_SERVICE_BASE = '/vendor-services';
 
 // Get all vendor services
-export const getAllBridges = () =>
+export const getAllVendorServices = () =>
   api.get(VENDOR_SERVICE_BASE);
 
 // Get vendor service by ID
-export const getBridgeById = (id) =>
+export const getVendorServiceById = (id) =>
   api.get(`${VENDOR_SERVICE_BASE}/${id}`);
 
 // Get vendor services by vendor
-export const getBridgesByVendor = (vendorId) =>
+export const getVendorServicesByVendor = (vendorId) =>
   api.get(`${VENDOR_SERVICE_BASE}/vendor/${vendorId}`);
 
 // Add a category to a vendor
-export const createBridge = (data) =>
+export const createVendorService = (data) =>
   api.post(VENDOR_SERVICE_BASE, data);
 // data = { vendorId, serviceCategoryId, isActive }
 
 // Update vendor service
-export const updateBridge = (id, data) =>
+export const updateVendorService = (id, data) =>
   api.put(`${VENDOR_SERVICE_BASE}/${id}`, data);
 
 // Deactivate vendor service
-export const deleteBridge = (id) =>
+export const deactivateVendorService = (id) =>
   api.delete(`${VENDOR_SERVICE_BASE}/${id}`);
 ```
 

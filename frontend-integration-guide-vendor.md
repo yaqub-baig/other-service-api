@@ -154,7 +154,7 @@ Links your vendor to specific service categories (what services you offer).
 GET /vendor-services/vendor/{vendorId}
 ```
 
-**Response:** `ApiResponse<List<VendorServiceBridgeResponse>>`
+**Response:** `ApiResponse<List<VendorServiceResponse>>`
 
 ```json
 {
@@ -1044,7 +1044,7 @@ export const deleteVendor = (id) =>
 
 ---
 
-### 9.3 Vendor Service Bridge APIs
+### 9.3 Vendor Service APIs
 
 ```javascript
 // api/vendor/vendorServiceApi.js
@@ -1074,7 +1074,7 @@ export const removeService = (id) =>
   api.delete(`${VENDOR_SERVICE_BASE}/${id}`);
 
 // Get all vendor services
-export const getAllBridges = () =>
+export const getAllVendorServices = () =>
   api.get(VENDOR_SERVICE_BASE);
 ```
 
