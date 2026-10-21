@@ -14,7 +14,7 @@ import com.autoadda.apis.other.mapper.VendorProfileMapper;
 import com.autoadda.apis.other.repository.MediaFileRepository;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
 import com.autoadda.apis.other.repository.VendorRepository;
-import com.autoadda.apis.other.request.GarageServiceRequest;
+import com.autoadda.apis.other.request.VendorServiceRequest;
 import com.autoadda.apis.other.request.OtherServiceRequest;
 import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
@@ -43,7 +43,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     private final LocationService locationService;
     private final MediaFileService mediaFileService;
     private final MediaFileRepository mediaFileRepository;
-    private final VendorServiceBridgeService vendorServiceBridgeService;
+    private final VendorServiceAssignmentService vendorServiceAssignmentService;
     private final VendorMapper vendorMapper;
     private final VendorProfileMapper vendorProfileMapper;
     private final MarketService marketService;
@@ -288,8 +288,8 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         for (Integer categoryId : requested) {
             serviceCategoryRepository.findById(categoryId)
                     .orElseThrow(() -> new ResourceNotFoundException("invalid id for service category"));
-            vendor.getServices().add(vendorServiceBridgeService.createVendorServiceBridgeEntity(
-                    GarageServiceRequest.builder().garageId(vendor.getId()).serviceId(categoryId).isActive(TRUE).build()));
+            vendor.getServices().add(vendorServiceAssignmentService.createVendorServiceEntity(
+                    VendorServiceRequest.builder().vendorId(vendor.getId()).serviceCategoryId(categoryId).isActive(TRUE).build()));
         }
     }
 

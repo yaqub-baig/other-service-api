@@ -217,17 +217,17 @@ QuotationRequest (customer inquiry)
 ---
 
 #### 3.2.2 VendorServiceBridgeController
-**Base Path:** `/vendor-service-bridges`
+**Base Path:** `/vendor-services`
 **Purpose:** Link vendors to service categories (subscription management)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/vendor-service-bridges` | Create a vendor-service subscription |
-| `GET` | `/vendor-service-bridges` | Get all vendor-service bridges |
-| `GET` | `/vendor-service-bridges/{id}` | Get bridge by ID |
-| `PUT` | `/vendor-service-bridges/{id}` | Update a vendor-service bridge |
-| `DELETE` | `/vendor-service-bridges/{id}` | Delete a vendor-service bridge |
-| `GET` | `/vendor-service-bridges/vendor/{vendorId}` | Get all bridges for a vendor |
+| `POST` | `/vendor-services` | Create a vendor-service subscription |
+| `GET` | `/vendor-services` | Get all vendor services |
+| `GET` | `/vendor-services/{id}` | Get vendor service by ID |
+| `PUT` | `/vendor-services/{id}` | Update a vendor services |
+| `DELETE` | `/vendor-services/{id}` | Delete a vendor services |
+| `GET` | `/vendor-services/vendor/{vendorId}` | Get all services for a vendor |
 
 **Total: 6 endpoints**
 
@@ -528,7 +528,7 @@ Step 2: Upload Media (Logo, Images, Documents)
 
 Step 3: Subscribe to Service Categories
 ──────────────────────────────────────────────────
-    POST /vendor-service-bridges
+    POST /vendor-services
     {
       "vendorId": 1,
       "serviceCategoryId": 2  // New Tyres

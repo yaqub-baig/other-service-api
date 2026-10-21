@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 /**
  * A vendor offering a service category: the single vendor ↔ category join.
  * Bookings, booked services and offerings all hang off this row.
- * (Previously split across VendorService and VendorServiceBridge.)
+ * (Previously split across two entities, VendorService and VendorServiceBridge.)
  */
 @Entity
 @Table(name = "vendor_service_bridge",

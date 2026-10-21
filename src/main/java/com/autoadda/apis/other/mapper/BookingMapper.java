@@ -44,7 +44,7 @@ public class BookingMapper {
             }
 
             response.setSelectedServiceIds(b.getSelectedServiceIds());
-            response.setOsSubscriptionPlanId(b.getOsSubscriptionPlanId());
+            response.setSubscriptionPlanId(b.getSubscriptionPlanId());
             response.setCustomerId(b.getCustomerId());
             response.setVehicleId(b.getVehicleId());
             if (b.getCatalogService() != null) {

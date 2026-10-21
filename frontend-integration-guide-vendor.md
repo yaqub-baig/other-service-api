@@ -144,14 +144,14 @@ DELETE /vendors/{id}
 
 ## 2. Vendor Service Management
 
-**Base Path:** `/vendor-service-bridges`
+**Base Path:** `/vendor-services`
 
 Links your vendor to specific service categories (what services you offer).
 
 ### 2.1 Get My Services
 
 ```
-GET /vendor-service-bridges/vendor/{vendorId}
+GET /vendor-services/vendor/{vendorId}
 ```
 
 **Response:** `ApiResponse<List<VendorServiceBridgeResponse>>`
@@ -173,35 +173,35 @@ GET /vendor-service-bridges/vendor/{vendorId}
 ### 2.2 Add a Service
 
 ```
-POST /vendor-service-bridges
+POST /vendor-services
 Content-Type: application/json
 ```
 
 ```json
 {
-  "garageId": 1,
-  "serviceId": 3,
+  "vendorId": 1,
+  "serviceCategoryId": 3,
   "isActive": true
 }
 ```
 
 | Field     | Type    | Required | Description                |
 |-----------|---------|----------|----------------------------|
-| garageId  | Integer | Yes      | Your vendor ID             |
-| serviceId | Integer | Yes      | Service category ID to add |
+| vendorId          | Integer | Yes      | Your vendor ID             |
+| serviceCategoryId | Integer | Yes      | Service category ID to add |
 | isActive  | Boolean | No       | Active status              |
 
 ### 2.3 Update a Service Link
 
 ```
-PUT /vendor-service-bridges/{id}
+PUT /vendor-services/{id}
 Content-Type: application/json
 ```
 
 ### 2.4 Remove a Service
 
 ```
-DELETE /vendor-service-bridges/{id}
+DELETE /vendor-services/{id}
 ```
 
 ---
@@ -257,7 +257,7 @@ Content-Type: application/json
 
 | Field                | Type            | Required | Description                                    |
 |----------------------|-----------------|----------|------------------------------------------------|
-| vendorServiceId      | Integer         | Yes      | Your vendor-service bridge ID                  |
+| vendorServiceId      | Integer         | Yes      | Your vendor services ID                  |
 | offeringName         | String          | Yes      | Product/service name                           |
 | shortDescription     | String          | No       | Short tagline                                  |
 | description          | String          | No       | Full description                               |
@@ -398,9 +398,9 @@ PATCH /service-offerings/{id}/featured
 ```javascript
 const API = 'http://localhost:8080';
 
-// 1. Get vendor's service bridges to know vendorServiceId
+// 1. Get the vendor services to know vendorServiceId
 const { data: services } = await fetch(
-  `${API}/vendor-service-bridges/vendor/${vendorId}`
+  `${API}/vendor-services/vendor/${vendorId}`
 ).then(r => r.json());
 
 // 2. Select a service -> get its categoryId
@@ -854,13 +854,13 @@ const offering = {
 4. Upload company photos          POST /mediafiles/upload
 5. Browse service categories      GET /service-categories
 6. Register vendor                POST /vendors (X-Auto-Adda-Id header)
-7. Link services                  POST /vendor-service-bridges (for each service)
+7. Link services                  POST /vendor-services (for each service)
 ```
 
 ### Journey 2: Add a Product/Service Listing
 
 ```
-1. Get my services                GET /vendor-service-bridges/vendor/{vendorId}
+1. Get my services                GET /vendor-services/vendor/{vendorId}
 2. Pick a service -> category
 3. Load attribute definitions     GET /service-offerings/category/{categoryId}/attributes
 4. Upload product images          POST /mediafiles/upload
@@ -1050,32 +1050,32 @@ export const deleteVendor = (id) =>
 // api/vendor/vendorServiceApi.js
 import api from '../axiosInstance';
 
-const BRIDGE_BASE = '/vendor-service-bridges';
+const VENDOR_SERVICE_BASE = '/vendor-services';
 
 // Get my services
 export const getMyServices = (vendorId) =>
-  api.get(`${BRIDGE_BASE}/vendor/${vendorId}`);
+  api.get(`${VENDOR_SERVICE_BASE}/vendor/${vendorId}`);
 
 // Add a service
 export const addService = (data) =>
-  api.post(BRIDGE_BASE, data);
-// data = { garageId: vendorId, serviceId: categoryId, isActive: true }
+  api.post(VENDOR_SERVICE_BASE, data);
+// data = { vendorId, serviceCategoryId: categoryId, isActive: true }
 
-// Get bridge by ID
+// Get vendor service by ID
 export const getServiceById = (id) =>
-  api.get(`${BRIDGE_BASE}/${id}`);
+  api.get(`${VENDOR_SERVICE_BASE}/${id}`);
 
 // Update a service link
 export const updateService = (id, data) =>
-  api.put(`${BRIDGE_BASE}/${id}`, data);
+  api.put(`${VENDOR_SERVICE_BASE}/${id}`, data);
 
 // Remove a service
 export const removeService = (id) =>
-  api.delete(`${BRIDGE_BASE}/${id}`);
+  api.delete(`${VENDOR_SERVICE_BASE}/${id}`);
 
-// Get all bridges
+// Get all vendor services
 export const getAllBridges = () =>
-  api.get(BRIDGE_BASE);
+  api.get(VENDOR_SERVICE_BASE);
 ```
 
 ---

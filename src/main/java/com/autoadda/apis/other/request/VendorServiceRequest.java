@@ -10,13 +10,13 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GarageServiceRequest {
+public class VendorServiceRequest {
 
-	@NotNull(message = "Garage ID is required")
-	private Integer garageId;
+	@NotNull(message = "Vendor ID is required")
+	private Integer vendorId;
 
-	@NotNull(message = "Service ID is required")
-	private Integer serviceId;
+	@NotNull(message = "Service category ID is required")
+	private Integer serviceCategoryId;
 
 	private boolean isActive;
 

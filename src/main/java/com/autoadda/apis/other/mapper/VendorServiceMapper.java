@@ -1,7 +1,7 @@
 package com.autoadda.apis.other.mapper;
 
 import com.autoadda.apis.other.entity.VendorService;
-import com.autoadda.apis.other.response.VendorServiceBridgeResponse;
+import com.autoadda.apis.other.response.VendorServiceResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -13,11 +13,11 @@ import java.util.stream.Collectors;
  * Manual mapper for VendorService entity.
  */
 @Component
-public class VendorServiceBridgeMapper {
+public class VendorServiceMapper {
 
-    public VendorServiceBridgeResponse toResponse(VendorService entity) {
+    public VendorServiceResponse toResponse(VendorService entity) {
         return Optional.ofNullable(entity).map(e -> {
-            VendorServiceBridgeResponse response = new VendorServiceBridgeResponse();
+            VendorServiceResponse response = new VendorServiceResponse();
             response.setId(e.getId());
             response.setIsActive(e.getIsActive());
             response.setVendorId(e.getVendor() != null ? e.getVendor().getId() : null);
@@ -34,7 +34,7 @@ public class VendorServiceBridgeMapper {
         }).orElse(null);
     }
 
-    public List<VendorServiceBridgeResponse> toResponseList(List<VendorService> entities) {
+    public List<VendorServiceResponse> toResponseList(List<VendorService> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }

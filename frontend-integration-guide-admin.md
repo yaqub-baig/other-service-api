@@ -708,24 +708,24 @@ DELETE /vendors/{id}
 
 ### 6.8 Vendor Service Bridges (Admin)
 
-**Base Path:** `/vendor-service-bridges`
+**Base Path:** `/vendor-services`
 
 Links vendors to service categories.
 
 ```
-GET  /vendor-service-bridges                          -- Get all
-GET  /vendor-service-bridges/{id}                     -- Get by ID
-GET  /vendor-service-bridges/vendor/{vendorId}        -- Get by vendor
-POST /vendor-service-bridges                          -- Create
-PUT  /vendor-service-bridges/{id}                     -- Update
-DELETE /vendor-service-bridges/{id}                   -- Delete
+GET  /vendor-services                          -- Get all
+GET  /vendor-services/{id}                     -- Get by ID
+GET  /vendor-services/vendor/{vendorId}        -- Get by vendor
+POST /vendor-services                          -- Create
+PUT  /vendor-services/{id}                     -- Update
+DELETE /vendor-services/{id}                   -- Delete
 ```
 
 **Create Request:**
 ```json
 {
-  "garageId": 1,
-  "serviceId": 3,
+  "vendorId": 1,
+  "serviceCategoryId": 3,
   "isActive": true
 }
 ```
@@ -889,7 +889,7 @@ Content-Type: application/json
       /quotation-fields         -- Quotation form builder
   /vendors                      -- Vendor list & management
     /:id                        -- Vendor detail
-      /services                 -- Vendor service bridges
+      /services                 -- Vendor services
       /offerings                -- Vendor's offerings
   /offerings                    -- All offerings across vendors
   /bookings                     -- All bookings
@@ -913,7 +913,7 @@ Content-Type: application/json
 ```
 1. View all vendors             GET /vendors/all
 2. View vendor detail           GET /vendors/{id}
-3. View vendor services         GET /vendor-service-bridges/vendor/{id}
+3. View vendor services         GET /vendor-services/vendor/{id}
 4. View vendor offerings        GET /service-offerings/vendor/{id}/all
 5. Toggle featured offering     PATCH /service-offerings/{id}/featured
 6. Hard delete bad offering     DELETE /service-offerings/{id}/hard
@@ -1288,32 +1288,32 @@ export const deleteVendor = (id) =>
 // api/admin/vendorServiceBridgeApi.js
 import api from '../axiosInstance';
 
-const BRIDGE_BASE = '/vendor-service-bridges';
+const VENDOR_SERVICE_BASE = '/vendor-services';
 
-// Get all bridges
+// Get all vendor services
 export const getAllBridges = () =>
-  api.get(BRIDGE_BASE);
+  api.get(VENDOR_SERVICE_BASE);
 
-// Get bridge by ID
+// Get vendor service by ID
 export const getBridgeById = (id) =>
-  api.get(`${BRIDGE_BASE}/${id}`);
+  api.get(`${VENDOR_SERVICE_BASE}/${id}`);
 
-// Get bridges by vendor
+// Get vendor services by vendor
 export const getBridgesByVendor = (vendorId) =>
-  api.get(`${BRIDGE_BASE}/vendor/${vendorId}`);
+  api.get(`${VENDOR_SERVICE_BASE}/vendor/${vendorId}`);
 
-// Create bridge
+// Add a category to a vendor
 export const createBridge = (data) =>
-  api.post(BRIDGE_BASE, data);
-// data = { garageId, serviceId, isActive }
+  api.post(VENDOR_SERVICE_BASE, data);
+// data = { vendorId, serviceCategoryId, isActive }
 
-// Update bridge
+// Update vendor service
 export const updateBridge = (id, data) =>
-  api.put(`${BRIDGE_BASE}/${id}`, data);
+  api.put(`${VENDOR_SERVICE_BASE}/${id}`, data);
 
-// Delete bridge
+// Deactivate vendor service
 export const deleteBridge = (id) =>
-  api.delete(`${BRIDGE_BASE}/${id}`);
+  api.delete(`${VENDOR_SERVICE_BASE}/${id}`);
 ```
 
 ---

@@ -26,7 +26,7 @@ public class OsAppointmentDetailMapper {
         response.setVendor(vendorMapper.entityToResponse(booking.getVendor()));
         response.setSlot(bookingSlotMapper.toResponse(booking.getSlot()));
         response.setSelectedServiceIds(booking.getSelectedServiceIds());
-        response.setSubscriptionPlanId(booking.getOsSubscriptionPlanId());
+        response.setSubscriptionPlanId(booking.getSubscriptionPlanId());
         response.setVehicleId(booking.getVehicleId());
         response.setVehicle(vehicleClient.getVehicleDetailsByIdResponse(booking.getVehicleId()));
 

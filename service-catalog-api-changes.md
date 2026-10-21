@@ -99,6 +99,7 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 
   The other booking paths (`/status`, `/{appointmentId}`, `/{appointmentId}/cancel`, `/user/bookings`) only change the base.
 - **Changed:** booking responses return `selectedServiceIds` instead of `selectedOtherServiceIds`, and the available-slots response returns `vendorId` instead of `garageId`.
+- **Changed:** booking responses return `subscriptionPlanId` instead of `osSubscriptionPlanId`.
 - **Changed (job cards):** the assign request takes `vendorId` instead of `otherServiceId`. Job card responses return `vendorId`, which is now filled in; `otherServiceId` was always `null`.
 - `POST /bookings` accepts `catalogServiceId`. `POST /bookings/vendor/{vendorId}/book` accepts `?catalogServiceId=`.
 - A service whose effective mode is REQUIRED can't be booked directly; book from the accepted quote instead. The vendor must offer the service's category.
@@ -110,7 +111,7 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 - **Removed:** `DELETE /admin/service-filters/{id}/hard`.
 - `DELETE /admin/service-filters/options/{id}` and `DELETE /service-categories/{id}` now deactivate instead of deleting.
 - Categories accept and return `code`, `nameAr`, `descriptionAr`, `displayOrder`, `isActive` and `parentId`.
-- `/vendor-service-bridges`: `PUT` takes the same body as `POST` (`garageId`, `serviceId`, `isActive`, plus optional `pricingType`, `price`, `minPrice`, `maxPrice`, `currency`, `description`). `DELETE` deactivates.
+- **Changed:** `/vendor-service-bridges` is now `/vendor-services`. The body uses `vendorId` and `serviceCategoryId` instead of `garageId` and `serviceId`. `PUT` takes the same body as `POST` (plus optional `pricingType`, `price`, `minPrice`, `maxPrice`, `currency`, `description`), and `DELETE` deactivates.
 
 ## Starter data
 

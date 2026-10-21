@@ -68,8 +68,8 @@ public class Booking {
     @Column(name = "selected_service_ids")
     private String selectedServiceIds;
 
-    @Column(name = "os_subscription_plan_id")
-    private String osSubscriptionPlanId;
+    @Column(name = "subscription_plan_id")
+    private String subscriptionPlanId;
 
     @Column(name = "customer_id", nullable = false)
     private Integer customerId;

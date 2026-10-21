@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class VendorServiceBridgeResponse {
+public class VendorServiceResponse {
     private Integer id;
     private Boolean isActive;
     private Integer vendorId;
