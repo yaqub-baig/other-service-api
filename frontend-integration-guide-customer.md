@@ -353,12 +353,12 @@ GET /service-offerings/vendor/{vendorId}/category/{categoryId}
 ### 4.1 Check Available Slots
 
 ```
-GET /bookings/{otherServiceId}/available-slots?date=25/04/2026
+GET /bookings/vendor/{vendorId}/available-slots?date=25/04/2026
 ```
 
 | Param          | Type      | Format      | Description        |
 |----------------|-----------|-------------|--------------------|
-| otherServiceId | Integer   | path        | Vendor ID          |
+| vendorId | Integer   | path        | Vendor ID          |
 | date           | LocalDate | dd/MM/yyyy  | Date to check      |
 
 **Response:**
@@ -388,7 +388,7 @@ GET /bookings/{otherServiceId}/available-slots?date=25/04/2026
 ### 4.2 Book Appointment (Slot-Based)
 
 ```
-POST /bookings/{serviceId}/book?vehicleId=10&time=2026-04-25T09:00:00&selectedOtherServiceIds=1,3
+POST /bookings/vendor/{vendorId}/book?vehicleId=10&time=2026-04-25T09:00:00&selectedServiceIds=1,3
 X-Auto-Adda-Id: {userId}
 ```
 
@@ -397,7 +397,7 @@ X-Auto-Adda-Id: {userId}
 | serviceId               | Integer       | path - Vendor service ID            |
 | vehicleId               | Integer       | query - Customer's vehicle ID       |
 | time                    | LocalDateTime | query - ISO datetime                |
-| selectedOtherServiceIds | String        | query - Comma-separated service IDs |
+| selectedServiceIds | String        | query - Comma-separated service IDs |
 
 **Header:** `X-Auto-Adda-Id: {userId}`
 
@@ -414,7 +414,7 @@ Content-Type: application/json
 ```json
 {
   "customerId": 100,
-  "otherServiceId": 1,
+  "vendorId": 1,
   "vehicleId": 10,
   "serviceIds": [1, 3],
   "scheduleDate": "2026-04-25",
@@ -430,14 +430,14 @@ Content-Type: application/json
 ### 4.4 Edit Appointment
 
 ```
-PUT /bookings/edit/appointment?appointmentId=123&otherServiceId=1&vehicleId=10&time=2026-04-26T10:00:00
+PUT /bookings/edit/appointment?appointmentId=123&vendorId=1&vehicleId=10&time=2026-04-26T10:00:00
 X-Auto-Adda-Id: {userId}
 ```
 
 | Param          | Type          | Required | Description           |
 |----------------|---------------|----------|-----------------------|
 | appointmentId  | Integer       | Yes      | Booking ID to edit    |
-| otherServiceId | Integer       | No       | Change vendor         |
+| vendorId | Integer       | No       | Change vendor         |
 | vehicleId      | Integer       | No       | Change vehicle        |
 | time           | LocalDateTime | No       | Change date/time      |
 
@@ -844,8 +844,8 @@ X-Auto-Adda-Id: {userId}
 4. Search offerings             POST /search/offerings
 5. View offering details         GET /service-offerings/{id}
 6. View vendor profile           GET /vendors/{vendorId}
-7. Check available slots         GET /bookings/{vendorId}/available-slots?date=...
-8. Book slot                     POST /bookings/{serviceId}/book?vehicleId=...&time=...
+7. Check available slots         GET /bookings/vendor/{vendorId}/available-slots?date=...
+8. Book slot                     POST /bookings/vendor/{vendorId}/book?vehicleId=...&time=...
 9. View my bookings              GET /bookings/user/bookings
 ```
 
@@ -870,7 +870,7 @@ X-Auto-Adda-Id: {userId}
 1. Get user location (browser geolocation API)
 2. Search nearby                 GET /search/nearby?lat=...&lng=...&radius=10
 3. View offering/vendor          GET /service-offerings/{id}
-4. Book appointment              POST /bookings/{serviceId}/book?...
+4. Book appointment              POST /bookings/vendor/{vendorId}/book?...
 ```
 
 ### Frontend Code Example: Complete Quotation Flow
@@ -1188,15 +1188,15 @@ import api from '../axiosInstance';
 const BOOKING_BASE = '/bookings';
 
 // Get available slots for a vendor on a date
-export const getAvailableSlots = (otherServiceId, date) =>
-  api.get(`${BOOKING_BASE}/${otherServiceId}/available-slots`, {
+export const getAvailableSlots = (vendorId, date) =>
+  api.get(`${BOOKING_BASE}/vendor/${vendorId}/available-slots`, {
     params: { date }, // format: dd/MM/yyyy
   });
 
 // Book appointment (slot-based)
-export const bookSlot = (serviceId, vehicleId, time, userId, selectedOtherServiceIds = null) =>
-  api.post(`${BOOKING_BASE}/${serviceId}/book`, null, {
-    params: { vehicleId, time, selectedOtherServiceIds },
+export const bookSlot = (vendorId, vehicleId, time, userId, selectedServiceIds = null) =>
+  api.post(`${BOOKING_BASE}/vendor/${vendorId}/book`, null, {
+    params: { vehicleId, time, selectedServiceIds },
     headers: { 'X-Auto-Adda-Id': userId },
   });
 
@@ -1204,7 +1204,7 @@ export const bookSlot = (serviceId, vehicleId, time, userId, selectedOtherServic
 export const createAppointment = (data) =>
   api.post(BOOKING_BASE, data);
 // data = {
-//   customerId, otherServiceId, vehicleId, serviceIds,
+//   customerId, vendorId, vehicleId, serviceIds,
 //   scheduleDate, serviceStartTime, serviceEndTime,
 //   deliveryTime, comments, memberId, memberType
 // }
@@ -1220,9 +1220,9 @@ export const getBookingDetails = (appointmentId) =>
   api.get(`${BOOKING_BASE}/${appointmentId}`);
 
 // Edit appointment
-export const editAppointment = (appointmentId, userId, { otherServiceId, vehicleId, time } = {}) =>
+export const editAppointment = (appointmentId, userId, { vendorId, vehicleId, time } = {}) =>
   api.put(`${BOOKING_BASE}/edit/appointment`, null, {
-    params: { appointmentId, otherServiceId, vehicleId, time },
+    params: { appointmentId, vendorId, vehicleId, time },
     headers: { 'X-Auto-Adda-Id': userId },
   });
 

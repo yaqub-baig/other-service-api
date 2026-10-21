@@ -298,7 +298,7 @@ QuotationRequest (customer inquiry)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/bookings/other-service/{otherServiceId}` | Get appointments for a vendor/service |
+| `GET` | `/bookings/vendor/{vendorId}` | Get appointments for a vendor/service |
 | `PUT` | `/bookings/status` | Update appointment status |
 | `GET` | `/bookings/{appointmentId}` | Get appointment details |
 
@@ -361,8 +361,8 @@ QuotationRequest (customer inquiry)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `POST` | `/bookings` | Create a customer appointment |
-| `POST` | `/bookings/{serviceId}/book` | Book an appointment slot |
-| `GET` | `/bookings/{otherServiceId}/available-slots` | Get available slots |
+| `POST` | `/bookings/vendor/{vendorId}/book` | Book an appointment slot |
+| `GET` | `/bookings/vendor/{vendorId}/available-slots` | Get available slots |
 | `GET` | `/bookings/user/bookings` | Get user's bookings |
 | `DELETE` | `/bookings/{appointmentId}/cancel` | Cancel an appointment |
 | `PUT` | `/bookings/edit/appointment` | Edit an appointment |
@@ -581,7 +581,7 @@ Step 6: Submit Quotation Response
 
 Step 7: Manage Bookings
 ──────────────────────────────────────────────────
-    GET /bookings/other-service/{vendorServiceId}?status=PENDING
+    GET /bookings/vendor/{vendorId}?status=PENDING
                 │
                 ▼
 

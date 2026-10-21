@@ -656,12 +656,12 @@ GET /quotations/vendor/stats?vendorId=1
 ### 5.1 Get My Appointments
 
 ```
-GET /bookings/other-service/{otherServiceId}?status=PENDING
+GET /bookings/vendor/{vendorId}?status=PENDING
 ```
 
 | Param          | Type    | Description                                    |
 |----------------|---------|------------------------------------------------|
-| otherServiceId | Integer | Your vendor ID                                 |
+| vendorId | Integer | Your vendor ID                                 |
 | status         | String  | Optional filter: `REQUESTED`, `CONFIRMED`, `SCHEDULED`, `WORK_INPROGRESS`, `COMPLETED`, etc. |
 
 **Response:** `ApiResponse<List<BookingDetailResponse>>`
@@ -743,7 +743,7 @@ REQUESTED -> CONFIRMED -> SCHEDULED -> WORK_INPROGRESS -> COMPLETED -> DELIVERED
 ### 5.4 Get Available Slots (Manage Capacity)
 
 ```
-GET /bookings/{otherServiceId}/available-slots?date=25/04/2026
+GET /bookings/vendor/{vendorId}/available-slots?date=25/04/2026
 ```
 
 ---
@@ -882,7 +882,7 @@ const offering = {
 ### Journey 4: Handle a Booking
 
 ```
-1. View incoming bookings         GET /bookings/other-service/{vendorId}?status=REQUESTED
+1. View incoming bookings         GET /bookings/vendor/{vendorId}?status=REQUESTED
 2. View booking details           GET /bookings/{appointmentId}
 3. Confirm booking                PUT /bookings/status  { status: "CONFIRMED" }
 4. Start work                     PUT /bookings/status  { status: "WORK_INPROGRESS" }
@@ -1246,8 +1246,8 @@ import api from '../axiosInstance';
 const BOOKING_BASE = '/bookings';
 
 // Get my appointments (by vendor ID)
-export const getMyAppointments = (otherServiceId, status = null) =>
-  api.get(`${BOOKING_BASE}/other-service/${otherServiceId}`, {
+export const getMyAppointments = (vendorId, status = null) =>
+  api.get(`${BOOKING_BASE}/vendor/${vendorId}`, {
     params: { status },
   });
 
@@ -1261,8 +1261,8 @@ export const updateAppointmentStatus = (data) =>
 // data = { appointmentId, memberId, memberType: "VENDOR", status, comments }
 
 // Get available slots (manage capacity)
-export const getAvailableSlots = (otherServiceId, date) =>
-  api.get(`${BOOKING_BASE}/${otherServiceId}/available-slots`, {
+export const getAvailableSlots = (vendorId, date) =>
+  api.get(`${BOOKING_BASE}/vendor/${vendorId}/available-slots`, {
     params: { date }, // format: dd/MM/yyyy
   });
 ```

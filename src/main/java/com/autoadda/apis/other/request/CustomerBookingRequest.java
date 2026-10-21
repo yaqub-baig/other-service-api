@@ -14,7 +14,7 @@ import java.util.List;
 @Setter
 public class CustomerBookingRequest {
     private Integer customerId;
-    private Integer otherServiceId;
+    private Integer vendorId;
     private Integer vehicleId;
     private List<Integer> serviceIds;
     /** Optional catalog service being booked; services that require a quote are refused here. */

@@ -87,10 +87,20 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 
 ## Bookings (**changed**)
 
-- **Changed:** the base path is now `/bookings` instead of `/os-appointments`. Every booking endpoint moves; the paths after the base are unchanged.
-- `POST /bookings` accepts `catalogServiceId`. `POST /bookings/{vendorId}/book` accepts `?catalogServiceId=`.
+- **Changed:** the base path is now `/bookings` instead of `/os-appointments`, and the "other service" naming is gone:
+
+| Before | Now |
+| --- | --- |
+| `GET /os-appointments/other-service/{otherServiceId}` | `GET /bookings/vendor/{vendorId}` |
+| `GET /os-appointments/{otherServiceId}/available-slots` | `GET /bookings/vendor/{vendorId}/available-slots` |
+| `POST /os-appointments/{serviceId}/book?selectedOtherServiceIds=` | `POST /bookings/vendor/{vendorId}/book?selectedServiceIds=` |
+| `PUT /os-appointments/edit/appointment?otherServiceId=` | `PUT /bookings/edit/appointment?vendorId=` |
+| `POST /os-appointments` body field `otherServiceId` | `POST /bookings` body field `vendorId` |
+
+  The other booking paths (`/status`, `/{appointmentId}`, `/{appointmentId}/cancel`, `/user/bookings`) only change the base.
+- `POST /bookings` accepts `catalogServiceId`. `POST /bookings/vendor/{vendorId}/book` accepts `?catalogServiceId=`.
 - A service whose effective mode is REQUIRED can't be booked directly; book from the accepted quote instead. The vendor must offer the service's category.
-- `/{vendorId}/book` no longer fails when `selectedOtherServiceIds` is omitted.
+- `/vendor/{vendorId}/book` no longer fails when `selectedServiceIds` is omitted.
 
 ## Filters, categories and vendor services (**changed**)
 

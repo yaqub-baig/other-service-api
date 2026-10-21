@@ -72,7 +72,7 @@ public class BookingService {
             throws CustomerNotFoundException, OtherServiceNotFoundException {
 
         // Vendor is mandatory
-        Vendor vendor = vendorRepository.findById(request.getOtherServiceId())
+        Vendor vendor = vendorRepository.findById(request.getVendorId())
                 .orElseThrow(() -> new OtherServiceNotFoundException("Vendor not found"));
 
         CatalogService catalogService = request.getCatalogServiceId() != null

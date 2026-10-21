@@ -841,12 +841,12 @@ const logoId = uploaded.data[0].id;
 ### 9.1 Get Appointments by Vendor/Service
 
 ```
-GET /bookings/other-service/{otherServiceId}?status=PENDING
+GET /bookings/vendor/{vendorId}?status=PENDING
 ```
 
 | Param          | Type    | Description                      |
 |----------------|---------|----------------------------------|
-| otherServiceId | Integer | Vendor ID                        |
+| vendorId | Integer | Vendor ID                        |
 | status         | String  | Optional filter (enum Status)    |
 
 ### 9.2 Get Appointment Details
@@ -921,7 +921,7 @@ Content-Type: application/json
 
 **3. Handle Bookings:**
 ```
-1. View bookings for vendor     GET /bookings/other-service/{id}
+1. View bookings for vendor     GET /bookings/vendor/{id}
 2. View booking details         GET /bookings/{id}
 3. Update status                PUT /bookings/status
 ```
@@ -1385,8 +1385,8 @@ import api from '../axiosInstance';
 const BOOKING_BASE = '/bookings';
 
 // Get appointments by vendor/service
-export const getAppointmentsByVendor = (otherServiceId, status = null) =>
-  api.get(`${BOOKING_BASE}/other-service/${otherServiceId}`, {
+export const getAppointmentsByVendor = (vendorId, status = null) =>
+  api.get(`${BOOKING_BASE}/vendor/${vendorId}`, {
     params: { status },
   });
 

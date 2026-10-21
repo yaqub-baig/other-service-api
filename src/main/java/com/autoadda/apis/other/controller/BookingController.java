@@ -35,23 +35,23 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Appointment created successfully", appointment));
     }
 
-    @PostMapping("/{serviceId}/book")
-    public ResponseEntity<ApiResponse<?>> bookAppointment(@PathVariable Integer serviceId, @RequestParam Integer vehicleId,
+    @PostMapping("/vendor/{vendorId}/book")
+    public ResponseEntity<ApiResponse<?>> bookAppointment(@PathVariable Integer vendorId, @RequestParam Integer vehicleId,
                                                                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time,
                                                                           @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId,
-                                                                          @RequestParam(required = false) String selectedOtherServiceIds,
+                                                                          @RequestParam(required = false) String selectedServiceIds,
                                                                           @RequestParam(required = false) Integer catalogServiceId) {
 
         LocalDate date = time.toLocalDate();
         LocalTime timestamp = time.toLocalTime();
-        BookingDetailResponse booking = appointmentSlotService.bookSlot(serviceId, vehicleId, date, timestamp, autoAddaId, selectedOtherServiceIds, catalogServiceId);
+        BookingDetailResponse booking = appointmentSlotService.bookSlot(vendorId, vehicleId, date, timestamp, autoAddaId, selectedServiceIds, catalogServiceId);
         return ResponseEntity.ok(ApiResponse.success(booking));
     }
 
-    @GetMapping("/other-service/{otherServiceId}")
-    public ResponseEntity<ApiResponse<?>> getOtherServiceAppointments(@PathVariable Integer otherServiceId,
+    @GetMapping("/vendor/{vendorId}")
+    public ResponseEntity<ApiResponse<?>> getVendorBookings(@PathVariable Integer vendorId,
                                                                          @RequestParam(required = false) String status) throws OtherServiceNotFoundException {
-        List<BookingDetailResponse> appointments = appointmentService.getAppointmentsByGarage(otherServiceId, status);
+        List<BookingDetailResponse> appointments = appointmentService.getAppointmentsByGarage(vendorId, status);
         return ResponseEntity.ok(ApiResponse.success(appointments));
     }
 
@@ -67,13 +67,13 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @GetMapping("/{otherServiceId}/available-slots")
-    public ResponseEntity<Map<String, Object>> getAvailableSlots(@PathVariable Integer otherServiceId,
+    @GetMapping("/vendor/{vendorId}/available-slots")
+    public ResponseEntity<Map<String, Object>> getAvailableSlots(@PathVariable Integer vendorId,
                                                                  @RequestParam @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate date) {
 
-        List<Map<String, Object>> slots = appointmentSlotService.getAvailableSlotsWithDetails(otherServiceId, date);
+        List<Map<String, Object>> slots = appointmentSlotService.getAvailableSlotsWithDetails(vendorId, date);
         Map<String, Object> res = new HashMap<>();
-        res.put("garageId", otherServiceId);
+        res.put("garageId", vendorId);
         res.put("date", date);
         res.put("availableSlots", slots);
         return ResponseEntity.ok(res);
@@ -91,12 +91,12 @@ public class BookingController {
     }
 
     @PutMapping("/edit/appointment")
-    public ResponseEntity<ApiResponse<?>> editAppointment(@RequestParam(required = false) Integer otherServiceId,
+    public ResponseEntity<ApiResponse<?>> editAppointment(@RequestParam(required = false) Integer vendorId,
                                                    @RequestParam(required = false) Integer vehicleId,
                                                    @RequestParam Integer appointmentId,
                                                    @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time,
                                                    @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId) {
-        BookingResponse updatedBooking = appointmentSlotService.editBooking(otherServiceId, vehicleId, appointmentId, time, autoAddaId);
+        BookingResponse updatedBooking = appointmentSlotService.editBooking(vendorId, vehicleId, appointmentId, time, autoAddaId);
         return ResponseEntity.ok(ApiResponse.success("Appointment updated successfully", updatedBooking));
     }
 }
