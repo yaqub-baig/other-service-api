@@ -275,8 +275,9 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         service.setIsActive(true);
         service.setServiceType(type.name());
         service.setAccountStatus(Status.PENDING);
-        service.setServiceCategory(serviceCategoryRepository.findByName(type.getDisplayName())
-                .orElseThrow(() -> new ResourceNotFoundException("Service category not found: " + type.getDisplayName())));
+        service.setServiceCategory(serviceCategoryRepository.findByCode(type.getCategoryCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Service category " + type.getCategoryCode()
+                        + " for " + type.getDisplayName() + " not found; is catalog.seed.enabled on?")));
         service.setOpeningTime(timeString(request.getOpeningTime()));
         service.setClosingTime(timeString(request.getClosingTime()));
         service.setWorkingDays(request.getWorkingDays() != null ? joinDays(request.getWorkingDays()) : null);

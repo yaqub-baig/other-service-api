@@ -49,7 +49,9 @@ Eureka registration is switched off by default (`eureka.client.register-with-eur
 
 ## Starter catalog
 
-On startup, `CatalogSeeder` loads `src/main/resources/seed/catalog-seed.json`: 7 categories and 14 services, each with a published v1 attribute schema (39 attributes, 64 options) and Arabic labels. It matches existing rows by code, so restarts don't duplicate anything. Set `catalog.seed.enabled=false` to skip it.
+On startup, `CatalogSeeder` loads `src/main/resources/seed/catalog-seed.json`: 10 categories and 14 services, each with a published v1 attribute schema (39 attributes, 64 options) and Arabic labels. It matches existing rows by code, so restarts don't duplicate anything. Set `catalog.seed.enabled=false` to skip it.
+
+These are the only categories. Vendor onboarding files each service type (`VendorServiceType`) under one of them; for example Car Wash and Car Detailing both go under Washing & Detailing. Onboarding needs the seed, so keep `catalog.seed.enabled` on outside tests.
 
 ## How the catalog fits together
 

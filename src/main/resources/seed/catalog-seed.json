@@ -1427,6 +1427,27 @@
           ]
         }
       ]
+    },
+    {
+      "code": "INSURANCE",
+      "name": "Insurance",
+      "nameAr": "التأمين",
+      "displayOrder": 80,
+      "services": []
+    },
+    {
+      "code": "ACCESSORIES_MODIFICATION",
+      "name": "Accessories & Modification",
+      "nameAr": "الإكسسوارات والتعديل",
+      "displayOrder": 90,
+      "services": []
+    },
+    {
+      "code": "OTHER_SERVICES",
+      "name": "Other Services",
+      "nameAr": "خدمات أخرى",
+      "displayOrder": 100,
+      "services": []
     }
   ]
 }

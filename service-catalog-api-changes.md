@@ -115,4 +115,6 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 
 ## Starter data
 
-On first start the service loads 7 categories and 14 services, each with a published v1 schema (39 attributes, 64 options), from `src/main/resources/seed/catalog-seed.json`. Markets are created only for the countries in `catalog.seed.markets` (default `AE`). Set `catalog.seed.enabled=false` to skip it.
+On first start the service loads 10 categories and 14 services, each with a published v1 schema (39 attributes, 64 options), from `src/main/resources/seed/catalog-seed.json`. Markets are created only for the countries in `catalog.seed.markets` (default `AE`). Set `catalog.seed.enabled=false` to skip it.
+
+These are the only categories. Vendor onboarding files each service type (`VendorServiceType`) under one of them; for example Car Wash and Car Detailing both go under Washing & Detailing. Onboarding needs the seed, so keep `catalog.seed.enabled` on outside tests.
