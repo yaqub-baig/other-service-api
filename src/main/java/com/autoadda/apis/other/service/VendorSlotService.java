@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.Booking;
 import com.autoadda.apis.other.entity.BookedService;
 import com.autoadda.apis.other.entity.BookingSlot;
@@ -36,6 +37,8 @@ import java.util.*;
 public class VendorSlotService {
 
     private final VendorWorkHoursRepository workingHoursRepo;
+    private final ServiceCatalogService serviceCatalogService;
+    private final SchemaVersionService schemaVersionService;
     private final VendorBreakTimeRepository breakRepo;
     private final VendorHolidayOverrideRepository holidayRepo;
     private final BookingRepository bookingRepo;
@@ -102,6 +105,17 @@ public class VendorSlotService {
     @Transactional
     public BookingDetailResponse bookSlot(Integer vendorServiceId, Integer vehicleId, LocalDate date,
                                           LocalTime time, String autoAddaId, String selectedServiceIds) {
+        return bookSlot(vendorServiceId, vehicleId, date, time, autoAddaId, selectedServiceIds, null);
+    }
+
+    /**
+     * Books a slot; when catalogServiceId is given the catalog service must be bookable directly
+     * with this vendor (not quote-only, and in a category the vendor offers).
+     */
+    @Transactional
+    public BookingDetailResponse bookSlot(Integer vendorServiceId, Integer vehicleId, LocalDate date,
+                                          LocalTime time, String autoAddaId, String selectedServiceIds,
+                                          Integer catalogServiceId) {
         Integer userId = Integer.parseInt(autoAddaId);
         BookingSlot slot = slotService.findAvailableSlotByVendorServiceIdAndTime(vendorServiceId, date, time);
         if (!slot.isAvailable()) {
@@ -110,6 +124,9 @@ public class VendorSlotService {
 
         VendorService service = vendorServiceRepository.findById(vendorServiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor service not found"));
+        CatalogService catalogService = catalogServiceId != null
+                ? serviceCatalogService.getForDirectBooking(catalogServiceId, service.getVendor())
+                : null;
 
         String selected = selectedServiceIds != null && !selectedServiceIds.isBlank()
                 ? selectedServiceIds : String.valueOf(vendorServiceId);
@@ -117,6 +134,10 @@ public class VendorSlotService {
         Booking booking = Booking.builder()
                 .vendor(service.getVendor())
                 .vendorService(service)
+                .catalogService(catalogService)
+                .schemaVersion(catalogService != null
+                        ? schemaVersionService.currentPublished(catalogService.getId()).orElse(null)
+                        : null)
                 .scheduleDate(date)
                 .serviceStartTime(time)
                 .status(Status.CONFIRMED)

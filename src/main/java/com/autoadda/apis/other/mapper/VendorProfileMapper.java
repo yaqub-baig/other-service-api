@@ -41,6 +41,7 @@ public class VendorProfileMapper {
         response.setMobileNumber(vendor.getMobileNumber());
         response.setAccountStatus(vendor.getAccountStatus());
         response.setServices(vendorServiceMapper.toResponseList(vendor.getServices()));
+        response.setCountryCode(vendor.getCountryCode());
 
         if (vendor.getCompanyLogo() != null) {
             response.setCompanyLogo(mediaFileMapper.toMediaFileResponse(vendor.getCompanyLogo()));

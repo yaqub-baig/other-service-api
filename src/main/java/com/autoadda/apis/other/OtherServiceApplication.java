@@ -8,8 +8,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableFeignClients
-@EnableDiscoveryClient
 @EnableScheduling
+@EnableDiscoveryClient
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class })
 public class OtherServiceApplication {
 	public static void main(String[] args) {

@@ -1,6 +1,5 @@
 package com.autoadda.apis.other.service;
 
-
 import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.mapper.VendorServiceMapper;
@@ -11,6 +10,7 @@ import com.autoadda.apis.other.request.VendorServiceRequest;
 import com.autoadda.apis.other.response.VendorServiceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,61 +20,81 @@ public class VendorServiceCrudService {
     private final VendorRepository vendorRepository;
     private final ServiceCategoryRepository serviceCategoryRepository;
     private final VendorServiceRepository vendorServiceRepository;
-    private final VendorServiceMapper bridgeMapper;
+    private final VendorServiceMapper vendorServiceMapper;
 
-    private VendorService mapToEntity(VendorServiceRequest request) {
-        VendorService bridge = new VendorService();
-        bridge.setIsActive(request.isActive());
-        bridge.setVendor(vendorRepository.findById(request.getVendorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vendor not found")));
-        bridge.setServiceCategory(serviceCategoryRepository.findById(request.getServiceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Service category not found")));
-        return bridge;
-    }
-
+    @Transactional
     public VendorServiceResponse createVendorService(VendorServiceRequest request) {
         VendorService saved = createVendorServiceEntity(request);
-        return bridgeMapper.toResponse(saved);
+        return vendorServiceMapper.toResponse(saved);
     }
 
     /**
-     * Internal method for creating and returning the entity (used by VendorManagementService).
+     * Creates the vendor ↔ category row, or reactivates and updates it when the vendor already has one
+     * (one row per vendor and category). Used by VendorManagementService too.
      */
+    @Transactional
     public VendorService createVendorServiceEntity(VendorServiceRequest request) {
-        return vendorServiceRepository.save(mapToEntity(request));
+        VendorService vendorService = vendorServiceRepository
+                .findByVendorIdAndServiceCategoryId(request.getVendorId(), request.getServiceCategoryId())
+                .stream().findFirst()
+                .orElseGet(() -> {
+                    VendorService created = new VendorService();
+                    created.setVendor(vendorRepository.findById(request.getVendorId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Vendor not found")));
+                    created.setServiceCategory(serviceCategoryRepository.findById(request.getServiceCategoryId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Service category not found")));
+                    return created;
+                });
+        vendorService.setIsActive(request.isActive());
+        applyPricing(vendorService, request);
+        return vendorServiceRepository.save(vendorService);
     }
 
     public VendorServiceResponse getVendorServiceById(Integer id) {
-        VendorService bridge = vendorServiceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vendor service bridge not found with id: " + id));
-        return bridgeMapper.toResponse(bridge);
+        return vendorServiceMapper.toResponse(findEntity(id));
     }
 
-    public VendorServiceResponse updateVendorService(Integer id, VendorService updated) {
-        VendorService existing = vendorServiceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vendor service bridge not found with ID: " + id));
-
-        existing.setIsActive(updated.getIsActive());
-        existing.setServiceCategory(updated.getServiceCategory());
-        existing.setVendor(updated.getVendor());
-        VendorService saved = vendorServiceRepository.save(existing);
-        return bridgeMapper.toResponse(saved);
-    }
-
-    public void deleteVendorService(Integer id) {
-        if (!vendorServiceRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Vendor service bridge not found with id: " + id);
+    @Transactional
+    public VendorServiceResponse updateVendorService(Integer id, VendorServiceRequest request) {
+        VendorService existing = findEntity(id);
+        existing.setIsActive(request.isActive());
+        if (request.getServiceCategoryId() != null) {
+            existing.setServiceCategory(serviceCategoryRepository.findById(request.getServiceCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Service category not found")));
         }
-        vendorServiceRepository.deleteById(id);
+        applyPricing(existing, request);
+        return vendorServiceMapper.toResponse(vendorServiceRepository.save(existing));
+    }
+
+    /**
+     * Deactivates rather than deletes: bookings and offerings keep pointing at this row.
+     */
+    @Transactional
+    public void deactivateVendorService(Integer id) {
+        VendorService existing = findEntity(id);
+        existing.setIsActive(false);
+        vendorServiceRepository.save(existing);
     }
 
     public List<VendorServiceResponse> getAllVendorServices() {
-        List<VendorService> bridges = vendorServiceRepository.findAll();
-        return bridgeMapper.toResponseList(bridges);
+        return vendorServiceMapper.toResponseList(vendorServiceRepository.findAll());
     }
 
     public List<VendorServiceResponse> getByVendorId(Integer vendorId) {
-        List<VendorService> bridges = vendorServiceRepository.findByVendorId(vendorId);
-        return bridgeMapper.toResponseList(bridges);
+        return vendorServiceMapper.toResponseList(vendorServiceRepository.findByVendorId(vendorId));
+    }
+
+    private VendorService findEntity(Integer id) {
+        return vendorServiceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor service not found with id: " + id));
+    }
+
+    private void applyPricing(VendorService target, VendorServiceRequest request) {
+        if (request.getPricingType() != null) target.setPricingType(request.getPricingType());
+        if (request.getPrice() != null) target.setPrice(request.getPrice());
+        if (request.getMinPrice() != null) target.setMinPrice(request.getMinPrice());
+        if (request.getMaxPrice() != null) target.setMaxPrice(request.getMaxPrice());
+        if (request.getCurrency() != null) target.setCurrency(request.getCurrency());
+        if (request.getDescription() != null) target.setDescription(request.getDescription());
     }
 }

@@ -1,7 +1,6 @@
 package com.autoadda.apis.other.controller;
 
 
-import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.request.VendorServiceRequest;
 import com.autoadda.apis.other.response.ApiResponse;
 import com.autoadda.apis.other.response.VendorServiceResponse;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping({"/vendor-services", "/vendor-service-bridges"})
+@RequestMapping("/vendor-services")
 @RequiredArgsConstructor
 public class VendorServiceController {
 
@@ -24,7 +23,7 @@ public class VendorServiceController {
     public ResponseEntity<ApiResponse<VendorServiceResponse>> create(@RequestBody VendorServiceRequest request) {
         VendorServiceResponse response = vendorServiceCrudService.createVendorService(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Vendor service bridge created", response));
+                .body(ApiResponse.success("Vendor service created", response));
     }
 
     @GetMapping("/{id}")
@@ -33,15 +32,15 @@ public class VendorServiceController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<VendorServiceResponse>> update(@PathVariable Integer id, @RequestBody VendorService updated) {
-        VendorServiceResponse response = vendorServiceCrudService.updateVendorService(id, updated);
-        return ResponseEntity.ok(ApiResponse.success("Vendor service bridge updated", response));
+    public ResponseEntity<ApiResponse<VendorServiceResponse>> update(@PathVariable Integer id, @RequestBody VendorServiceRequest request) {
+        VendorServiceResponse response = vendorServiceCrudService.updateVendorService(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Vendor service updated", response));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
-        vendorServiceCrudService.deleteVendorService(id);
-        return ResponseEntity.ok(ApiResponse.success("Vendor service bridge deleted", null));
+        vendorServiceCrudService.deactivateVendorService(id);
+        return ResponseEntity.ok(ApiResponse.success("Vendor service deactivated", null));
     }
 
     @GetMapping

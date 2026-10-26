@@ -1,11 +1,13 @@
 package com.autoadda.apis.other.entity;
 
+import com.autoadda.apis.other.util.PricingType;
 import com.autoadda.apis.other.util.Status;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +17,8 @@ import java.util.List;
  *
  * <p>A vendor may have many of these, each with its own working days/hours,
  * capacity, trade licence, branch address, branch images and booking slots.
- * This is the unit that bookings and the per-service schedule attach to.</p>
+ * This is the unit that bookings, the per-service schedule and offerings attach to.
+ * It also carries the vendor's default pricing for the category.</p>
  *
  * <p>DB table kept as {@code vendor_service_bridge} for continuity.</p>
  */
@@ -75,6 +78,33 @@ public class VendorService {
     @OneToMany
     @JoinColumn(name = "service_images")
     private List<MediaFile> serviceImages = new ArrayList<>();
+
+    // ---- vendor-level pricing for this category (offerings can override) ----
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pricing_type", length = 20)
+    private PricingType pricingType = PricingType.FIXED;
+
+    @Column(name = "price", precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @Column(name = "min_price", precision = 10, scale = 2)
+    private BigDecimal minPrice;
+
+    @Column(name = "max_price", precision = 10, scale = 2)
+    private BigDecimal maxPrice;
+
+    /** ISO 4217. */
+    @Column(name = "currency", length = 3)
+    private String currency = "AED";
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "average_rating", precision = 2, scale = 1)
+    private BigDecimal averageRating;
+
+    @Column(name = "total_ratings")
+    private Integer totalRatings = 0;
 
     // ---- lifecycle ----
     @Column(name = "account_status")

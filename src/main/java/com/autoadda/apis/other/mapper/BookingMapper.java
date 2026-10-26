@@ -47,6 +47,11 @@ public class BookingMapper {
             response.setSubscriptionPlanId(b.getSubscriptionPlanId());
             response.setCustomerId(b.getCustomerId());
             response.setVehicleId(b.getVehicleId());
+            if (b.getCatalogService() != null) {
+                response.setServiceId(b.getCatalogService().getId());
+                response.setServiceCode(b.getCatalogService().getCode());
+            }
+            response.setSchemaVersionId(b.getSchemaVersion() != null ? b.getSchemaVersion().getId() : null);
 
             // Map nested BookingSlot
             if (b.getSlot() != null) {
@@ -62,6 +67,8 @@ public class BookingMapper {
                 response.setTechnician(new TechnicianResponse(b.getTechnicianId(), null, null, null));
             }
 
+            response.setReferenceType(b.getReferenceType());
+            response.setReferenceId(b.getReferenceId());
             response.setSubtotal(b.getSubtotal());
             response.setTaxes(b.getTaxes());
             response.setDiscount(b.getDiscount());

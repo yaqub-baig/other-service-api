@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.mapper;
 
+import com.autoadda.apis.other.util.Localized;
 import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.response.AvailableServiceResponse;
 import org.springframework.stereotype.Component;
@@ -14,8 +15,14 @@ public class ServiceCategoryMapper {
     public AvailableServiceResponse toResponse(ServiceCategory serviceCategory) {
         AvailableServiceResponse response = new AvailableServiceResponse();
         response.setId(serviceCategory.getId());
-        response.setName(serviceCategory.getName());
-        response.setDescription(serviceCategory.getDescription());
+        response.setCode(serviceCategory.getCode());
+        response.setName(Localized.pick(serviceCategory.getName(), serviceCategory.getNameAr()));
+        response.setDescription(Localized.pick(serviceCategory.getDescription(), serviceCategory.getDescriptionAr()));
+        response.setNameAr(serviceCategory.getNameAr());
+        response.setDescriptionAr(serviceCategory.getDescriptionAr());
+        response.setDisplayOrder(serviceCategory.getDisplayOrder());
+        response.setIsActive(serviceCategory.getIsActive());
+        response.setParentId(serviceCategory.getParent() != null ? serviceCategory.getParent().getId() : null);
         response.setImage(serviceCategory.getImage());
         return response;
     }

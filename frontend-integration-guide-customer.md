@@ -348,23 +348,23 @@ GET /service-offerings/vendor/{vendorId}/category/{categoryId}
 
 ## 4. Booking Flow
 
-**Base Path:** `/os-appointments`
+**Base Path:** `/bookings`
 
 ### 4.1 Check Available Slots
 
 ```
-GET /os-appointments/{otherServiceId}/available-slots?date=25/04/2026
+GET /bookings/{vendorServiceId}/available-slots?date=25/04/2026
 ```
 
 | Param          | Type      | Format      | Description        |
 |----------------|-----------|-------------|--------------------|
-| otherServiceId | Integer   | path        | Vendor ID          |
+| vendorServiceId | Integer   | path        | Vendor service (branch) ID |
 | date           | LocalDate | dd/MM/yyyy  | Date to check      |
 
 **Response:**
 ```json
 {
-  "garageId": 1,
+  "vendorServiceId": 1,
   "date": "2026-04-25",
   "availableSlots": [
     {
@@ -388,7 +388,7 @@ GET /os-appointments/{otherServiceId}/available-slots?date=25/04/2026
 ### 4.2 Book Appointment (Slot-Based)
 
 ```
-POST /os-appointments/{serviceId}/book?vehicleId=10&time=2026-04-25T09:00:00&selectedOtherServiceIds=1,3
+POST /bookings/{vendorServiceId}/book?vehicleId=10&time=2026-04-25T09:00:00&selectedVendorServiceIds=1,3
 X-Auto-Adda-Id: {userId}
 ```
 
@@ -397,7 +397,7 @@ X-Auto-Adda-Id: {userId}
 | serviceId               | Integer       | path - Vendor service ID            |
 | vehicleId               | Integer       | query - Customer's vehicle ID       |
 | time                    | LocalDateTime | query - ISO datetime                |
-| selectedOtherServiceIds | String        | query - Comma-separated service IDs |
+| selectedVendorServiceIds | String        | query - Comma-separated vendor service IDs |
 
 **Header:** `X-Auto-Adda-Id: {userId}`
 
@@ -406,7 +406,7 @@ X-Auto-Adda-Id: {userId}
 ### 4.3 Create Appointment (Direct)
 
 ```
-POST /os-appointments
+POST /bookings
 Content-Type: application/json
 ```
 
@@ -414,7 +414,7 @@ Content-Type: application/json
 ```json
 {
   "customerId": 100,
-  "otherServiceId": 1,
+  "vendorServiceId": 1,
   "vehicleId": 10,
   "serviceIds": [1, 3],
   "scheduleDate": "2026-04-25",
@@ -430,21 +430,21 @@ Content-Type: application/json
 ### 4.4 Edit Appointment
 
 ```
-PUT /os-appointments/edit/appointment?appointmentId=123&otherServiceId=1&vehicleId=10&time=2026-04-26T10:00:00
+PUT /bookings/edit?bookingId=123&serviceId=1&vehicleId=10&time=2026-04-26T10:00:00
 X-Auto-Adda-Id: {userId}
 ```
 
 | Param          | Type          | Required | Description           |
 |----------------|---------------|----------|-----------------------|
-| appointmentId  | Integer       | Yes      | Booking ID to edit    |
-| otherServiceId | Integer       | No       | Change vendor         |
+| bookingId      | Integer       | Yes      | Booking ID to edit    |
+| serviceId      | Integer       | No       | Change vendor service |
 | vehicleId      | Integer       | No       | Change vehicle        |
 | time           | LocalDateTime | No       | Change date/time      |
 
 ### 4.5 Cancel Appointment
 
 ```
-DELETE /os-appointments/{appointmentId}/cancel
+DELETE /bookings/{appointmentId}/cancel
 X-Auto-Adda-Id: {userId}
 ```
 
@@ -743,12 +743,12 @@ Content-Type: application/json
 
 ## 6. My Bookings Management
 
-**Base Path:** `/os-appointments`
+**Base Path:** `/bookings`
 
 ### 6.1 Get My Bookings
 
 ```
-GET /os-appointments/user/bookings
+GET /bookings/user/bookings
 X-Auto-Adda-Id: {userId}
 ```
 
@@ -790,20 +790,20 @@ X-Auto-Adda-Id: {userId}
 ### 6.2 Get Booking Details
 
 ```
-GET /os-appointments/{appointmentId}
+GET /bookings/{appointmentId}
 ```
 
 ### 6.3 Edit Booking
 
 ```
-PUT /os-appointments/edit/appointment?appointmentId=123&time=2026-04-26T10:00:00
+PUT /bookings/edit?bookingId=123&time=2026-04-26T10:00:00
 X-Auto-Adda-Id: {userId}
 ```
 
 ### 6.4 Cancel Booking
 
 ```
-DELETE /os-appointments/{appointmentId}/cancel
+DELETE /bookings/{appointmentId}/cancel
 X-Auto-Adda-Id: {userId}
 ```
 
@@ -844,9 +844,9 @@ X-Auto-Adda-Id: {userId}
 4. Search offerings             POST /search/offerings
 5. View offering details         GET /service-offerings/{id}
 6. View vendor profile           GET /vendors/{vendorId}
-7. Check available slots         GET /os-appointments/{vendorId}/available-slots?date=...
-8. Book slot                     POST /os-appointments/{serviceId}/book?vehicleId=...&time=...
-9. View my bookings              GET /os-appointments/user/bookings
+7. Check available slots         GET /bookings/{vendorServiceId}/available-slots?date=...
+8. Book slot                     POST /bookings/{vendorServiceId}/book?vehicleId=...&time=...
+9. View my bookings              GET /bookings/user/bookings
 ```
 
 ### Journey 2: Request Quote & Book
@@ -861,7 +861,7 @@ X-Auto-Adda-Id: {userId}
 7. Compare quotes (view items)   GET /quotations/customer/quote/{id}/items
 8. Accept best quote             POST /quotations/customer/quote/{id}/accept
 9. Book from accepted quote      POST /quotations/customer/quote/{id}/book
-10. View my bookings             GET /os-appointments/user/bookings
+10. View my bookings             GET /bookings/user/bookings
 ```
 
 ### Journey 3: Nearby Search
@@ -870,7 +870,7 @@ X-Auto-Adda-Id: {userId}
 1. Get user location (browser geolocation API)
 2. Search nearby                 GET /search/nearby?lat=...&lng=...&radius=10
 3. View offering/vendor          GET /service-offerings/{id}
-4. Book appointment              POST /os-appointments/{serviceId}/book?...
+4. Book appointment              POST /bookings/{vendorServiceId}/book?...
 ```
 
 ### Frontend Code Example: Complete Quotation Flow
@@ -1185,18 +1185,18 @@ export const getVendorsByServiceType = (serviceType) =>
 // api/customer/bookingApi.js
 import api from '../axiosInstance';
 
-const BOOKING_BASE = '/os-appointments';
+const BOOKING_BASE = '/bookings';
 
 // Get available slots for a vendor on a date
-export const getAvailableSlots = (otherServiceId, date) =>
-  api.get(`${BOOKING_BASE}/${otherServiceId}/available-slots`, {
+export const getAvailableSlots = (vendorServiceId, date) =>
+  api.get(`${BOOKING_BASE}/${vendorServiceId}/available-slots`, {
     params: { date }, // format: dd/MM/yyyy
   });
 
 // Book appointment (slot-based)
-export const bookSlot = (serviceId, vehicleId, time, userId, selectedOtherServiceIds = null) =>
-  api.post(`${BOOKING_BASE}/${serviceId}/book`, null, {
-    params: { vehicleId, time, selectedOtherServiceIds },
+export const bookSlot = (vendorServiceId, vehicleId, time, userId, selectedVendorServiceIds = null) =>
+  api.post(`${BOOKING_BASE}/${vendorServiceId}/book`, null, {
+    params: { vehicleId, time, selectedVendorServiceIds },
     headers: { 'X-Auto-Adda-Id': userId },
   });
 
@@ -1204,7 +1204,7 @@ export const bookSlot = (serviceId, vehicleId, time, userId, selectedOtherServic
 export const createAppointment = (data) =>
   api.post(BOOKING_BASE, data);
 // data = {
-//   customerId, otherServiceId, vehicleId, serviceIds,
+//   customerId, vendorServiceId, vehicleId, serviceIds,
 //   scheduleDate, serviceStartTime, serviceEndTime,
 //   deliveryTime, comments, memberId, memberType
 // }
@@ -1220,9 +1220,9 @@ export const getBookingDetails = (appointmentId) =>
   api.get(`${BOOKING_BASE}/${appointmentId}`);
 
 // Edit appointment
-export const editAppointment = (appointmentId, userId, { otherServiceId, vehicleId, time } = {}) =>
-  api.put(`${BOOKING_BASE}/edit/appointment`, null, {
-    params: { appointmentId, otherServiceId, vehicleId, time },
+export const editAppointment = (bookingId, userId, { serviceId, vehicleId, time } = {}) =>
+  api.put(`${BOOKING_BASE}/edit`, null, {
+    params: { bookingId, serviceId, vehicleId, time },
     headers: { 'X-Auto-Adda-Id': userId },
   });
 

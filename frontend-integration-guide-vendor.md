@@ -144,17 +144,17 @@ DELETE /vendors/{id}
 
 ## 2. Vendor Service Management
 
-**Base Path:** `/vendor-service-bridges`
+**Base Path:** `/vendor-services`
 
 Links your vendor to specific service categories (what services you offer).
 
 ### 2.1 Get My Services
 
 ```
-GET /vendor-service-bridges/vendor/{vendorId}
+GET /vendor-services/vendor/{vendorId}
 ```
 
-**Response:** `ApiResponse<List<VendorServiceBridgeResponse>>`
+**Response:** `ApiResponse<List<VendorServiceResponse>>`
 
 ```json
 {
@@ -173,35 +173,35 @@ GET /vendor-service-bridges/vendor/{vendorId}
 ### 2.2 Add a Service
 
 ```
-POST /vendor-service-bridges
+POST /vendor-services
 Content-Type: application/json
 ```
 
 ```json
 {
-  "garageId": 1,
-  "serviceId": 3,
+  "vendorId": 1,
+  "serviceCategoryId": 3,
   "isActive": true
 }
 ```
 
 | Field     | Type    | Required | Description                |
 |-----------|---------|----------|----------------------------|
-| garageId  | Integer | Yes      | Your vendor ID             |
-| serviceId | Integer | Yes      | Service category ID to add |
+| vendorId          | Integer | Yes      | Your vendor ID             |
+| serviceCategoryId | Integer | Yes      | Service category ID to add |
 | isActive  | Boolean | No       | Active status              |
 
 ### 2.3 Update a Service Link
 
 ```
-PUT /vendor-service-bridges/{id}
+PUT /vendor-services/{id}
 Content-Type: application/json
 ```
 
 ### 2.4 Remove a Service
 
 ```
-DELETE /vendor-service-bridges/{id}
+DELETE /vendor-services/{id}
 ```
 
 ---
@@ -257,7 +257,7 @@ Content-Type: application/json
 
 | Field                | Type            | Required | Description                                    |
 |----------------------|-----------------|----------|------------------------------------------------|
-| vendorServiceId      | Integer         | Yes      | Your vendor-service bridge ID                  |
+| vendorServiceId      | Integer         | Yes      | Your vendor services ID                  |
 | offeringName         | String          | Yes      | Product/service name                           |
 | shortDescription     | String          | No       | Short tagline                                  |
 | description          | String          | No       | Full description                               |
@@ -398,9 +398,9 @@ PATCH /service-offerings/{id}/featured
 ```javascript
 const API = 'http://localhost:8080';
 
-// 1. Get vendor's service bridges to know vendorServiceId
+// 1. Get the vendor services to know vendorServiceId
 const { data: services } = await fetch(
-  `${API}/vendor-service-bridges/vendor/${vendorId}`
+  `${API}/vendor-services/vendor/${vendorId}`
 ).then(r => r.json());
 
 // 2. Select a service -> get its categoryId
@@ -651,17 +651,17 @@ GET /quotations/vendor/stats?vendorId=1
 
 ## 5. Booking Management (Vendor View)
 
-**Base Path:** `/os-appointments`
+**Base Path:** `/bookings`
 
 ### 5.1 Get My Appointments
 
 ```
-GET /os-appointments/other-service/{otherServiceId}?status=PENDING
+GET /bookings/vendor/{vendorId}?status=PENDING
 ```
 
 | Param          | Type    | Description                                    |
 |----------------|---------|------------------------------------------------|
-| otherServiceId | Integer | Your vendor ID                                 |
+| vendorId | Integer | Your vendor ID                                 |
 | status         | String  | Optional filter: `REQUESTED`, `CONFIRMED`, `SCHEDULED`, `WORK_INPROGRESS`, `COMPLETED`, etc. |
 
 **Response:** `ApiResponse<List<BookingDetailResponse>>`
@@ -698,13 +698,13 @@ GET /os-appointments/other-service/{otherServiceId}?status=PENDING
 ### 5.2 Get Appointment Details
 
 ```
-GET /os-appointments/{appointmentId}
+GET /bookings/{appointmentId}
 ```
 
 ### 5.3 Update Appointment Status
 
 ```
-PUT /os-appointments/status
+PUT /bookings/status
 Content-Type: application/json
 ```
 
@@ -743,7 +743,7 @@ REQUESTED -> CONFIRMED -> SCHEDULED -> WORK_INPROGRESS -> COMPLETED -> DELIVERED
 ### 5.4 Get Available Slots (Manage Capacity)
 
 ```
-GET /os-appointments/{otherServiceId}/available-slots?date=25/04/2026
+GET /bookings/{vendorServiceId}/available-slots?date=25/04/2026
 ```
 
 ---
@@ -854,13 +854,13 @@ const offering = {
 4. Upload company photos          POST /mediafiles/upload
 5. Browse service categories      GET /service-categories
 6. Register vendor                POST /vendors (X-Auto-Adda-Id header)
-7. Link services                  POST /vendor-service-bridges (for each service)
+7. Link services                  POST /vendor-services (for each service)
 ```
 
 ### Journey 2: Add a Product/Service Listing
 
 ```
-1. Get my services                GET /vendor-service-bridges/vendor/{vendorId}
+1. Get my services                GET /vendor-services/vendor/{vendorId}
 2. Pick a service -> category
 3. Load attribute definitions     GET /service-offerings/category/{categoryId}/attributes
 4. Upload product images          POST /mediafiles/upload
@@ -882,12 +882,12 @@ const offering = {
 ### Journey 4: Handle a Booking
 
 ```
-1. View incoming bookings         GET /os-appointments/other-service/{vendorId}?status=REQUESTED
-2. View booking details           GET /os-appointments/{appointmentId}
-3. Confirm booking                PUT /os-appointments/status  { status: "CONFIRMED" }
-4. Start work                     PUT /os-appointments/status  { status: "WORK_INPROGRESS" }
-5. Complete                       PUT /os-appointments/status  { status: "COMPLETED" }
-6. Deliver                        PUT /os-appointments/status  { status: "DELIVERED" }
+1. View incoming bookings         GET /bookings/vendor/{vendorId}?status=REQUESTED
+2. View booking details           GET /bookings/{appointmentId}
+3. Confirm booking                PUT /bookings/status  { status: "CONFIRMED" }
+4. Start work                     PUT /bookings/status  { status: "WORK_INPROGRESS" }
+5. Complete                       PUT /bookings/status  { status: "COMPLETED" }
+6. Deliver                        PUT /bookings/status  { status: "DELIVERED" }
 ```
 
 ### Journey 5: Manage Stock & Listings
@@ -1044,38 +1044,38 @@ export const deleteVendor = (id) =>
 
 ---
 
-### 9.3 Vendor Service Bridge APIs
+### 9.3 Vendor Service APIs
 
 ```javascript
 // api/vendor/vendorServiceApi.js
 import api from '../axiosInstance';
 
-const BRIDGE_BASE = '/vendor-service-bridges';
+const VENDOR_SERVICE_BASE = '/vendor-services';
 
 // Get my services
 export const getMyServices = (vendorId) =>
-  api.get(`${BRIDGE_BASE}/vendor/${vendorId}`);
+  api.get(`${VENDOR_SERVICE_BASE}/vendor/${vendorId}`);
 
 // Add a service
 export const addService = (data) =>
-  api.post(BRIDGE_BASE, data);
-// data = { garageId: vendorId, serviceId: categoryId, isActive: true }
+  api.post(VENDOR_SERVICE_BASE, data);
+// data = { vendorId, serviceCategoryId: categoryId, isActive: true }
 
-// Get bridge by ID
+// Get vendor service by ID
 export const getServiceById = (id) =>
-  api.get(`${BRIDGE_BASE}/${id}`);
+  api.get(`${VENDOR_SERVICE_BASE}/${id}`);
 
 // Update a service link
 export const updateService = (id, data) =>
-  api.put(`${BRIDGE_BASE}/${id}`, data);
+  api.put(`${VENDOR_SERVICE_BASE}/${id}`, data);
 
 // Remove a service
 export const removeService = (id) =>
-  api.delete(`${BRIDGE_BASE}/${id}`);
+  api.delete(`${VENDOR_SERVICE_BASE}/${id}`);
 
-// Get all bridges
-export const getAllBridges = () =>
-  api.get(BRIDGE_BASE);
+// Get all vendor services
+export const getAllVendorServices = () =>
+  api.get(VENDOR_SERVICE_BASE);
 ```
 
 ---
@@ -1243,11 +1243,11 @@ export const getQuotationStats = (vendorId) =>
 // api/vendor/bookingApi.js
 import api from '../axiosInstance';
 
-const BOOKING_BASE = '/os-appointments';
+const BOOKING_BASE = '/bookings';
 
 // Get my appointments (by vendor ID)
-export const getMyAppointments = (otherServiceId, status = null) =>
-  api.get(`${BOOKING_BASE}/other-service/${otherServiceId}`, {
+export const getMyAppointments = (vendorId, status = null) =>
+  api.get(`${BOOKING_BASE}/vendor/${vendorId}`, {
     params: { status },
   });
 
@@ -1261,8 +1261,8 @@ export const updateAppointmentStatus = (data) =>
 // data = { appointmentId, memberId, memberType: "VENDOR", status, comments }
 
 // Get available slots (manage capacity)
-export const getAvailableSlots = (otherServiceId, date) =>
-  api.get(`${BOOKING_BASE}/${otherServiceId}/available-slots`, {
+export const getAvailableSlots = (vendorServiceId, date) =>
+  api.get(`${BOOKING_BASE}/${vendorServiceId}/available-slots`, {
     params: { date }, // format: dd/MM/yyyy
   });
 ```

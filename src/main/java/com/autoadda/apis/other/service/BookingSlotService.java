@@ -57,10 +57,6 @@ public class BookingSlotService {
         return slotMapper.toResponse(slotRepository.save(bookingSlot));
     }
 
-    public void deleteSlot(Integer id) {
-        slotRepository.deleteById(id);
-    }
-
     public BookingSlotResponse getSlotById(Integer id) {
         BookingSlot slot = slotRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found"));

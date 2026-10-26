@@ -1,5 +1,13 @@
 package com.autoadda.apis.other.service;
 
+import java.math.BigDecimal;
+import com.autoadda.apis.other.exception.BusinessException;
+import com.autoadda.apis.other.request.BookingFromQuotationRequest;
+import com.autoadda.apis.other.util.VendorQuotationStatus;
+import com.autoadda.apis.other.entity.VendorQuotationLineItem;
+import com.autoadda.apis.other.entity.VendorQuotation;
+import com.autoadda.apis.other.entity.ServiceSchemaVersion;
+import com.autoadda.apis.other.entity.CatalogService;
 import com.autoadda.apis.other.entity.Booking;
 import com.autoadda.apis.other.entity.BookedService;
 import com.autoadda.apis.other.entity.BookingStatusActivity;
@@ -37,6 +45,9 @@ import java.util.stream.Collectors;
 public class BookingService {
 
     private final BookingRepository bookingRepository;
+    private final VendorQuotationRepository vendorQuotationRepository;
+    private final ServiceCatalogService serviceCatalogService;
+    private final SchemaVersionService schemaVersionService;
     private final BookingStatusActivityRepository appointmentActivityRepo;
     private final BookedServiceRepository serviceRepo;
     private final VendorRepository vendorRepository;
@@ -64,10 +75,16 @@ public class BookingService {
                 .orElseThrow(() -> new VendorNotFoundException("Vendor service not found"));
         Vendor vendor = vendorService.getVendor();
 
+        CatalogService catalogService = request.getCatalogServiceId() != null
+                ? serviceCatalogService.getForDirectBooking(request.getCatalogServiceId(), vendor)
+                : null;
+
         // Create booking
         Booking booking = Booking.builder()
                 .vendor(vendor)
                 .vendorService(vendorService)
+                .catalogService(catalogService)
+                .schemaVersion(liveVersion(catalogService))
                 .vehicleId(request.getVehicleId())
                 .customerId(request.getCustomerId())
                 .scheduleDate(request.getScheduleDate())
@@ -102,6 +119,110 @@ public class BookingService {
 
             serviceRepo.saveAll(services);
         }
+
+        return bookingMapper.toBookingResponse(savedBooking);
+    }
+
+    /**
+     * Creates a booking from an accepted vendor quotation.
+     * The booking is pre-filled with pricing details from the quotation.
+     *
+     * @param request the booking request containing quotation ID and optional details.
+     * @return the created BookingResponse DTO.
+     * @throws BusinessException if the quotation is not found or not accepted.
+     */
+    @Transactional
+    public BookingResponse createBookingFromQuotation(BookingFromQuotationRequest request) {
+        // Get and validate the vendor quotation
+        VendorQuotation quotation = vendorQuotationRepository.findById(request.getVendorQuotationId())
+                .orElseThrow(() -> new BusinessException("Vendor quotation not found"));
+
+        // Validate the quotation is accepted
+        if (quotation.getStatus() != VendorQuotationStatus.ACCEPTED) {
+            throw new BusinessException("Can only create booking from an accepted quotation. Current status: " + quotation.getStatus());
+        }
+
+        // Validate customer owns the quotation request
+        if (!quotation.getQuotationRequest().getCustomerId().equals(request.getCustomerId())) {
+            throw new BusinessException("You can only create bookings from your own quotation requests");
+        }
+
+        // Check if a booking already exists for this quotation
+        if (bookingRepository.existsByReferenceTypeAndReferenceId("QUOTATION", quotation.getId())) {
+            throw new BusinessException("A booking has already been created for this quotation");
+        }
+
+        // Calculate pricing from line items if available
+        BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal taxes = BigDecimal.ZERO;
+        BigDecimal discount = BigDecimal.ZERO;
+
+        List<VendorQuotationLineItem> lineItems = quotation.getLineItems();
+        if (lineItems != null && !lineItems.isEmpty()) {
+            for (VendorQuotationLineItem item : lineItems) {
+                if (item.getIsOptional() == null || !item.getIsOptional()) {
+                    if (item.getUnitPrice() != null && item.getQuantity() != null) {
+                        subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                    }
+                    if (item.getDiscount() != null) {
+                        discount = discount.add(item.getDiscount());
+                    }
+                    if (item.getTaxRate() != null && item.getUnitPrice() != null && item.getQuantity() != null) {
+                        BigDecimal itemSubtotal = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                        taxes = taxes.add(itemSubtotal.multiply(item.getTaxRate()).divide(BigDecimal.valueOf(100)));
+                    }
+                }
+            }
+        }
+
+        // Use quotation total amount if available, otherwise calculate
+        BigDecimal totalAmount = quotation.getTotalAmount();
+        if (totalAmount == null) {
+            totalAmount = subtotal.subtract(discount).add(taxes);
+        }
+
+        // Generate booking reference
+        String bookingCode = generateBookingCode();
+
+        // Create the booking
+        Booking booking = Booking.builder()
+                .appointmentReferenceId(bookingCode)
+                .vendor(quotation.getVendor())
+                .vendorService(vendorServiceRepo
+                        .findByVendorIdAndServiceCategoryId(quotation.getVendor().getId(),
+                                quotation.getQuotationRequest().getServiceCategory().getId())
+                        .stream().filter(vs -> Boolean.TRUE.equals(vs.getIsActive())).findFirst().orElse(null))
+                .catalogService(quotation.getQuotationRequest().getCatalogService())
+                // the version the customer filled the request against
+                .schemaVersion(quotation.getQuotationRequest().getSchemaVersion())
+                .customerId(request.getCustomerId())
+                .vehicleId(request.getVehicleId())
+                .scheduleDate(request.getScheduleDate())
+                .comments(request.getComments())
+                .status(Status.CONFIRMED)
+                .insert_tms(DateHelper.dbDate())
+                // Quotation reference
+                .referenceType("QUOTATION")
+                .referenceId(quotation.getId())
+                // Pricing details
+                .subtotal(subtotal)
+                .taxes(taxes)
+                .discount(discount)
+                .totalAmount(totalAmount)
+                .build();
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // Save activity
+        appointmentActivityRepo.save(BookingStatusActivity.builder()
+                .bookingId(savedBooking.getId())
+                .status(savedBooking.getStatus())
+                .comments("Booking created from quotation: " + quotation.getQuoteNumber())
+                .insertTms(DateHelper.dbDate())
+                .build());
+
+        log.info("Created booking {} from quotation {} for customer {}",
+                bookingCode, quotation.getQuoteNumber(), request.getCustomerId());
 
         return bookingMapper.toBookingResponse(savedBooking);
     }
@@ -212,6 +333,12 @@ public class BookingService {
         return bookingRepository.findByVendorIdAndStatus(vendorId, status).stream()
                 .map(bookingDetailMapper::entityToResponse)
                 .toList();
+    }
+
+    private ServiceSchemaVersion liveVersion(CatalogService catalogService) {
+        return catalogService != null
+                ? schemaVersionService.currentPublished(catalogService.getId()).orElse(null)
+                : null;
     }
 
     public String generateBookingCode() {

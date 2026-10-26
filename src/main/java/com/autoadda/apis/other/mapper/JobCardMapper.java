@@ -20,6 +20,7 @@ public class JobCardMapper {
                 .workOrderId(jobCard.getWorkOrder() != null ? jobCard.getWorkOrder().getId() : null)
                 .id(jobCard.getId())
                 .technicianId(jobCard.getTechnician() != null ? jobCard.getTechnician().getId() : null)
+                .vendorId(jobCard.getVendor() != null ? jobCard.getVendor().getId() : null)
                 .status(jobCard.getStatus().name())
                 .build();
     }

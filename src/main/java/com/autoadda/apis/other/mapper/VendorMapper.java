@@ -25,6 +25,7 @@ public class VendorMapper {
         response.setAccountStatus(vendor.getAccountStatus());
         response.setCreatedAt(vendor.getCreatedAt());
         response.setCompanyOwnerId(vendor.getCompanyOwner());
+        response.setCountryCode(vendor.getCountryCode());
         response.setIsActive(vendor.isActive());
         response.setVatCertificate(vendor.getVatCertificate());
         response.setCompnayLocation(vendor.getCompanyLocation());

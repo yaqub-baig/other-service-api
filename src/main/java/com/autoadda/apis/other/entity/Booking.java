@@ -49,6 +49,21 @@ public class Booking {
     @JoinColumn(name = "vendor_id")
     private Vendor vendor;
 
+    /**
+     * Catalog service booked (optional for bookings made before services existed).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id")
+    private CatalogService catalogService;
+
+    /**
+     * Schema version of the catalog service this was validated against. Stays put when a newer
+     * version is published.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schema_version_id")
+    private ServiceSchemaVersion schemaVersion;
+
     @ManyToOne
     @JoinColumn(name = "vendor_service_id")
     private VendorService vendorService;
@@ -70,6 +85,20 @@ public class Booking {
 
     @Column(name = "technician_id", nullable = true)
     private Integer technicianId;
+
+    // ==================== Quotation Reference ====================
+
+    /**
+     * Type of reference (e.g., "QUOTATION", "DIRECT_BOOKING").
+     */
+    @Column(name = "reference_type", length = 30)
+    private String referenceType;
+
+    /**
+     * ID of the referenced entity (e.g., VendorQuotation ID).
+     */
+    @Column(name = "reference_id")
+    private Integer referenceId;
 
     // ==================== Pricing Details ====================
 

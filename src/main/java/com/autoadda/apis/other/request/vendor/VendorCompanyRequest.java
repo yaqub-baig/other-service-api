@@ -23,6 +23,9 @@ public class VendorCompanyRequest {
     private String phoneNumber;
     private String mobileNumber;
 
+    /** ISO 3166-1 alpha-2, e.g. "AE". Defaults to catalog.default-country when omitted. */
+    private String countryCode;
+
     /** Registered / HQ address. */
     private LocationRequest companyLocation;
 

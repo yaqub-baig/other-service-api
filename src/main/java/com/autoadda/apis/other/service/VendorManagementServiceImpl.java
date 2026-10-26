@@ -1,5 +1,6 @@
 package com.autoadda.apis.other.service;
 
+import com.autoadda.apis.other.util.IsoCodes;
 
 import com.autoadda.apis.other.clients.AuthClient;
 import com.autoadda.apis.other.entity.MediaFile;
@@ -71,6 +72,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     private final VendorSlotGenerationService slotGenerationService;
     private final List<VendorOnboardingHandler> onboardingHandlers;
     private final DefaultVendorOnboardingHandler defaultOnboardingHandler;
+    private final MarketService marketService;
 
     // ==================== company ====================
 
@@ -91,6 +93,9 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         vendor.setEmail(request.getEmail());
         vendor.setPhoneNumber(request.getPhoneNumber());
         vendor.setMobileNumber(request.getMobileNumber());
+        vendor.setCountryCode(request.getCountryCode() != null
+                ? IsoCodes.country(request.getCountryCode())
+                : marketService.getDefaultCountry());
         vendor.setCompanyOwner(ownerId);
         vendor.setAccountStatus(Status.PENDING);
 
@@ -123,6 +128,9 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         applyIfPresent(request.getEmail(), existing::setEmail);
         applyIfPresent(request.getPhoneNumber(), existing::setPhoneNumber);
         applyIfPresent(request.getMobileNumber(), existing::setMobileNumber);
+        if (request.getCountryCode() != null) {
+            existing.setCountryCode(IsoCodes.country(request.getCountryCode()));
+        }
 
         if (request.getCompanyLocation() != null && existing.getCompanyLocation() != null) {
             existing.setCompanyLocation(locationService.updateLocation(
@@ -267,8 +275,9 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         service.setIsActive(true);
         service.setServiceType(type.name());
         service.setAccountStatus(Status.PENDING);
-        service.setServiceCategory(serviceCategoryRepository.findByName(type.getDisplayName())
-                .orElseThrow(() -> new ResourceNotFoundException("Service category not found: " + type.getDisplayName())));
+        service.setServiceCategory(serviceCategoryRepository.findByCode(type.getCategoryCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Service category " + type.getCategoryCode()
+                        + " for " + type.getDisplayName() + " not found; is catalog.seed.enabled on?")));
         service.setOpeningTime(timeString(request.getOpeningTime()));
         service.setClosingTime(timeString(request.getClosingTime()));
         service.setWorkingDays(request.getWorkingDays() != null ? joinDays(request.getWorkingDays()) : null);
@@ -354,21 +363,10 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     @Override
     @Transactional
     public void deleteService(Integer vendorServiceId) {
+        // Deactivated, not deleted: offerings, bookings and quotes keep pointing at this row
         VendorService service = getServiceOrThrow(vendorServiceId);
-        workHoursRepository.deleteAll(workHoursRepository.findByVendorServiceId(vendorServiceId));
-        breakTimeRepository.deleteAll(breakTimeRepository.findByVendorServiceId(vendorServiceId));
-        holidayOverrideRepository.deleteAll(holidayOverrideRepository.findByVendorServiceId(vendorServiceId));
-
-        List<Long> mediaIds = new ArrayList<>();
-        service.getTradeLicenseAttachment().forEach(m -> mediaIds.add(m.getId()));
-        service.getServiceImages().forEach(m -> mediaIds.add(m.getId()));
-
-        service.getVendor().getServices().remove(service);
-        vendorServiceRepository.delete(service);
-
-        if (!mediaIds.isEmpty()) {
-            scheduleMediaFileCleanup(mediaIds);
-        }
+        service.setIsActive(false);
+        vendorServiceRepository.save(service);
     }
 
     @Override

@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface ServiceCategoryRepository extends JpaRepository<ServiceCategory, Integer> {
     Optional<ServiceCategory> findByName(String name);
+    Optional<ServiceCategory> findByCode(String code);
     List<ServiceCategory> findByParentId(Integer parentId);
     List<ServiceCategory> findByParentIsNull();
 }

@@ -42,10 +42,12 @@ public class BookingController {
                                                    @RequestParam Integer vehicleId,
                                                    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time,
                                                    @RequestHeader(value = "X-Auto-Adda-Id") String autoAddaId,
-                                                   @RequestParam(required = false) String selectedVendorServiceIds) {
+                                                   @RequestParam(required = false) String selectedVendorServiceIds,
+                                                   @RequestParam(required = false) Integer catalogServiceId) {
         LocalDate date = time.toLocalDate();
         LocalTime timestamp = time.toLocalTime();
-        BookingDetailResponse booking = slotService.bookSlot(serviceId, vehicleId, date, timestamp, autoAddaId, selectedVendorServiceIds);
+        BookingDetailResponse booking = slotService.bookSlot(serviceId, vehicleId, date, timestamp, autoAddaId,
+                selectedVendorServiceIds, catalogServiceId);
         return ResponseEntity.ok(ApiResponse.success(booking));
     }
 

@@ -37,6 +37,12 @@ public class VendorServiceMapper {
             r.setConcurrentAppointmentCapacity(v.getConcurrentAppointmentCapacity());
             r.setTradeLicenceNumber(v.getTradeLicenceNumber());
             r.setAccountStatus(v.getAccountStatus());
+            r.setPricingType(v.getPricingType());
+            r.setPrice(v.getPrice());
+            r.setMinPrice(v.getMinPrice());
+            r.setMaxPrice(v.getMaxPrice());
+            r.setCurrency(v.getCurrency());
+            r.setDescription(v.getDescription());
             if (v.getServiceLocation() != null) {
                 r.setServiceLocation(toLocationResponse(v.getServiceLocation()));
             }

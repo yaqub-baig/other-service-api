@@ -706,26 +706,26 @@ Content-Type: application/json
 DELETE /vendors/{id}
 ```
 
-### 6.8 Vendor Service Bridges (Admin)
+### 6.8 Vendor Services (Admin)
 
-**Base Path:** `/vendor-service-bridges`
+**Base Path:** `/vendor-services`
 
 Links vendors to service categories.
 
 ```
-GET  /vendor-service-bridges                          -- Get all
-GET  /vendor-service-bridges/{id}                     -- Get by ID
-GET  /vendor-service-bridges/vendor/{vendorId}        -- Get by vendor
-POST /vendor-service-bridges                          -- Create
-PUT  /vendor-service-bridges/{id}                     -- Update
-DELETE /vendor-service-bridges/{id}                   -- Delete
+GET  /vendor-services                          -- Get all
+GET  /vendor-services/{id}                     -- Get by ID
+GET  /vendor-services/vendor/{vendorId}        -- Get by vendor
+POST /vendor-services                          -- Create
+PUT  /vendor-services/{id}                     -- Update
+DELETE /vendor-services/{id}                   -- Delete
 ```
 
 **Create Request:**
 ```json
 {
-  "garageId": 1,
-  "serviceId": 3,
+  "vendorId": 1,
+  "serviceCategoryId": 3,
   "isActive": true
 }
 ```
@@ -836,29 +836,29 @@ const logoId = uploaded.data[0].id;
 
 ## 9. Booking Management (Admin View)
 
-**Base Path:** `/os-appointments`
+**Base Path:** `/bookings`
 
 ### 9.1 Get Appointments by Vendor/Service
 
 ```
-GET /os-appointments/other-service/{otherServiceId}?status=PENDING
+GET /bookings/vendor/{vendorId}?status=PENDING
 ```
 
 | Param          | Type    | Description                      |
 |----------------|---------|----------------------------------|
-| otherServiceId | Integer | Vendor ID                        |
+| vendorId | Integer | Vendor ID                        |
 | status         | String  | Optional filter (enum Status)    |
 
 ### 9.2 Get Appointment Details
 
 ```
-GET /os-appointments/{appointmentId}
+GET /bookings/{appointmentId}
 ```
 
 ### 9.3 Update Appointment Status
 
 ```
-PUT /os-appointments/status
+PUT /bookings/status
 Content-Type: application/json
 ```
 
@@ -889,7 +889,7 @@ Content-Type: application/json
       /quotation-fields         -- Quotation form builder
   /vendors                      -- Vendor list & management
     /:id                        -- Vendor detail
-      /services                 -- Vendor service bridges
+      /services                 -- Vendor services
       /offerings                -- Vendor's offerings
   /offerings                    -- All offerings across vendors
   /bookings                     -- All bookings
@@ -913,7 +913,7 @@ Content-Type: application/json
 ```
 1. View all vendors             GET /vendors/all
 2. View vendor detail           GET /vendors/{id}
-3. View vendor services         GET /vendor-service-bridges/vendor/{id}
+3. View vendor services         GET /vendor-services/vendor/{id}
 4. View vendor offerings        GET /service-offerings/vendor/{id}/all
 5. Toggle featured offering     PATCH /service-offerings/{id}/featured
 6. Hard delete bad offering     DELETE /service-offerings/{id}/hard
@@ -921,9 +921,9 @@ Content-Type: application/json
 
 **3. Handle Bookings:**
 ```
-1. View bookings for vendor     GET /os-appointments/other-service/{id}
-2. View booking details         GET /os-appointments/{id}
-3. Update status                PUT /os-appointments/status
+1. View bookings for vendor     GET /bookings/vendor/{id}
+2. View booking details         GET /bookings/{id}
+3. Update status                PUT /bookings/status
 ```
 
 ---
@@ -1282,38 +1282,38 @@ export const deleteVendor = (id) =>
 
 ---
 
-### 11.8 Vendor Service Bridge APIs
+### 11.8 Vendor Service APIs
 
 ```javascript
-// api/admin/vendorServiceBridgeApi.js
+// api/admin/vendorServiceApi.js
 import api from '../axiosInstance';
 
-const BRIDGE_BASE = '/vendor-service-bridges';
+const VENDOR_SERVICE_BASE = '/vendor-services';
 
-// Get all bridges
-export const getAllBridges = () =>
-  api.get(BRIDGE_BASE);
+// Get all vendor services
+export const getAllVendorServices = () =>
+  api.get(VENDOR_SERVICE_BASE);
 
-// Get bridge by ID
-export const getBridgeById = (id) =>
-  api.get(`${BRIDGE_BASE}/${id}`);
+// Get vendor service by ID
+export const getVendorServiceById = (id) =>
+  api.get(`${VENDOR_SERVICE_BASE}/${id}`);
 
-// Get bridges by vendor
-export const getBridgesByVendor = (vendorId) =>
-  api.get(`${BRIDGE_BASE}/vendor/${vendorId}`);
+// Get vendor services by vendor
+export const getVendorServicesByVendor = (vendorId) =>
+  api.get(`${VENDOR_SERVICE_BASE}/vendor/${vendorId}`);
 
-// Create bridge
-export const createBridge = (data) =>
-  api.post(BRIDGE_BASE, data);
-// data = { garageId, serviceId, isActive }
+// Add a category to a vendor
+export const createVendorService = (data) =>
+  api.post(VENDOR_SERVICE_BASE, data);
+// data = { vendorId, serviceCategoryId, isActive }
 
-// Update bridge
-export const updateBridge = (id, data) =>
-  api.put(`${BRIDGE_BASE}/${id}`, data);
+// Update vendor service
+export const updateVendorService = (id, data) =>
+  api.put(`${VENDOR_SERVICE_BASE}/${id}`, data);
 
-// Delete bridge
-export const deleteBridge = (id) =>
-  api.delete(`${BRIDGE_BASE}/${id}`);
+// Deactivate vendor service
+export const deactivateVendorService = (id) =>
+  api.delete(`${VENDOR_SERVICE_BASE}/${id}`);
 ```
 
 ---
@@ -1382,11 +1382,11 @@ export const deleteFile = (id) =>
 // api/admin/bookingAdminApi.js
 import api from '../axiosInstance';
 
-const BOOKING_BASE = '/os-appointments';
+const BOOKING_BASE = '/bookings';
 
 // Get appointments by vendor/service
-export const getAppointmentsByVendor = (otherServiceId, status = null) =>
-  api.get(`${BOOKING_BASE}/other-service/${otherServiceId}`, {
+export const getAppointmentsByVendor = (vendorId, status = null) =>
+  api.get(`${BOOKING_BASE}/vendor/${vendorId}`, {
     params: { status },
   });
 

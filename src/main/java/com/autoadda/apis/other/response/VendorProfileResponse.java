@@ -22,6 +22,7 @@ public class VendorProfileResponse {
     private String phoneNumber;
     private String mobileNumber;
     private Status accountStatus;
+    private String countryCode;
     private MediaFileResponse companyLogo;
     private LocationResponse companyLocation;
     private List<MediaFileResponse> vatCertificate;
