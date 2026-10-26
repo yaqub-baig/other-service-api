@@ -15,13 +15,15 @@ Covers the API after the **multi-service vendor** remodel.
 | what | the business: brand, legal name, contact, HQ address, logo, VAT cert, owner | a car wash / tyre shop / battery service run by that vendor |
 | how many | one per company | **many per vendor** |
 | owns | — | its own working days/hours, capacity, **trade licence + docs**, branch address, branch photos, and its own **booking slots** |
-| id used in | `/vendors/{vendorId}` | `/vendors/{vendorId}/services/...`, `/vendors/car-wash/{vendorServiceId}`, **all `/bookings/{vendorServiceId}/...`** |
+| id used in | `/vendors/{vendorId}` | `/vendors/{vendorId}/services`, `/vendors/services/{vendorServiceId}`, **all `/bookings/{vendorServiceId}/...`** |
 
 A booking is always made against a **`vendorServiceId`**, not a vendorId.
 
-Each service type also has a **detail block** (e.g. `carWashDetails` — bay count, express wash, …).
-Adding a new service type on the backend = a new `/vendors/<type>` controller + detail table; the
-generic `/vendors` and `/bookings` endpoints don't change.
+Every service type uses the same endpoints; `serviceType` in the body says which one. Details that
+only apply to some types (a car wash's bay count, express wash, …) go in the service's
+**`attributes`** map. Which details a type takes is data, not code: they are its category's `VENDOR`
+attributes, read from `GET /vendors/services/attributes?serviceType=`. Adding details for another
+type is an admin change, with no new endpoint or table.
 
 ---
 
@@ -34,7 +36,7 @@ Two shapes depending on the controller:
 { "status": "success", "code": "200", "message": "...", "data": { ... } }
 ```
 
-**Raw** (`/vendors`, `/vendors/car-wash`): the DTO is the body directly, no wrapper.
+**Raw** (`/vendors`): the DTO is the body directly, no wrapper.
 ```json
 { "id": 12, "companyBrandName": "...", "services": [ ... ] }
 ```
@@ -60,8 +62,9 @@ Upload files, then pass the returned ids into vendor/service payloads (`logoId`,
 | DELETE | `/mediafiles/delete-image/{id}` | — | |
 
 ### 3.2 `ServiceCategoryController` — `/service-categories`  · admin (manage) / everyone (read)
-The catalogue of service types (21 seeded: Car Wash, Battery, Tyre & Balancing, …). Read it to
-populate dropdowns; the category whose `name` matches a service type is auto-attached on onboarding.
+The grouped starter categories (10 seeded: Washing & Detailing, Tires & Wheels, …). Read it to
+populate dropdowns. On onboarding, each service type is attached to its category automatically
+(see the service types list in section 6).
 
 | method | path | scope |
 |---|---|---|
@@ -73,7 +76,8 @@ populate dropdowns; the category whose `name` matches a service type is auto-att
 `data` item: `{ id, name, description, image, isActive, price, laborPrice }`
 
 ### 3.3 `VendorController` — `/vendors`  · vendor owner (write) / admin + discovery (read)
-The **company** record only. Raw response bodies (no envelope). Header `X-Auto-Adda-Id` = owner.
+The company record, and the services a vendor adds. Raw response bodies (no envelope). Header
+`X-Auto-Adda-Id` = owner on the write endpoints.
 
 | method | path | scope | body |
 |---|---|---|---|
@@ -85,6 +89,16 @@ The **company** record only. Raw response bodies (no envelope). Header `X-Auto-A
 | GET | `/vendors/brandname/{name}` | search by brand (contains) | — |
 | GET | `/vendors/search?city=&zip=&vendorName=&serviceCategoryIds=` | discovery search | — |
 | DELETE | `/vendors/{id}` | soft-delete (isActive=false) | — |
+| POST | `/vendors/onboard` | vendor owner — create **company + first service** in one call | `VendorOnboardingRequest` = `{ company: VendorCompanyRequest, service: VendorServiceOnboardingRequest }` |
+| POST | `/vendors/{vendorId}/services` | vendor owner — add a service to an **existing** company | `VendorServiceOnboardingRequest` |
+| PUT | `/vendors/services/{vendorServiceId}` | vendor owner — edit a service (hours, capacity, licence, details) | `VendorServiceOnboardingRequest` (partial ok) |
+| GET | `/vendors/{vendorId}/services` | anyone — a vendor's services | — |
+| GET | `/vendors/services?serviceType=` | the caller's services (header); all types if `serviceType` is left out | — |
+| GET | `/vendors/services/all?serviceType=` | every active service (listing); all types if left out | — |
+| GET | `/vendors/services/attributes?serviceType=CAR_WASH` | the details form for a type | — |
+
+`POST /vendors/onboard` returns `{ vendor: VendorProfileResponse, service: VendorServiceResponse }`;
+the other service endpoints return `VendorServiceResponse`.
 
 `VendorProfileResponse`:
 ```json
@@ -100,15 +114,15 @@ The **company** record only. Raw response bodies (no envelope). Header `X-Auto-A
 ```
 
 ### 3.4 `VendorServiceController` — `/vendor-services`  · generic per-service CRUD
-Low-level access to `VendorService` rows. Prefer the **typed** controllers below for onboarding —
-use this for admin/debug or generic reads. (Alias `/vendor-service-bridges` also works.)
+Low-level access to `VendorService` rows and their pricing. Use the `/vendors/.../services`
+endpoints above for onboarding; use this for pricing, admin/debug or generic reads.
 
 | method | path | notes |
 |---|---|---|
 | GET | `/vendor-services` | all |
 | GET | `/vendor-services/{id}` | one service |
 | GET | `/vendor-services/vendor/{vendorId}` | a vendor's services |
-| POST | `/vendor-services` | body `{ vendorId, serviceId (categoryId), isActive }` — bare link, no hours/slots |
+| POST | `/vendor-services` | body `{ vendorId, serviceCategoryId, isActive }` plus optional pricing — bare link, no hours/slots |
 | PUT / DELETE | `/vendor-services/{id}` | |
 
 `VendorServiceResponse`:
@@ -119,26 +133,12 @@ use this for admin/debug or generic reads. (Alias `/vendor-service-bridges` also
   "openingTime": "08:00", "closingTime": "20:00", "workingDays": "MONDAY,TUESDAY,...",
   "concurrentAppointmentCapacity": 3, "tradeLicenceNumber": "CN-1099001",
   "accountStatus": "PENDING",
-  "serviceLocation": { LocationResponse }, "serviceImages": [ ... ], "tradeLicenseAttachment": [ ... ]
+  "serviceLocation": { LocationResponse }, "serviceImages": [ ... ], "tradeLicenseAttachment": [ ... ],
+  "attributes": { "bay_count": 4, "mobile_service": false }
 }
 ```
 
-### 3.5 `CarWashVendorController` — `/vendors/car-wash*`  · vendor owner (Car Wash)
-The typed onboarding + management surface for a Car Wash service. This is the template every other
-service type will copy (`/vendors/battery`, `/vendors/tyre`, …). Raw response bodies. Header
-`X-Auto-Adda-Id` = owner on the write endpoints.
-
-| method | path | scope | body |
-|---|---|---|---|
-| POST | `/vendors/car-wash` | create **company + first car-wash service** in one call | `CarWashVendorRequest` = `{ company: VendorCompanyRequest, service: CarWashVendorServiceRequest }` |
-| POST | `/vendors/{vendorId}/services/car-wash` | add a car-wash service to an **existing** company | `CarWashVendorServiceRequest` |
-| PUT | `/vendors/car-wash/{vendorServiceId}` | edit a car-wash service (hours, capacity, licence, details) | `CarWashVendorServiceRequest` (partial ok) |
-| GET | `/vendors/car-wash` | the caller's car-wash services (header) | — |
-| GET | `/vendors/car-wash/all` | every car-wash service (listing) | — |
-
-`CarWashVendorResponse`: `{ vendor: VendorProfileResponse, service: VendorServiceResponse, carWashDetails: {...} }`
-
-### 3.6 `BookingController` — `/bookings`  · customer (book) / vendor (manage)
+### 3.5 `BookingController` — `/bookings`  · customer (book) / vendor (manage)
 All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
 
 | method | path | scope | params / body |
@@ -182,9 +182,10 @@ All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
 ```
 `logoId` / `vatCertificateIds` optional — upload via `/mediafiles/upload` first.
 
-### `BaseVendorServiceRequest` (fields shared by every service type)
+### `VendorServiceOnboardingRequest`
 ```json
 {
+  "serviceType": "CAR_WASH",
   "openingTime": "08:00:00",
   "closingTime": "20:00:00",
   "breakStartTime": "13:00:00",
@@ -195,36 +196,25 @@ All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
   "serviceLocation": { "streetAddress1": "Shop 4", "city": "Dubai", "country": "AE", "latitude": 25.14, "longitude": 55.24 },
   "tradeLicenseAttachmentIds": [10],
   "serviceImagesIds": [11, 12],
-  "serviceCategoryIds": []
+  "serviceCategoryIds": [],
+  "attributes": {
+    "bay_count": 4,
+    "average_wash_duration_minutes": 30,
+    "mobile_service": false,
+    "express_wash_available": true,
+    "accepts_walk_ins": true
+  }
 }
 ```
+- `serviceType` — required when adding a service, ignored on update. One of the types in section 6.
 - `workingDays` — `java.time.DayOfWeek` names, UPPERCASE.
 - times — `HH:mm:ss` (or `HH:mm`).
 - `serviceLocation` optional → falls back to the company HQ address.
 - `serviceCategoryIds` — extra categories to attach beyond the primary one for this type.
-
-### `CarWashVendorServiceRequest` (= `BaseVendorServiceRequest` + car-wash fields)
-```json
-{
-  "openingTime": "08:00:00", "closingTime": "20:00:00",
-  "workingDays": ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"],
-  "concurrentAppointmentCapacity": 3,
-
-  "bayCount": 4,
-  "averageWashDurationMinutes": 30,
-  "mobileService": false,
-  "selfServiceAvailable": true,
-  "expressWashAvailable": true,
-  "interiorDetailingAvailable": true,
-  "waterRecycling": true,
-  "acceptsWalkIns": true
-}
-```
-
-### `CarWashVendorRequest` (combined create)
-```json
-{ "company": { VendorCompanyRequest }, "service": { CarWashVendorServiceRequest } }
-```
+- `attributes` — the type's details, keyed by attribute code. `GET /vendors/services/attributes?serviceType=`
+  lists the codes, types, required flags and options (with Arabic labels under `Accept-Language: ar`).
+  Unknown codes and invalid values are refused with every failing field listed. On update, sent codes
+  are merged into what's stored and a `null` value clears one.
 
 ### `CustomerBookingRequest`
 ```json
@@ -247,21 +237,21 @@ All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
 
 ## 5. End-to-end flows
 
-### A. Onboard a car wash (2-step wizard)
+### A. Onboard a vendor (2-step wizard)
 1. *(optional)* `POST /mediafiles/upload` → collect `logoId`, `tradeLicenseAttachmentIds`, `serviceImagesIds`.
 2. **Step 1 — company:** `POST /vendors` with `VendorCompanyRequest`, header `X-Auto-Adda-Id`.
    → `{ id: <vendorId> }`, `accountStatus: PENDING`, owner role set to `OTHER_SERVICE_OWNER`.
-3. **Step 2 — service:** `POST /vendors/{vendorId}/services/car-wash` with `CarWashVendorServiceRequest`.
-   → `{ service: { id: <vendorServiceId> } }`. This creates the working-hours rows and 60 days of
-   booking slots.
-   *(Or skip 2+3 and do both at once: `POST /vendors/car-wash` with `{ company, service }`.)*
-4. Edit later: `PUT /vendors/car-wash/{vendorServiceId}` (changing hours/capacity regenerates slots).
+3. **Step 2 — service:** `GET /vendors/services/attributes?serviceType=CAR_WASH` to build the details
+   form, then `POST /vendors/{vendorId}/services` with `VendorServiceOnboardingRequest`.
+   → `{ id: <vendorServiceId> }`. This creates the working-hours rows and 60 days of booking slots.
+   *(Or skip 2+3 and do both at once: `POST /vendors/onboard` with `{ company, service }`.)*
+4. Edit later: `PUT /vendors/services/{vendorServiceId}` (changing hours/capacity regenerates slots).
 
-A vendor adds a second service (e.g. also does battery, once that controller exists) by calling that
-type's `POST /vendors/{vendorId}/services/<type>` — same company, independent hours & slots.
+A vendor adds a second service (e.g. also does battery) with another `POST /vendors/{vendorId}/services`
+and a different `serviceType` — same company, independent hours & slots.
 
 ### B. Customer books
-1. `GET /vendors/search?...` or `GET /vendors/car-wash/all` → pick a `vendorServiceId` (from `service.id`).
+1. `GET /vendors/search?...` or `GET /vendors/services/all?serviceType=CAR_WASH` → pick a `vendorServiceId` (the service's `id`).
 2. `GET /bookings/{vendorServiceId}/available-slots?date=05/09/2026` → list of slots.
 3. `POST /bookings/{vendorServiceId}/book?vehicleId=101&time=2026-09-05T09:00:00` + header `X-Auto-Adda-Id` = customer id.
 4. `GET /bookings/user/bookings` (header) → customer's bookings. `GET /bookings/{bookingId}` → detail.
@@ -276,14 +266,22 @@ type's `POST /vendors/{vendorId}/services/<type>` — same company, independent 
 
 **`workingDays`** — `MONDAY … SUNDAY`
 
-**Service types** (`serviceType` on `VendorService`; matching `ServiceCategory.name` in brackets):
-`CAR_WASH` (Car Wash), `TYRE_AND_BALANCING` (Tyre & Balancing), `BATTERY` (Battery),
-`SUSPENSION`, `RECOVERY`, `INSURANCE`, `CAR_INSPECTION` (Car Inspection), `QUALITY_CONTROL`
-(Quality Control), `ENGINEERING_WORK` (Engineering Work), `HYDRAULIC_HOSE` (Hydraulic Hose),
-`PART_REPAIRING` (Part Repairing), `ACCESSORIES`, `UPHOLSTERY`, `CAR_DETAILING` (Car Detailing),
-`MODIFICATION`, `GLASS_SERVICES` (Glass Services), `OIL_CHANGE` (Oil Change), `FUEL_SERVICES`
-(Fuel Services), `EV_SERVICES` (EV Services), `TOOLS`, `DELIVERY`.
-Only `CAR_WASH` has a typed controller today.
+**Service types** (`serviceType` on `VendorService`) and the category each is filed under:
+
+| category | service types |
+|---|---|
+| Washing & Detailing | `CAR_WASH`, `CAR_DETAILING`, `UPHOLSTERY` |
+| Routine Maintenance | `OIL_CHANGE` |
+| Tires & Wheels | `TYRE_AND_BALANCING` |
+| Electrical & EV | `BATTERY`, `EV_SERVICES` |
+| Repairs & Diagnostics | `SUSPENSION`, `CAR_INSPECTION`, `QUALITY_CONTROL`, `ENGINEERING_WORK`, `HYDRAULIC_HOSE`, `PART_REPAIRING` |
+| Tinting & Paint Protection | `GLASS_SERVICES` |
+| Roadside Assistance | `RECOVERY`, `FUEL_SERVICES` |
+| Insurance | `INSURANCE` |
+| Accessories & Modification | `ACCESSORIES`, `MODIFICATION` |
+| Other Services | `TOOLS`, `DELIVERY` |
+
+Only Washing & Detailing has detail attributes in the starter seed (the eight car wash fields).
 
 **Booking `status`** (subset): `CONFIRMED`, `WORK_INPROGRESS`, `COMPLETED`, `DELIVERED`, `DONE`,
 `CANCELLED`, `PENDING`, `NEW`, `ASSIGNED`.
@@ -296,10 +294,12 @@ Only `CAR_WASH` has a typed controller today.
 
 | before | now |
 |---|---|
-| `POST /vendors` took the full flat form (company + hours + services) | `POST /vendors` = company only; hours/services via `POST /vendors/{id}/services/<type>` |
+| `POST /vendors` took the full flat form (company + hours + services) | `POST /vendors` = company only; hours/services via `POST /vendors/{id}/services` |
+| `/vendors/car-wash`, `/vendors/{id}/services/car-wash`, `/vendors/car-wash/{id}`, `/vendors/car-wash/all` | `/vendors/onboard`, `/vendors/{id}/services`, `/vendors/services/{id}`, `/vendors/services/all?serviceType=CAR_WASH` |
+| car wash fields at the top level of the request (`bayCount`, `mobileService`, …) and a `carWashDetails` block in the response | `attributes` map on the request and response (`bay_count`, `mobile_service`, …) |
 | `/os-appointments/**` | `/bookings/**` |
 | `/os-appointments/{id}/book` — `id` = vendorId | `/bookings/{id}/book` — `id` = **vendorServiceId** |
 | `/os-appointments/other-service/{id}` | `/bookings/vendor/{vendorId}` (all branches) |
 | `selectedOtherServiceIds` param | `selectedVendorServiceIds` |
-| `/vendor-service-bridges` | `/vendor-services` (old path still aliased) |
+| `/vendor-service-bridges` | `/vendor-services` |
 | `VendorProfileResponse` had `serviceType`, `openingTime`, `closingTime`, `workingDays`, `concurrentAppointmentCapacity`, `tradeLicenceNumber` at top level | those moved into each `services[]` entry (`VendorServiceResponse`) |

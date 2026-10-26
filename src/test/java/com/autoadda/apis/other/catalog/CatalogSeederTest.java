@@ -58,8 +58,12 @@ class CatalogSeederTest {
         CatalogService oilChange = catalogServiceRepository.findByCode("OIL_CHANGE").orElseThrow();
         assertThat(oilChange.getNameAr()).isEqualTo("تغيير زيت المحرك");
 
+        Integer washing = categoryRepository.findByCode("CLEANING_DETAILING").orElseThrow().getId();
+        assertThat(attributeService.resolveVendorAttributes(washing)).hasSize(8);
+
         // Running again changes nothing
         seeder.run(new DefaultApplicationArguments());
         assertThat(catalogServiceRepository.count()).isEqualTo(14);
+        assertThat(attributeService.resolveVendorAttributes(washing)).hasSize(8);
     }
 }

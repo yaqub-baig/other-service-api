@@ -37,6 +37,18 @@ public class FieldSpecFactory {
         return defs.stream().map(this::forOffering).toList();
     }
 
+    /**
+     * Spec for a VENDOR attribute, filled in on the vendor's service.
+     */
+    public FieldSpec forVendorService(ServiceAttributeDefinition def) {
+        return new FieldSpec(def.getAttributeCode(), def.getAttributeName(), kindOf(def),
+                Boolean.TRUE.equals(def.getIsRequired()), optionValues(def.getOptions()), rules(def.getValidationRules()));
+    }
+
+    public List<FieldSpec> forVendorService(List<ServiceAttributeDefinition> defs) {
+        return defs.stream().map(this::forVendorService).toList();
+    }
+
     public FieldSpec forQuotation(QuotationFieldDefinition def) {
         FieldSpec.Kind kind = switch (def.getFieldType()) {
             case NUMBER -> FieldSpec.Kind.DECIMAL;

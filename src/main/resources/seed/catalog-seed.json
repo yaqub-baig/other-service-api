@@ -138,6 +138,87 @@
       "name": "Washing & Detailing",
       "nameAr": "الغسيل والتلميع",
       "displayOrder": 20,
+      "vendorAttributes": [
+        {
+          "code": "bay_count",
+          "name": "Wash bays",
+          "nameAr": "عدد منصات الغسيل",
+          "dataType": "INTEGER",
+          "inputContext": "VENDOR",
+          "required": false,
+          "displayOrder": 10,
+          "validationRules": {
+            "minimum": 1
+          }
+        },
+        {
+          "code": "average_wash_duration_minutes",
+          "name": "Average wash time",
+          "nameAr": "متوسط مدة الغسيل",
+          "dataType": "INTEGER",
+          "inputContext": "VENDOR",
+          "required": false,
+          "displayOrder": 20,
+          "unit": "minutes",
+          "validationRules": {
+            "minimum": 5
+          }
+        },
+        {
+          "code": "mobile_service",
+          "name": "Mobile service",
+          "nameAr": "خدمة متنقلة",
+          "dataType": "BOOLEAN",
+          "inputContext": "VENDOR",
+          "required": false,
+          "displayOrder": 30
+        },
+        {
+          "code": "self_service_available",
+          "name": "Self-service bays",
+          "nameAr": "غسيل ذاتي",
+          "dataType": "BOOLEAN",
+          "inputContext": "VENDOR",
+          "required": false,
+          "displayOrder": 40
+        },
+        {
+          "code": "express_wash_available",
+          "name": "Express wash",
+          "nameAr": "غسيل سريع",
+          "dataType": "BOOLEAN",
+          "inputContext": "VENDOR",
+          "required": false,
+          "displayOrder": 50
+        },
+        {
+          "code": "interior_detailing_available",
+          "name": "Interior detailing",
+          "nameAr": "تنظيف داخلي تفصيلي",
+          "dataType": "BOOLEAN",
+          "inputContext": "VENDOR",
+          "required": false,
+          "displayOrder": 60
+        },
+        {
+          "code": "water_recycling",
+          "name": "Water recycling",
+          "nameAr": "إعادة تدوير المياه",
+          "dataType": "BOOLEAN",
+          "inputContext": "VENDOR",
+          "required": false,
+          "displayOrder": 70
+        },
+        {
+          "code": "accepts_walk_ins",
+          "name": "Accepts walk-ins",
+          "nameAr": "يستقبل العملاء بدون موعد",
+          "dataType": "BOOLEAN",
+          "inputContext": "VENDOR",
+          "required": false,
+          "displayOrder": 80
+        }
+      ],
       "services": [
         {
           "code": "CAR_WASH",

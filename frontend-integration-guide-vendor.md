@@ -17,7 +17,7 @@
 ## Table of Contents
 
 1. [Vendor Registration & Profile](#1-vendor-registration--profile)
-2. [Vendor Service Management](#2-vendor-service-management)
+2. [Vendor Service Pricing](#2-vendor-service-pricing)
 3. [Service Offerings (Product/Service Listings)](#3-service-offerings-productservice-listings)
 4. [Quotation Management](#4-quotation-management)
 5. [Booking Management (Vendor View)](#5-booking-management-vendor-view)
@@ -29,9 +29,13 @@
 
 ## 1. Vendor Registration & Profile
 
-**Base Path:** `/vendors`
+**Base Path:** `/vendors`. These endpoints return the DTO directly, without the `ApiResponse` wrapper.
 
-### 1.1 Register as Vendor
+Registration has two parts: the **company** (brand, contact, HQ address, logo, VAT certificate) and one
+or more **services** the company runs (a car wash, a tyre shop, ...). Each service has its own hours,
+capacity, trade licence, branch address, photos, booking slots and details.
+
+### 1.1 Register the Company
 
 ```
 POST /vendors
@@ -39,7 +43,7 @@ X-Auto-Adda-Id: {userId}
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request Body (`VendorCompanyRequest`):**
 ```json
 {
   "companyBrandName": "QuickFit Tyres LLC",
@@ -50,103 +54,178 @@ Content-Type: application/json
   "email": "info@quickfit.ae",
   "phoneNumber": "+971-4-1234567",
   "mobileNumber": "+971501234567",
+  "countryCode": "AE",
   "companyLocation": {
-    "address": "Al Quoz Industrial Area 3, Street 8",
+    "streetAddress1": "Al Quoz Industrial Area 3, Street 8",
     "city": "Dubai",
     "state": "Dubai",
-    "zipCode": "12345",
+    "postalCode": "12345",
+    "country": "AE",
     "latitude": 25.2048,
     "longitude": 55.2708
   },
-  "osServiceIds": [1, 3, 5],
-  "tradeLicenceNumber": "DED-123456",
-  "openingTime": "08:00",
-  "closingTime": "20:00",
-  "workingDays": "Mon-Sat",
   "logoId": 10,
-  "vatCertificateIds": [11],
-  "tradeLicenseAttachmentIds": [12],
-  "companyImagesIds": [13, 14, 15]
+  "vatCertificateIds": [11]
 }
 ```
 
-| Field                      | Type          | Required | Description                                   |
-|----------------------------|---------------|----------|-----------------------------------------------|
-| companyBrandName           | String        | Yes      | Company brand name (English)                  |
-| companyArabicName          | String        | No       | Company name in Arabic                        |
-| name                       | String        | Yes      | Short name                                    |
-| trnNumber                  | String        | No       | Tax Registration Number                       |
-| webSite                    | String        | No       | Company website URL                           |
-| email                      | String        | Yes      | Contact email                                 |
-| phoneNumber                | String        | Yes      | Landline phone                                |
-| mobileNumber               | String        | No       | Mobile phone                                  |
-| companyLocation            | Object        | Yes      | Location details (see below)                  |
-| companyLocation.address    | String        | Yes      | Street address                                |
-| companyLocation.city       | String        | Yes      | City name                                     |
-| companyLocation.state      | String        | No       | State/emirate                                 |
-| companyLocation.zipCode    | String        | No       | ZIP/postal code                               |
-| companyLocation.latitude   | Double        | Yes      | GPS latitude                                  |
-| companyLocation.longitude  | Double        | Yes      | GPS longitude                                 |
-| osServiceIds               | List<Integer> | Yes      | Service category IDs vendor offers             |
-| tradeLicenceNumber         | String        | No       | Trade license number                          |
-| openingTime                | String        | Yes      | Opening time (HH:mm)                          |
-| closingTime                | String        | Yes      | Closing time (HH:mm)                          |
-| workingDays                | String        | Yes      | Working days (e.g., "Mon-Sat")                |
-| logoId                     | Long          | No       | MediaFile ID for logo (upload first)          |
-| vatCertificateIds          | List<Long>    | No       | MediaFile IDs for VAT certificates            |
-| tradeLicenseAttachmentIds  | List<Long>    | No       | MediaFile IDs for trade license docs          |
-| companyImagesIds           | List<Long>    | No       | MediaFile IDs for company photos              |
+| Field             | Type       | Required | Description                                      |
+|-------------------|------------|----------|--------------------------------------------------|
+| companyBrandName  | String     | Yes      | Company brand name (English)                     |
+| companyArabicName | String     | No       | Company name in Arabic                           |
+| name              | String     | Yes      | Legal name                                       |
+| trnNumber         | String     | No       | Tax Registration Number                          |
+| webSite           | String     | No       | Company website URL                              |
+| email             | String     | Yes      | Contact email                                    |
+| phoneNumber       | String     | Yes      | Landline phone                                   |
+| mobileNumber      | String     | No       | Mobile phone                                     |
+| countryCode       | String     | No       | ISO country of the vendor's market (default AE)  |
+| companyLocation   | Object     | Yes      | HQ address (`streetAddress1`, `city`, `latitude`, `longitude`, ...) |
+| logoId            | Long       | No       | MediaFile ID for the logo (upload first)         |
+| vatCertificateIds | List<Long> | No       | MediaFile IDs for VAT certificates               |
 
-**Response:** `VendorProfileResponse`
+**Response:** `VendorProfileResponse`, with `accountStatus: PENDING`.
 
-### 1.2 Get My Vendor Profiles
+### 1.2 Add a Service
+
+```
+POST /vendors/{vendorId}/services
+X-Auto-Adda-Id: {userId}
+Content-Type: application/json
+```
+
+First load the details form for the service type:
+
+```
+GET /vendors/services/attributes?serviceType=CAR_WASH
+```
+
+It returns attribute definitions (`attributeCode`, `attributeName`, `dataType`, `isRequired`, `options`,
+`validationRules`, `unit`). Send `Accept-Language: ar` for Arabic labels. Types with no details return
+an empty list.
+
+**Request Body (`VendorServiceOnboardingRequest`):**
+```json
+{
+  "serviceType": "CAR_WASH",
+  "openingTime": "08:00:00",
+  "closingTime": "20:00:00",
+  "breakStartTime": "13:00:00",
+  "breakEndTime": "14:00:00",
+  "workingDays": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"],
+  "concurrentAppointmentCapacity": 3,
+  "tradeLicenceNumber": "DED-123456",
+  "serviceLocation": { "streetAddress1": "Shop 4", "city": "Dubai", "country": "AE", "latitude": 25.14, "longitude": 55.24 },
+  "tradeLicenseAttachmentIds": [12],
+  "serviceImagesIds": [13, 14],
+  "attributes": {
+    "bay_count": 4,
+    "average_wash_duration_minutes": 30,
+    "mobile_service": false,
+    "express_wash_available": true
+  }
+}
+```
+
+| Field                         | Type               | Required | Description                                             |
+|-------------------------------|--------------------|----------|---------------------------------------------------------|
+| serviceType                   | String             | Yes      | e.g. `CAR_WASH`, `BATTERY`, `TYRE_AND_BALANCING`; picks the category |
+| openingTime / closingTime     | String (HH:mm:ss)  | Yes*     | *Required for a car wash                                |
+| breakStartTime / breakEndTime | String (HH:mm:ss)  | No       | Daily break                                             |
+| workingDays                   | List<String>       | Yes*     | `MONDAY` ... `SUNDAY`. *Required for a car wash         |
+| concurrentAppointmentCapacity | Integer            | No       | Bookings per slot (car wash default 2)                  |
+| tradeLicenceNumber            | String             | No       | This branch's trade licence                             |
+| serviceLocation               | Object             | No       | Branch address; the company HQ is used when left out    |
+| tradeLicenseAttachmentIds     | List<Long>         | No       | MediaFile IDs for licence documents                     |
+| serviceImagesIds              | List<Long>         | No       | MediaFile IDs for branch photos                         |
+| serviceCategoryIds            | List<Integer>      | No       | Extra categories beyond the type's own                  |
+| attributes                    | Object             | Depends  | The type's details, keyed by `attributeCode`. Required ones must be sent |
+
+Unknown attribute codes and invalid values are refused with `code: "400"` and every failing field in
+`body`.
+
+**Response:** `VendorServiceResponse`, including `id` (the `vendorServiceId` used for bookings) and
+`attributes`. Adding a service creates its working hours and 60 days of booking slots.
+
+To create the company and its first service in one call:
+
+```
+POST /vendors/onboard
+X-Auto-Adda-Id: {userId}
+
+{ "company": { VendorCompanyRequest }, "service": { VendorServiceOnboardingRequest } }
+```
+
+It returns `{ "vendor": VendorProfileResponse, "service": VendorServiceResponse }`.
+
+### 1.3 Update a Service
+
+```
+PUT /vendors/services/{vendorServiceId}
+Content-Type: application/json
+```
+
+Same body as 1.2. Every field is optional and `serviceType` is ignored. Sent `attributes` are merged into
+the stored ones, and a `null` value clears one. Changing hours or capacity regenerates upcoming slots.
+
+### 1.4 Get Services
+
+```
+GET /vendors/{vendorId}/services              a company's services
+GET /vendors/services?serviceType=CAR_WASH    the caller's services (X-Auto-Adda-Id); all types if serviceType is left out
+```
+
+### 1.5 Get My Vendor Profiles
 
 ```
 GET /vendors
 X-Auto-Adda-Id: {userId}
 ```
 
-Returns all vendor profiles owned by this user.
+Returns all companies owned by this user, each with its `services`.
 
-### 1.3 Get Vendor by ID
+### 1.6 Get Vendor by ID
 
 ```
 GET /vendors/{id}
 ```
 
-### 1.4 Update Vendor Profile
+### 1.7 Update Vendor Profile
 
 ```
 PUT /vendors/{id}
 Content-Type: application/json
 ```
 
-Same request body as registration.
+Same body as 1.1; every field is optional.
 
-### 1.5 Delete Vendor
+### 1.8 Delete Vendor
 
 ```
 DELETE /vendors/{id}
 ```
 
+Deactivates the company.
+
 ### Registration Flow
 
 ```
-1. Upload logo                POST /mediafiles/upload
-2. Upload trade license       POST /mediafiles/upload
-3. Upload VAT certificate     POST /mediafiles/upload
-4. Upload company images      POST /mediafiles/upload
-5. Get available categories   GET /service-categories
-6. Submit registration        POST /vendors (with all IDs from uploads)
+1. Upload logo and VAT certificate      POST /mediafiles/upload
+2. Register the company                 POST /vendors
+3. Upload trade licence and photos      POST /mediafiles/upload
+4. Load the details form                GET /vendors/services/attributes?serviceType=...
+5. Add the service                      POST /vendors/{vendorId}/services
+   (steps 2 and 5 can be one call:      POST /vendors/onboard)
 ```
 
 ---
 
-## 2. Vendor Service Management
+## 2. Vendor Service Pricing
 
 **Base Path:** `/vendor-services`
 
-Links your vendor to specific service categories (what services you offer).
+Low-level access to vendor service rows, mainly to set the vendor's default pricing for a service.
+Use section 1 to add services; a service added here has no hours or slots.
 
 ### 2.1 Get My Services
 
@@ -156,24 +235,10 @@ GET /vendor-services/vendor/{vendorId}
 
 **Response:** `ApiResponse<List<VendorServiceResponse>>`
 
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "vendorId": 1,
-      "serviceId": 3,
-      "serviceName": "Tyres",
-      "isActive": true
-    }
-  ]
-}
-```
-
-### 2.2 Add a Service
+### 2.2 Set Pricing
 
 ```
-POST /vendor-services
+PUT /vendor-services/{id}
 Content-Type: application/json
 ```
 
@@ -181,28 +246,30 @@ Content-Type: application/json
 {
   "vendorId": 1,
   "serviceCategoryId": 3,
-  "isActive": true
+  "pricingType": "FIXED",
+  "price": 120.00,
+  "currency": "AED",
+  "description": "Exterior and interior wash"
 }
 ```
 
-| Field     | Type    | Required | Description                |
-|-----------|---------|----------|----------------------------|
-| vendorId          | Integer | Yes      | Your vendor ID             |
-| serviceCategoryId | Integer | Yes      | Service category ID to add |
-| isActive  | Boolean | No       | Active status              |
+| Field             | Type       | Required | Description                         |
+|-------------------|------------|----------|-------------------------------------|
+| vendorId          | Integer    | Yes      | Your vendor ID                      |
+| serviceCategoryId | Integer    | Yes      | The service's category              |
+| pricingType       | String     | No       | `FIXED` (default), `RANGE`, `QUOTE_BASED` or `NEGOTIABLE` |
+| price             | Decimal    | No       | Fixed price                         |
+| minPrice/maxPrice | Decimal    | No       | Range                               |
+| currency          | String     | No       | ISO 4217                            |
+| description       | String     | No       |                                     |
 
-### 2.3 Update a Service Link
-
-```
-PUT /vendor-services/{id}
-Content-Type: application/json
-```
-
-### 2.4 Remove a Service
+### 2.3 Remove a Service
 
 ```
 DELETE /vendor-services/{id}
 ```
+
+Deactivates it; offerings, bookings and quotes keep pointing at it.
 
 ---
 
@@ -848,13 +915,12 @@ const offering = {
 ### Journey 1: Initial Setup
 
 ```
-1. Upload company logo           POST /mediafiles/upload
-2. Upload trade license           POST /mediafiles/upload
-3. Upload VAT certificate         POST /mediafiles/upload
-4. Upload company photos          POST /mediafiles/upload
-5. Browse service categories      GET /service-categories
-6. Register vendor                POST /vendors (X-Auto-Adda-Id header)
-7. Link services                  POST /vendor-services (for each service)
+1. Upload logo and VAT cert       POST /mediafiles/upload
+2. Register the company           POST /vendors (X-Auto-Adda-Id header)
+3. Upload licence and photos      POST /mediafiles/upload
+4. Load the details form          GET /vendors/services/attributes?serviceType=...
+5. Add each service               POST /vendors/{vendorId}/services
+6. Set pricing (optional)         PUT /vendor-services/{vendorServiceId}
 ```
 
 ### Journey 2: Add a Product/Service Listing
@@ -1015,12 +1081,36 @@ export const registerVendor = (userId, data) =>
   });
 // data = {
 //   companyBrandName, companyArabicName, name, trnNumber,
-//   webSite, email, phoneNumber, mobileNumber,
-//   companyLocation: { address, city, state, zipCode, latitude, longitude },
-//   osServiceIds, tradeLicenceNumber, openingTime, closingTime,
-//   workingDays, logoId, vatCertificateIds,
-//   tradeLicenseAttachmentIds, companyImagesIds
+//   webSite, email, phoneNumber, mobileNumber, countryCode,
+//   companyLocation: { streetAddress1, city, state, postalCode, country, latitude, longitude },
+//   logoId, vatCertificateIds
 // }
+
+// Details form for a service type
+export const getServiceAttributes = (serviceType) =>
+  api.get(`${VENDOR_BASE}/services/attributes`, { params: { serviceType } });
+
+// Add a service to a company
+export const addVendorService = (userId, vendorId, data) =>
+  api.post(`${VENDOR_BASE}/${vendorId}/services`, data, {
+    headers: { 'X-Auto-Adda-Id': userId },
+  });
+// data = {
+//   serviceType, openingTime, closingTime, breakStartTime, breakEndTime,
+//   workingDays, concurrentAppointmentCapacity, tradeLicenceNumber,
+//   serviceLocation, tradeLicenseAttachmentIds, serviceImagesIds,
+//   attributes: { bay_count: 4, ... }
+// }
+
+// Company and first service in one call
+export const onboardVendor = (userId, company, service) =>
+  api.post(`${VENDOR_BASE}/onboard`, { company, service }, {
+    headers: { 'X-Auto-Adda-Id': userId },
+  });
+
+// Update a service (attributes are merged; null clears one)
+export const updateVendorService = (vendorServiceId, data) =>
+  api.put(`${VENDOR_BASE}/services/${vendorServiceId}`, data);
 
 // Get my vendor profiles
 export const getMyVendors = (userId) =>
@@ -1059,7 +1149,7 @@ export const getMyServices = (vendorId) =>
 // Add a service
 export const addService = (data) =>
   api.post(VENDOR_SERVICE_BASE, data);
-// data = { vendorId, serviceCategoryId: categoryId, isActive: true }
+// data = { vendorId, serviceCategoryId, isActive: true } (no hours or slots; use addVendorService to onboard)
 
 // Get vendor service by ID
 export const getServiceById = (id) =>
@@ -1332,70 +1422,67 @@ export const getCategoryById = (id) =>
 
 ```javascript
 import React, { useEffect, useState } from 'react';
-import { registerVendor } from '../api/vendor/vendorProfileApi';
-import { getAllCategories } from '../api/vendor/categoryApi';
+import { onboardVendor, getServiceAttributes } from '../api/vendor/vendorProfileApi';
 import { uploadFiles } from '../api/vendor/mediaApi';
 
 const VendorRegistration = ({ userId }) => {
-  const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState({ serviceType: 'CAR_WASH' });
+  const [detailFields, setDetailFields] = useState([]);   // attribute definitions
+  const [details, setDetails] = useState({});             // attributeCode -> value
   const [logo, setLogo] = useState(null);
   const [tradeLicense, setTradeLicense] = useState([]);
-  const [companyImages, setCompanyImages] = useState([]);
+  const [serviceImages, setServiceImages] = useState([]);
 
+  // The details form depends on the service type
   useEffect(() => {
-    getAllCategories().then((res) => setCategories(res.data.data));
-  }, []);
+    getServiceAttributes(form.serviceType).then((res) => setDetailFields(res.data));
+  }, [form.serviceType]);
+
+  const upload = async (files) =>
+    files.length ? (await uploadFiles(files)).data.data.map((f) => f.id) : [];
 
   const handleSubmit = async () => {
-    // Upload all files first
-    let logoId = null;
-    let tradeLicenseIds = [];
-    let companyImageIds = [];
+    const [logoId] = await upload(logo ? [logo] : []);
+    const tradeLicenseAttachmentIds = await upload(tradeLicense);
+    const serviceImagesIds = await upload(serviceImages);
 
-    if (logo) {
-      const res = await uploadFiles([logo]);
-      logoId = res.data.data[0].id;
-    }
-    if (tradeLicense.length) {
-      const res = await uploadFiles(tradeLicense);
-      tradeLicenseIds = res.data.data.map((f) => f.id);
-    }
-    if (companyImages.length) {
-      const res = await uploadFiles(companyImages);
-      companyImageIds = res.data.data.map((f) => f.id);
-    }
-
-    // Register
-    const vendorData = {
+    const company = {
       companyBrandName: form.brandName,
-      name: form.shortName,
+      name: form.legalName,
       email: form.email,
       phoneNumber: form.phone,
+      countryCode: 'AE',
       companyLocation: {
-        address: form.address,
+        streetAddress1: form.address,
         city: form.city,
         latitude: form.lat,
         longitude: form.lng,
       },
-      osServiceIds: form.selectedServiceIds,
-      openingTime: form.openingTime,
-      closingTime: form.closingTime,
-      workingDays: form.workingDays,
       logoId,
-      tradeLicenseAttachmentIds: tradeLicenseIds,
-      companyImagesIds: companyImageIds,
+    };
+    const service = {
+      serviceType: form.serviceType,
+      openingTime: form.openingTime,                 // "08:00:00"
+      closingTime: form.closingTime,
+      workingDays: form.workingDays,                 // ["MONDAY", ...]
+      tradeLicenceNumber: form.tradeLicenceNumber,
+      tradeLicenseAttachmentIds,
+      serviceImagesIds,
+      attributes: details,
     };
 
-    try {
-      const res = await registerVendor(userId, vendorData);
-      alert(`Registered! Vendor ID: ${res.data.id}`);
-    } catch (err) {
-      alert('Registration failed: ' + err.response?.data?.message);
+    const res = await onboardVendor(userId, company, service);
+    // errors come back as HTTP 201 too, with status "failed"; validation errors
+    // list each failing field in body: [{ field, message }]
+    if (res.data.status === 'failed') {
+      alert('Registration failed: ' + res.data.message);
+      return;
     }
+    alert(`Registered! Vendor ID: ${res.data.vendor.id}, service ID: ${res.data.service.id}`);
   };
 
-  // ... render form with file pickers, category multi-select, etc.
+  // ... render the company fields, a service type picker, and one input per entry in
+  // detailFields (number, checkbox or select depending on dataType)
 };
 ```
 

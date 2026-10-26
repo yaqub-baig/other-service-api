@@ -49,7 +49,7 @@ Eureka registration is switched off by default (`eureka.client.register-with-eur
 
 ## Starter catalog
 
-On startup, `CatalogSeeder` loads `src/main/resources/seed/catalog-seed.json`: 10 categories and 14 services, each with a published v1 attribute schema (39 attributes, 64 options) and Arabic labels. It matches existing rows by code, so restarts don't duplicate anything. Set `catalog.seed.enabled=false` to skip it.
+On startup, `CatalogSeeder` loads `src/main/resources/seed/catalog-seed.json`: 10 categories and 14 services, each with a published v1 attribute schema (39 attributes, 64 options) and Arabic labels, plus the car wash details (bay count, mobile service and so on) as vendor attributes on Washing & Detailing. It matches existing rows by code, so restarts don't duplicate anything. Set `catalog.seed.enabled=false` to skip it.
 
 These are the only categories. Vendor onboarding files each service type (`VendorServiceType`) under one of them; for example Car Wash and Car Detailing both go under Washing & Detailing. Onboarding needs the seed, so keep `catalog.seed.enabled` on outside tests.
 
@@ -66,6 +66,7 @@ Vendor ──< VendorService ──<  ServiceOffering ── catalog service + s
 
 - **Attributes:** category-level attributes are defaults, and a service's published schema adds to or overrides them. Only published versions are live, and they can't be edited; changes go into a new draft.
 - **Validation:** offerings and quotation requests are checked by one `AttributeValidator`, covering required fields, types, options and validation rules.
+- **Vendor details:** details about a vendor's branch, such as a car wash's bay count, are category attributes with input context `VENDOR`. They are filled in when the vendor adds the service (`POST /vendors/{vendorId}/services`), stored on `VendorService.attributes` and checked by the same validator. Every service type uses the same endpoints; there are no per-type tables.
 - **Quotation mode:** a service is DIRECT, OPTIONAL or REQUIRED; when it has no mode set, it follows its category's quotation scope.
 - **Languages:** send `Accept-Language: ar` for Arabic labels.
 
