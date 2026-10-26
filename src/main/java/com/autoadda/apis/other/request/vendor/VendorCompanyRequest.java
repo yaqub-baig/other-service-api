@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * Company half of vendor onboarding. Everything here is company-level; a
- * vendor's individual services are added separately via {@link BaseVendorServiceRequest}.
+ * vendor's individual services are added separately via {@link VendorServiceOnboardingRequest}.
  */
 @Getter
 @Setter

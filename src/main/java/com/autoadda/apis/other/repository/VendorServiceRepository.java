@@ -21,4 +21,6 @@ public interface VendorServiceRepository extends JpaRepository<VendorService, In
     List<VendorService> findByServiceTypeAndIsActiveTrue(String serviceType);
 
     List<VendorService> findByVendor_CompanyOwnerAndServiceTypeAndIsActiveTrue(Integer companyOwner, String serviceType);
+
+    List<VendorService> findByVendor_CompanyOwnerAndIsActiveTrue(Integer companyOwner);
 }

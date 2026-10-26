@@ -1,8 +1,10 @@
 package com.autoadda.apis.other.service;
 
 
-import com.autoadda.apis.other.request.vendor.BaseVendorServiceRequest;
+import com.autoadda.apis.other.request.vendor.VendorServiceOnboardingRequest;
 import com.autoadda.apis.other.request.vendor.VendorCompanyRequest;
+import com.autoadda.apis.other.response.ServiceAttributeDefinitionResponse;
+import com.autoadda.apis.other.response.VendorOnboardingResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorServiceResponse;
@@ -41,12 +43,18 @@ public interface VendorManagementService {
     // ---- services ----
 
     /**
-     * Add a service (with its own hours, capacity, licence, location, slots) to a vendor.
+     * Create the company and its first service in one call.
      */
-    VendorServiceResponse addService(Integer vendorId, BaseVendorServiceRequest request,
-                                     VendorServiceType type, String autoAddaId);
+    VendorOnboardingResponse onboard(VendorCompanyRequest company, VendorServiceOnboardingRequest service,
+                                     String autoAddaId);
 
-    VendorServiceResponse updateService(Integer vendorServiceId, BaseVendorServiceRequest request);
+    /**
+     * Add a service (with its own hours, capacity, licence, location, slots and details) to a vendor.
+     * The request's serviceType picks the category and the onboarding rules.
+     */
+    VendorServiceResponse addService(Integer vendorId, VendorServiceOnboardingRequest request, String autoAddaId);
+
+    VendorServiceResponse updateService(Integer vendorServiceId, VendorServiceOnboardingRequest request);
 
     void deleteService(Integer vendorServiceId);
 
@@ -54,7 +62,12 @@ public interface VendorManagementService {
 
     List<VendorServiceResponse> getServicesByVendor(Integer vendorId);
 
-    List<VendorServiceResponse> getServicesByOwnerAndType(String autoAddaId, VendorServiceType type);
+    /** The caller's active services; all types when type is null. */
+    List<VendorServiceResponse> getServicesByOwner(String autoAddaId, VendorServiceType type);
 
-    List<VendorServiceResponse> getServicesByType(VendorServiceType type);
+    /** Every active service; all types when type is null. */
+    List<VendorServiceResponse> getServices(VendorServiceType type);
+
+    /** The details form for a service type: its category's VENDOR attributes. */
+    List<ServiceAttributeDefinitionResponse> getVendorAttributes(VendorServiceType type);
 }

@@ -2,6 +2,7 @@ package com.autoadda.apis.other.config;
 
 import com.autoadda.apis.other.entity.ServiceCategory;
 import com.autoadda.apis.other.repository.CatalogServiceRepository;
+import com.autoadda.apis.other.repository.ServiceAttributeDefinitionRepository;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
 import com.autoadda.apis.other.request.AttributeOption;
 import com.autoadda.apis.other.request.CatalogServiceRequest;
@@ -38,9 +39,10 @@ import java.util.stream.Collectors;
 
 /**
  * Loads the Middle East starter catalog (seed/catalog-seed.json) into an empty or partly seeded
- * database: categories, services with a published v1 schema, attributes, options and markets.
+ * database: categories with their VENDOR attributes, services with a published v1 schema,
+ * attributes, options and markets.
  * Goes through the normal services, so the same validation applies. Existing categories and
- * services (matched by code) are left untouched, so restarts are safe.
+ * services and category attributes (matched by code) are left untouched, so restarts are safe.
  *
  * catalog.seed.enabled=false turns it off; catalog.seed.markets limits which countries are seeded.
  */
@@ -53,6 +55,7 @@ public class CatalogSeeder implements ApplicationRunner {
     private final ObjectMapper objectMapper;
     private final ServiceCategoryRepository categoryRepository;
     private final CatalogServiceRepository catalogServiceRepository;
+    private final ServiceAttributeDefinitionRepository attributeRepository;
     private final ServiceCatalogService serviceCatalogService;
     private final ServiceAttributeDefinitionService attributeService;
     private final SchemaVersionService schemaVersionService;
@@ -76,6 +79,13 @@ public class CatalogSeeder implements ApplicationRunner {
         int created = 0;
         for (SeedCategory category : seed.getCategories()) {
             ServiceCategory saved = transactionTemplate.execute(status -> upsertCategory(category));
+            for (SeedAttribute attribute : category.getVendorAttributes()) {
+                if (!attributeRepository.existsByServiceCategoryIdAndCatalogServiceIsNullAndAttributeCode(
+                        saved.getId(), attribute.getCode())) {
+                    transactionTemplate.executeWithoutResult(status -> attributeService.create(
+                            attributeRequest(attribute).serviceCategoryId(saved.getId()).build()));
+                }
+            }
             for (SeedService service : category.getServices()) {
                 if (catalogServiceRepository.existsByCode(service.getCode())) {
                     continue;
@@ -115,22 +125,8 @@ public class CatalogSeeder implements ApplicationRunner {
 
         Integer draftId = null;
         for (SeedAttribute attribute : seed.getAttributes()) {
-            ServiceAttributeDefinitionResponse saved = attributeService.create(ServiceAttributeDefinitionRequest.builder()
-                    .serviceId(service.getId())
-                    .attributeCode(attribute.getCode())
-                    .attributeName(attribute.getName())
-                    .attributeNameAr(attribute.getNameAr())
-                    .dataType(attribute.getDataType())
-                    .inputContext(attribute.getInputContext())
-                    .isRequired(attribute.isRequired())
-                    .isFilterable(attribute.getOptions() != null)
-                    .unit(attribute.getUnit())
-                    .description(attribute.getDescription())
-                    .validationRules(attribute.getValidationRules() != null
-                            ? writeJson(attribute.getValidationRules()) : null)
-                    .options(attribute.getOptions())
-                    .displayOrder(attribute.getDisplayOrder())
-                    .build());
+            ServiceAttributeDefinitionResponse saved = attributeService.create(
+                    attributeRequest(attribute).serviceId(service.getId()).build());
             draftId = saved.getSchemaVersionId();
         }
         if (draftId != null) {
@@ -148,6 +144,23 @@ public class CatalogSeeder implements ApplicationRunner {
                         .build());
             }
         }
+    }
+
+    private ServiceAttributeDefinitionRequest.ServiceAttributeDefinitionRequestBuilder attributeRequest(SeedAttribute attribute) {
+        return ServiceAttributeDefinitionRequest.builder()
+                .attributeCode(attribute.getCode())
+                .attributeName(attribute.getName())
+                .attributeNameAr(attribute.getNameAr())
+                .dataType(attribute.getDataType())
+                .inputContext(attribute.getInputContext())
+                .isRequired(attribute.isRequired())
+                .isFilterable(attribute.getOptions() != null)
+                .unit(attribute.getUnit())
+                .description(attribute.getDescription())
+                .validationRules(attribute.getValidationRules() != null
+                        ? writeJson(attribute.getValidationRules()) : null)
+                .options(attribute.getOptions())
+                .displayOrder(attribute.getDisplayOrder());
     }
 
     private String writeJson(Object value) {
@@ -170,6 +183,8 @@ public class CatalogSeeder implements ApplicationRunner {
         private String name;
         private String nameAr;
         private Integer displayOrder;
+        /** Category-level details a vendor fills in for a service in this category. */
+        private List<SeedAttribute> vendorAttributes = List.of();
         private List<SeedService> services = List.of();
     }
 

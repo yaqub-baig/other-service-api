@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Full view of one service a vendor offers.
@@ -43,4 +44,7 @@ public class VendorServiceResponse {
     private BigDecimal maxPrice;
     private String currency;
     private String description;
+
+    /** Values for the category's VENDOR attributes. */
+    private Map<String, Object> attributes;
 }

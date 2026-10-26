@@ -1,7 +1,7 @@
 package com.autoadda.apis.other.service.vendor.onboarding;
 
 import com.autoadda.apis.other.entity.VendorService;
-import com.autoadda.apis.other.request.vendor.BaseVendorServiceRequest;
+import com.autoadda.apis.other.request.vendor.VendorServiceOnboardingRequest;
 import com.autoadda.apis.other.util.VendorServiceType;
 
 /**
@@ -14,9 +14,9 @@ public interface VendorOnboardingHandler {
 
     VendorServiceType type();
 
-    default void validate(BaseVendorServiceRequest request) {
+    default void validate(VendorServiceOnboardingRequest request) {
     }
 
-    default void applyDefaults(VendorService vendorService, BaseVendorServiceRequest request) {
+    default void applyDefaults(VendorService vendorService, VendorServiceOnboardingRequest request) {
     }
 }

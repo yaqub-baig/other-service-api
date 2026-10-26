@@ -4,22 +4,29 @@ import com.autoadda.apis.other.entity.Location;
 import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.response.LocationResponse;
 import com.autoadda.apis.other.response.VendorServiceResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Manual mapper for {@link VendorService}.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class VendorServiceMapper {
 
     private final MediaFileMapper mediaFileMapper;
+    private final ObjectMapper objectMapper;
 
     public VendorServiceResponse toResponse(VendorService e) {
         return Optional.ofNullable(e).map(v -> {
@@ -43,6 +50,7 @@ public class VendorServiceMapper {
             r.setMaxPrice(v.getMaxPrice());
             r.setCurrency(v.getCurrency());
             r.setDescription(v.getDescription());
+            r.setAttributes(readAttributes(v));
             if (v.getServiceLocation() != null) {
                 r.setServiceLocation(toLocationResponse(v.getServiceLocation()));
             }
@@ -63,6 +71,21 @@ public class VendorServiceMapper {
             return Collections.emptyList();
         }
         return entities.stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    /**
+     * The stored VENDOR attribute values; empty when none are set.
+     */
+    public Map<String, Object> readAttributes(VendorService v) {
+        if (v.getAttributes() == null || v.getAttributes().isBlank()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(v.getAttributes(), new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException e) {
+            log.warn("Ignoring unreadable attributes JSON on vendor service {}", v.getId());
+            return Map.of();
+        }
     }
 
     private LocationResponse toLocationResponse(Location location) {

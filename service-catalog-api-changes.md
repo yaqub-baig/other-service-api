@@ -62,7 +62,7 @@ A service's attributes are versioned. Only the **published** version is live.
 
 ## Attributes (**changed**)
 
-New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`), `inputContext` (CUSTOMER / PROVIDER / BOTH, default BOTH), `isIndexed`, `attributeNameAr`, `descriptionAr`.
+New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`), `inputContext` (CUSTOMER / PROVIDER / BOTH, default BOTH, or VENDOR; see below), `isIndexed`, `attributeNameAr`, `descriptionAr`.
 
 - New `dataType` values: `INTEGER`, `DECIMAL`, `SINGLE_SELECT`, `MULTI_SELECT`. Select types must have options.
 - Codes must be 1–50 lowercase letters, digits or underscores, starting with a letter.
@@ -105,6 +105,24 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 - `POST /bookings` accepts `catalogServiceId`. `POST /bookings/{vendorServiceId}/book` accepts `?catalogServiceId=`.
 - A service whose effective mode is REQUIRED can't be booked directly; book from the accepted quote instead. The vendor must offer the service's category.
 
+## Vendor onboarding (**changed**)
+
+- **Removed:** the car wash endpoints (`POST /vendors/car-wash`, `POST /vendors/{vendorId}/services/car-wash`, `PUT /vendors/car-wash/{vendorServiceId}`, `GET /vendors/car-wash`, `GET /vendors/car-wash/all`), the `car_wash_details` table and the `carWashDetails` response block.
+- Every service type now uses the same endpoints, with `serviceType` in the body:
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| POST | `/vendors/onboard` | `{ company, service }`; returns `{ vendor, service }` |
+| POST | `/vendors/{vendorId}/services` | Add a service |
+| PUT | `/vendors/services/{vendorServiceId}` | Edit a service |
+| GET | `/vendors/{vendorId}/services` | A vendor's services |
+| GET | `/vendors/services?serviceType=` | The caller's services (header) |
+| GET | `/vendors/services/all?serviceType=` | Every active service |
+| GET | `/vendors/services/attributes?serviceType=` | The details form for a type |
+
+- Type-specific details go in an `attributes` map on the request and response, for example `{ "bay_count": 4, "mobile_service": true }` instead of `bayCount` and `mobileService`. They are checked against the category's `VENDOR` attributes like offering attributes are. On update, sent codes are merged in and `null` clears one.
+- `VENDOR` is a new `inputContext`: a category-level attribute about the vendor's branch. It never appears on offering or quotation forms, and can't be added to a service schema.
+
 ## Filters, categories and vendor services (**changed**)
 
 - Filters accept `attributeDefinitionId`. The filter code then follows the attribute's code.
@@ -115,6 +133,6 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 
 ## Starter data
 
-On first start the service loads 10 categories and 14 services, each with a published v1 schema (39 attributes, 64 options), from `src/main/resources/seed/catalog-seed.json`. Markets are created only for the countries in `catalog.seed.markets` (default `AE`). Set `catalog.seed.enabled=false` to skip it.
+On first start the service loads 10 categories and 14 services, each with a published v1 schema (39 attributes, 64 options), plus 8 car wash details as `VENDOR` attributes on Washing & Detailing, from `src/main/resources/seed/catalog-seed.json`. Markets are created only for the countries in `catalog.seed.markets` (default `AE`). Set `catalog.seed.enabled=false` to skip it.
 
 These are the only categories. Vendor onboarding files each service type (`VendorServiceType`) under one of them; for example Car Wash and Car Detailing both go under Washing & Detailing. Onboarding needs the seed, so keep `catalog.seed.enabled` on outside tests.

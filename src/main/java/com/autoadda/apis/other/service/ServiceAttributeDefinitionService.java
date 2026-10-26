@@ -275,7 +275,7 @@ public class ServiceAttributeDefinitionService {
     /**
      * The attributes that apply to an offering or request: the service's published schema version,
      * plus the category defaults whose code that version does not redefine. Drafts are not live.
-     * Ordered by display order.
+     * VENDOR attributes are left out. Ordered by display order.
      */
     @Transactional(readOnly = true)
     public List<ServiceAttributeDefinition> resolveAttributes(Integer categoryId, Integer serviceId) {
@@ -286,9 +286,22 @@ public class ServiceAttributeDefinitionService {
                             .forEach(a -> byCode.put(a.getAttributeCode(), a)));
         }
         attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId)
+                .stream()
+                .filter(a -> a.getInputContext() != InputContext.VENDOR)
                 .forEach(a -> byCode.putIfAbsent(a.getAttributeCode(), a));
         return byCode.values().stream()
                 .sorted(Comparator.comparing(a -> a.getDisplayOrder() != null ? a.getDisplayOrder() : 0))
+                .toList();
+    }
+
+    /**
+     * The category's VENDOR attributes: details a vendor fills in once for a service they add.
+     */
+    @Transactional(readOnly = true)
+    public List<ServiceAttributeDefinition> resolveVendorAttributes(Integer categoryId) {
+        return attributeRepository.findByServiceCategoryIdAndCatalogServiceIsNullAndIsActiveTrueOrderByDisplayOrderAsc(categoryId)
+                .stream()
+                .filter(a -> a.getInputContext() == InputContext.VENDOR)
                 .toList();
     }
 
@@ -304,6 +317,9 @@ public class ServiceAttributeDefinitionService {
     private void checkDefinition(ServiceAttributeDefinition attribute) {
         if (attribute.getDataType() == null) {
             throw new BusinessException("dataType is required");
+        }
+        if (attribute.getInputContext() == InputContext.VENDOR && attribute.getCatalogService() != null) {
+            throw new BusinessException("VENDOR attributes belong to a category, not a service");
         }
         boolean isSelect = attribute.getDataType() == DataType.SINGLE_SELECT || attribute.getDataType() == DataType.MULTI_SELECT;
         if (isSelect && (attribute.getOptions() == null || "[]".equals(attribute.getOptions()))) {

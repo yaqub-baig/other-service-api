@@ -9,10 +9,12 @@ import com.autoadda.apis.other.entity.Vendor;
 import com.autoadda.apis.other.entity.VendorBreakTime;
 import com.autoadda.apis.other.entity.VendorService;
 import com.autoadda.apis.other.entity.VendorWorkHours;
+import com.autoadda.apis.other.exception.BusinessException;
 import com.autoadda.apis.other.exception.ResourceNotFoundException;
 import com.autoadda.apis.other.exception.VendorNotFoundException;
 import com.autoadda.apis.other.mapper.VendorMapper;
 import com.autoadda.apis.other.mapper.VendorProfileMapper;
+import com.autoadda.apis.other.mapper.ServiceAttributeDefinitionMapper;
 import com.autoadda.apis.other.mapper.VendorServiceMapper;
 import com.autoadda.apis.other.repository.MediaFileRepository;
 import com.autoadda.apis.other.repository.ServiceCategoryRepository;
@@ -21,8 +23,10 @@ import com.autoadda.apis.other.repository.VendorHolidayOverrideRepository;
 import com.autoadda.apis.other.repository.VendorRepository;
 import com.autoadda.apis.other.repository.VendorServiceRepository;
 import com.autoadda.apis.other.repository.VendorWorkHoursRepository;
-import com.autoadda.apis.other.request.vendor.BaseVendorServiceRequest;
+import com.autoadda.apis.other.request.vendor.VendorServiceOnboardingRequest;
 import com.autoadda.apis.other.request.vendor.VendorCompanyRequest;
+import com.autoadda.apis.other.response.ServiceAttributeDefinitionResponse;
+import com.autoadda.apis.other.response.VendorOnboardingResponse;
 import com.autoadda.apis.other.response.VendorProfileResponse;
 import com.autoadda.apis.other.response.VendorResponse;
 import com.autoadda.apis.other.response.VendorServiceResponse;
@@ -32,6 +36,10 @@ import com.autoadda.apis.other.service.vendor.onboarding.VendorOnboardingHandler
 import com.autoadda.apis.other.util.ERole;
 import com.autoadda.apis.other.util.Status;
 import com.autoadda.apis.other.util.VendorServiceType;
+import com.autoadda.apis.other.validation.AttributeValidator;
+import com.autoadda.apis.other.validation.FieldSpecFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +52,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -73,6 +83,11 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     private final List<VendorOnboardingHandler> onboardingHandlers;
     private final DefaultVendorOnboardingHandler defaultOnboardingHandler;
     private final MarketService marketService;
+    private final ServiceAttributeDefinitionService attributeDefinitionService;
+    private final ServiceAttributeDefinitionMapper attributeMapper;
+    private final AttributeValidator attributeValidator;
+    private final FieldSpecFactory fieldSpecFactory;
+    private final ObjectMapper objectMapper;
 
     // ==================== company ====================
 
@@ -263,8 +278,22 @@ public class VendorManagementServiceImpl implements VendorManagementService {
 
     @Override
     @Transactional
-    public VendorServiceResponse addService(Integer vendorId, BaseVendorServiceRequest request,
-                                            VendorServiceType type, String autoAddaId) {
+    public VendorOnboardingResponse onboard(VendorCompanyRequest company, VendorServiceOnboardingRequest service,
+                                            String autoAddaId) {
+        if (company == null || service == null) {
+            throw new BusinessException("company and service are both required");
+        }
+        VendorProfileResponse vendor = createCompany(company, autoAddaId);
+        return new VendorOnboardingResponse(vendor, addService(vendor.getId(), service, autoAddaId));
+    }
+
+    @Override
+    @Transactional
+    public VendorServiceResponse addService(Integer vendorId, VendorServiceOnboardingRequest request, String autoAddaId) {
+        VendorServiceType type = request.getServiceType();
+        if (type == null) {
+            throw new BusinessException("serviceType is required");
+        }
         Vendor vendor = getVendorOrThrow(vendorId);
 
         VendorOnboardingHandler handler = resolveHandler(type);
@@ -275,14 +304,14 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         service.setIsActive(true);
         service.setServiceType(type.name());
         service.setAccountStatus(Status.PENDING);
-        service.setServiceCategory(serviceCategoryRepository.findByCode(type.getCategoryCode())
-                .orElseThrow(() -> new ResourceNotFoundException("Service category " + type.getCategoryCode()
-                        + " for " + type.getDisplayName() + " not found; is catalog.seed.enabled on?")));
+        service.setServiceCategory(categoryFor(type));
         service.setOpeningTime(timeString(request.getOpeningTime()));
         service.setClosingTime(timeString(request.getClosingTime()));
         service.setWorkingDays(request.getWorkingDays() != null ? joinDays(request.getWorkingDays()) : null);
         service.setConcurrentAppointmentCapacity(request.getConcurrentAppointmentCapacity());
         service.setTradeLicenceNumber(request.getTradeLicenceNumber());
+        // validated even when none are sent, so required details can't be skipped
+        service.setAttributes(checkedAttributes(service, request.getAttributes()));
 
         handler.applyDefaults(service, request);
 
@@ -307,7 +336,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
 
     @Override
     @Transactional
-    public VendorServiceResponse updateService(Integer vendorServiceId, BaseVendorServiceRequest request) {
+    public VendorServiceResponse updateService(Integer vendorServiceId, VendorServiceOnboardingRequest request) {
         VendorService service = getServiceOrThrow(vendorServiceId);
 
         Integer oldCapacity = service.getConcurrentAppointmentCapacity();
@@ -328,6 +357,17 @@ public class VendorManagementServiceImpl implements VendorManagementService {
             service.setConcurrentAppointmentCapacity(request.getConcurrentAppointmentCapacity());
         }
         applyIfPresent(request.getTradeLicenceNumber(), service::setTradeLicenceNumber);
+        if (request.getAttributes() != null) {
+            Map<String, Object> merged = new LinkedHashMap<>(vendorServiceMapper.readAttributes(service));
+            request.getAttributes().forEach((code, value) -> {
+                if (value == null) {
+                    merged.remove(code);
+                } else {
+                    merged.put(code, value);
+                }
+            });
+            service.setAttributes(checkedAttributes(service, merged));
+        }
 
         if (request.getServiceLocation() != null && service.getServiceLocation() != null) {
             service.setServiceLocation(locationService.updateLocation(
@@ -380,16 +420,24 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     }
 
     @Override
-    public List<VendorServiceResponse> getServicesByOwnerAndType(String autoAddaId, VendorServiceType type) {
-        return vendorServiceMapper.toResponseList(
-                vendorServiceRepository.findByVendor_CompanyOwnerAndServiceTypeAndIsActiveTrue(
-                        Integer.parseInt(autoAddaId), type.name()));
+    public List<VendorServiceResponse> getServicesByOwner(String autoAddaId, VendorServiceType type) {
+        Integer owner = Integer.parseInt(autoAddaId);
+        return vendorServiceMapper.toResponseList(type != null
+                ? vendorServiceRepository.findByVendor_CompanyOwnerAndServiceTypeAndIsActiveTrue(owner, type.name())
+                : vendorServiceRepository.findByVendor_CompanyOwnerAndIsActiveTrue(owner));
     }
 
     @Override
-    public List<VendorServiceResponse> getServicesByType(VendorServiceType type) {
-        return vendorServiceMapper.toResponseList(
-                vendorServiceRepository.findByServiceTypeAndIsActiveTrue(type.name()));
+    public List<VendorServiceResponse> getServices(VendorServiceType type) {
+        return vendorServiceMapper.toResponseList(type != null
+                ? vendorServiceRepository.findByServiceTypeAndIsActiveTrue(type.name())
+                : vendorServiceRepository.findByIsActiveTrue());
+    }
+
+    @Override
+    public List<ServiceAttributeDefinitionResponse> getVendorAttributes(VendorServiceType type) {
+        return attributeMapper.toResponseList(
+                attributeDefinitionService.resolveVendorAttributes(categoryFor(type).getId()));
     }
 
     // ==================== helpers ====================
@@ -402,6 +450,29 @@ public class VendorManagementServiceImpl implements VendorManagementService {
     private VendorService getServiceOrThrow(Integer vendorServiceId) {
         return vendorServiceRepository.findById(vendorServiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vendor service not found with id: " + vendorServiceId));
+    }
+
+    private ServiceCategory categoryFor(VendorServiceType type) {
+        return serviceCategoryRepository.findByCode(type.getCategoryCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Service category " + type.getCategoryCode()
+                        + " for " + type.getDisplayName() + " not found; is catalog.seed.enabled on?"));
+    }
+
+    /**
+     * Checks the values against the category's VENDOR attributes and returns them as JSON.
+     */
+    private String checkedAttributes(VendorService service, Map<String, Object> values) {
+        Map<String, Object> submitted = values != null ? values : Map.of();
+        attributeValidator.validateOrThrow(fieldSpecFactory.forVendorService(
+                attributeDefinitionService.resolveVendorAttributes(service.getServiceCategory().getId())), submitted);
+        if (submitted.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(submitted);
+        } catch (JsonProcessingException e) {
+            throw new BusinessException("attributes could not be stored");
+        }
     }
 
     private VendorOnboardingHandler resolveHandler(VendorServiceType type) {
@@ -436,7 +507,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
                 });
     }
 
-    private void rebuildWorkingHours(VendorService service, BaseVendorServiceRequest request) {
+    private void rebuildWorkingHours(VendorService service, VendorServiceOnboardingRequest request) {
         workHoursRepository.deleteAll(workHoursRepository.findByVendorServiceId(service.getId()));
         if (request.getWorkingDays() == null) {
             return;
@@ -452,7 +523,7 @@ public class VendorManagementServiceImpl implements VendorManagementService {
         });
     }
 
-    private void rebuildBreaks(VendorService service, BaseVendorServiceRequest request) {
+    private void rebuildBreaks(VendorService service, VendorServiceOnboardingRequest request) {
         breakTimeRepository.deleteAll(breakTimeRepository.findByVendorServiceId(service.getId()));
         if (request.getWorkingDays() == null
                 || request.getBreakStartTime() == null || request.getBreakEndTime() == null) {

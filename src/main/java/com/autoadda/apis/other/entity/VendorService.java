@@ -106,6 +106,10 @@ public class VendorService {
     @Column(name = "total_ratings")
     private Integer totalRatings = 0;
 
+    /** Values for the category's VENDOR attributes, e.g. {"bay_count": 4, "mobile_service": true}. */
+    @Column(name = "attributes", columnDefinition = "JSON")
+    private String attributes;
+
     // ---- lifecycle ----
     @Column(name = "account_status")
     private Status accountStatus;

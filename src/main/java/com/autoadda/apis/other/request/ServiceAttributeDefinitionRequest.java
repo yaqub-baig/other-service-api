@@ -48,6 +48,6 @@ public class ServiceAttributeDefinitionRequest {
     private String validationRules;
     /** Allowed values for SINGLE_SELECT / MULTI_SELECT. */
     private List<AttributeOption> options;
-    /** CUSTOMER, PROVIDER or BOTH (default). */
+    /** CUSTOMER, PROVIDER, BOTH (default), or VENDOR for category-level details about the vendor's branch. */
     private InputContext inputContext;
 }
