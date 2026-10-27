@@ -21,7 +21,9 @@ public class VendorServiceRequest {
 	@JsonAlias("serviceId")
 	private Integer serviceCategoryId;
 
-	private boolean isActive;
+	/** Defaults to true on create; left unchanged on update when not sent. "active" is also accepted. */
+	@JsonAlias("active")
+	private Boolean isActive;
 
 	// Optional vendor-level pricing for this category
 	private PricingType pricingType;
