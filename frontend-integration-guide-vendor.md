@@ -1,7 +1,8 @@
 # Frontend Integration Guide - Vendor Panel
 
-> **Base URL:** `{API_BASE_URL}` (e.g., `http://localhost:8080`)
+> **Base URL:** `{API_BASE_URL}` (e.g., `http://localhost:9010/api/v1`)
 > **Authentication Header:** `X-Auto-Adda-Id: {vendorOwnerUserId}` (used in vendor registration)
+> **Language:** send `Accept-Language: ar` to get Arabic attribute names, labels and help text.
 > **Standard Response Wrapper:**
 > ```json
 > {
@@ -10,6 +11,13 @@
 >   "message": "success",
 >   "data": { ... }
 > }
+> ```
+> Not wrapped: `/vendors/**` and `GET /bookings/{vendorServiceId}/available-slots` return the DTO directly.
+>
+> **Errors** come back as **HTTP 201** with `"status": "failed"` and the real status in `code`, so check the body, not the HTTP status (axios and `fetch` won't treat them as errors):
+> ```json
+> { "status": "failed", "code": "400", "message": "Invalid attribute values: 1 field(s) failed validation",
+>   "body": [ { "field": "tire_size", "message": "Unknown attribute 'tire_size'" } ] }
 > ```
 
 ---
@@ -257,6 +265,7 @@ Content-Type: application/json
 |-------------------|------------|----------|-------------------------------------|
 | vendorId          | Integer    | Yes      | Your vendor ID                      |
 | serviceCategoryId | Integer    | Yes      | The service's category              |
+| isActive          | Boolean    | No       | Left unchanged when not sent (`active` is also accepted) |
 | pricingType       | String     | No       | `FIXED` (default), `RANGE`, `QUOTE_BASED` or `NEGOTIABLE` |
 | price             | Decimal    | No       | Fixed price                         |
 | minPrice/maxPrice | Decimal    | No       | Range                               |
@@ -290,24 +299,23 @@ Content-Type: application/json
 ```json
 {
   "vendorServiceId": 1,
+  "serviceId": 7,
+  "offeringType": "PRODUCT",
   "offeringName": "MRF ZLX 185/65 R15 Tubeless Car Tyre",
   "shortDescription": "High-performance tubeless tyre for sedans",
   "description": "MRF ZLX is a premium tubeless radial tyre...",
   "sku": null,
   "pricingType": "FIXED",
-  "price": 3500.00,
+  "price": 350.00,
   "minPrice": null,
   "maxPrice": null,
-  "originalPrice": 4000.00,
+  "originalPrice": 400.00,
   "currency": "AED",
   "stockStatus": "IN_STOCK",
   "quantityAvailable": 50,
   "filterableAttributes": {
-    "brand": "MRF",
-    "width": "185",
-    "height": "65",
-    "rim_size": "15",
-    "tyre_type": "Tubeless"
+    "tire_size": "185/65 R15",
+    "tire_brand": "MRF"
   },
   "specifications": {
     "warranty": "5 years",
@@ -324,33 +332,45 @@ Content-Type: application/json
 
 | Field                | Type            | Required | Description                                    |
 |----------------------|-----------------|----------|------------------------------------------------|
-| vendorServiceId      | Integer         | Yes      | Your vendor services ID                  |
+| vendorServiceId      | Integer         | Yes      | Your vendor service (branch) ID                |
+| serviceId            | Integer         | No       | Catalog service (`GET /catalog/services?categoryId=`). Must be in the vendor service's category. Recommended: it decides the attribute set, the currency and the schema version |
+| offeringType         | Enum            | No       | `SERVICE` (default) or `PRODUCT`               |
 | offeringName         | String          | Yes      | Product/service name                           |
 | shortDescription     | String          | No       | Short tagline                                  |
 | description          | String          | No       | Full description                               |
-| sku                  | String          | No       | SKU (auto-generated if empty)                  |
-| pricingType          | Enum            | Yes      | `FIXED`, `RANGE`, `QUOTE_BASED`, `NEGOTIABLE`  |
-| price                | BigDecimal      | Depends  | Price (required for FIXED)                     |
-| minPrice             | BigDecimal      | Depends  | Min price (required for RANGE)                 |
-| maxPrice             | BigDecimal      | Depends  | Max price (required for RANGE)                 |
+| sku                  | String          | No       | SKU (auto-generated if empty; must be unique)  |
+| pricingType          | Enum            | No       | `FIXED` (default), `RANGE`, `QUOTE_BASED`, `NEGOTIABLE` |
+| price                | BigDecimal      | Depends  | Price (for FIXED)                              |
+| minPrice             | BigDecimal      | Depends  | Min price (for RANGE)                          |
+| maxPrice             | BigDecimal      | Depends  | Max price (for RANGE)                          |
 | originalPrice        | BigDecimal      | No       | Original/MRP price (for showing discount)      |
-| currency             | String          | No       | Currency code, defaults to "AED"               |
-| stockStatus          | Enum            | No       | `IN_STOCK`, `LIMITED_STOCK`, `OUT_OF_STOCK`, `PRE_ORDER`, `DISCONTINUED` |
-| quantityAvailable    | Integer         | No       | Available quantity                             |
-| filterableAttributes | Map             | Yes*     | Attributes matching category attribute defs    |
-| specifications       | Map             | No       | Additional specs (free-form)                   |
+| currency             | String          | No       | See currency rules below                       |
+| stockStatus          | Enum            | No       | PRODUCT only: `IN_STOCK` (default), `LIMITED_STOCK`, `OUT_OF_STOCK`, `PRE_ORDER`, `DISCONTINUED` |
+| quantityAvailable    | Integer         | No       | PRODUCT only                                   |
+| filterableAttributes | Map             | Depends  | Attribute code → value; see validation rules below |
+| specifications       | Map             | No       | Additional specs (free-form, not validated)    |
 | imageUrl             | String          | No       | Primary image URL                              |
 | galleryImages        | List<String>    | No       | Gallery image URLs                             |
 | displayOrder         | Integer         | No       | Sort order in your listings                    |
-| isFeatured           | Boolean         | No       | Request featured status                        |
+| isFeatured           | Boolean         | No       | Featured flag (default false)                  |
+
+**Rules:**
+- **Attributes** are always validated, even when none are sent. The allowed codes are the service's published schema plus the category defaults (3.2). Required attributes must be sent, values must match their type and options, and unknown codes are refused. Attributes marked `CUSTOMER` are never required on an offering.
+- **Currency:** with a `serviceId`, the offering is priced in the currency of the vendor's market (the company's `countryCode`). Leave `currency` out to use it; a different currency is refused, and so is a service that isn't available in that country. Without a `serviceId`, `currency` is used as sent (default `AED`).
+- **Stock:** `stockStatus` other than `IN_STOCK`, and `quantityAvailable`, are refused on `SERVICE` offerings.
+- **Schema version:** the offering records the service's live schema version (`schemaVersionId`, `schemaVersionNo` in the response). Changing its attributes or service later re-validates against the current version.
+
+**Response:** `ApiResponse<ServiceOfferingResponse>`. It includes `vendorServiceId`, `vendorId`, `serviceCategoryId`, `serviceId`, `serviceCode`, `serviceName`, `schemaVersionId`, `schemaVersionNo`, `offeringType`, `isActive` and the fields above. **`filterableAttributes`, `specifications` and `galleryImages` come back as JSON strings**; `JSON.parse` them.
 
 ### 3.2 Get Attribute Definitions (Before Creating)
 
-Before creating an offering, get the attribute definitions for the category to know what `filterableAttributes` to provide.
+Before creating an offering, get the attribute definitions to know what `filterableAttributes` to provide.
 
 ```
-GET /service-offerings/category/{categoryId}/attributes
+GET /service-offerings/category/{categoryId}/attributes?serviceId={serviceId}
 ```
+
+With `serviceId`, this returns the service's published attributes plus the category defaults; without it, only the category defaults. `GET /catalog/services/{serviceId}/attributes` returns the same set.
 
 **Response:** `ApiResponse<List<ServiceAttributeDefinitionResponse>>`
 
@@ -359,30 +379,45 @@ GET /service-offerings/category/{categoryId}/attributes
   "data": [
     {
       "id": 1,
-      "attributeCode": "brand",
-      "attributeName": "Brand",
+      "serviceCategoryId": 3,
+      "serviceId": 7,
+      "serviceCode": "TIRE_REPLACEMENT",
+      "schemaVersionNo": 1,
+      "schemaVersionStatus": "PUBLISHED",
+      "attributeCode": "tire_size",
+      "attributeName": "Tire size",
+      "attributeNameAr": "مقاس الإطار",
       "dataType": "STRING",
+      "inputContext": "CUSTOMER",
       "isRequired": true,
-      "isFilterable": true,
-      "description": "Tyre manufacturer"
+      "isFilterable": false,
+      "unit": null,
+      "options": null,
+      "validationRules": null,
+      "displayOrder": 10
     },
     {
       "id": 2,
-      "attributeCode": "width",
-      "attributeName": "Width (mm)",
-      "dataType": "NUMBER",
-      "unit": "mm",
+      "serviceCode": "WHEEL_ALIGNMENT",
+      "attributeCode": "alignment_type",
+      "attributeName": "Alignment type",
+      "dataType": "SINGLE_SELECT",
+      "inputContext": "CUSTOMER",
       "isRequired": true,
-      "isFilterable": true
+      "options": "[{\"value\":\"front\",\"label\":\"Front axle\",\"labelAr\":\"...\"},{\"value\":\"four_wheel\",\"label\":\"Four-wheel alignment\",\"labelAr\":\"...\"}]"
     }
   ]
 }
 ```
 
+- `options` and `validationRules` are **JSON strings**; `JSON.parse` them. Options are `{ value, label, labelAr }`; send the `value`.
+- `inputContext`: `PROVIDER` and `BOTH` attributes are what you describe on an offering; `CUSTOMER` attributes describe the customer's request and are optional here.
+- `dataType`: `STRING`, `NUMBER`, `INTEGER`, `DECIMAL`, `BOOLEAN`, `DATE` (`yyyy-MM-dd`), `SINGLE_SELECT`, `MULTI_SELECT` (send a list), `JSON`.
+
 ### 3.3 Get Required Attributes
 
 ```
-GET /service-offerings/category/{categoryId}/attributes/required
+GET /service-offerings/category/{categoryId}/attributes/required?serviceId={serviceId}
 ```
 
 ### 3.4 Get My Offerings
@@ -429,13 +464,15 @@ PUT /service-offerings/{id}
 Content-Type: application/json
 ```
 
-Same body as create.
+Same body as create; every field is optional and only sent fields change. Sending `filterableAttributes` replaces the whole map and re-validates it. Switching `offeringType` to `SERVICE` resets the stock fields.
 
 ### 3.11 Soft Delete (Deactivate)
 
 ```
 DELETE /service-offerings/{id}
 ```
+
+Sets `isActive` to false. There is no hard delete; bookings and quotes keep pointing at the offering.
 
 ### 3.12 Reactivate
 
@@ -454,6 +491,8 @@ PATCH /service-offerings/{id}/stock?status=LIMITED_STOCK&quantity=5
 | status   | Enum       | Yes      | `IN_STOCK`, `LIMITED_STOCK`, `OUT_OF_STOCK`, `PRE_ORDER`, `DISCONTINUED` |
 | quantity | Integer    | No       | Available quantity                                       |
 
+PRODUCT offerings only; a SERVICE offering refuses anything but `IN_STOCK` with no quantity.
+
 ### 3.14 Toggle Featured
 
 ```
@@ -463,46 +502,55 @@ PATCH /service-offerings/{id}/featured
 ### Frontend Flow: Create Offering
 
 ```javascript
-const API = 'http://localhost:8080';
+const API = 'http://localhost:9010/api/v1';
 
-// 1. Get the vendor services to know vendorServiceId
-const { data: services } = await fetch(
-  `${API}/vendor-services/vendor/${vendorId}`
+// 1. Get the vendor's services (raw list, not wrapped) to know vendorServiceId
+const services = await fetch(`${API}/vendors/${vendorId}/services`).then(r => r.json());
+
+// 2. Select a service (branch) -> its category
+const selectedService = services[0]; // e.g. { id: 1, serviceCategoryId: 3, serviceType: "TYRE_AND_BALANCING" }
+
+// 3. Pick the catalog service in that category (e.g. Tire Replacement)
+const { data: catalogServices } = await fetch(
+  `${API}/catalog/services?categoryId=${selectedService.serviceCategoryId}&country=AE`
 ).then(r => r.json());
+const catalogService = catalogServices[0];
 
-// 2. Select a service -> get its categoryId
-const selectedService = services[0]; // e.g., { id: 1, serviceId: 3 }
-
-// 3. Load attribute definitions for the category
+// 4. Load attribute definitions for the service
 const { data: attributes } = await fetch(
-  `${API}/service-offerings/category/${selectedService.serviceId}/attributes`
+  `${API}/service-offerings/category/${selectedService.serviceCategoryId}/attributes?serviceId=${catalogService.id}`
 ).then(r => r.json());
 
-// 4. Render dynamic form:
+// 5. Render dynamic form:
 //    - Fixed fields: name, description, price, images, etc.
-//    - Dynamic fields: generated from attribute definitions
+//    - Dynamic fields: one per attribute; JSON.parse(attr.options) for selects
 //    - Required attrs marked with *
 
-// 5. Submit offering
-await fetch(`${API}/service-offerings`, {
+// 6. Submit offering
+const res = await fetch(`${API}/service-offerings`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     vendorServiceId: selectedService.id,
+    serviceId: catalogService.id,
+    offeringType: 'PRODUCT',
     offeringName: formData.name,
     pricingType: 'FIXED',
-    price: formData.price,
+    price: formData.price,          // currency comes from the vendor's market
     filterableAttributes: {
-      // Dynamic values from attribute form fields
-      brand: formData.brand,
-      width: formData.width,
-      // ... other attributes
+      tire_size: formData.tireSize,
+      tire_brand: formData.brand,
     },
     specifications: formData.specs,
     imageUrl: formData.mainImage,
     galleryImages: formData.gallery
   })
-});
+}).then(r => r.json());
+
+if (res.status === 'failed') {
+  // HTTP 201 with the error; body lists failing fields: [{ field, message }]
+  showErrors(res.body);
+}
 ```
 
 ---
@@ -524,6 +572,10 @@ GET /quotations/vendor/requests/open?vendorId=1&categoryId=3
 | vendorId   | Integer | Yes      | Your vendor ID                  |
 | categoryId | Integer | Yes      | Service category to browse      |
 
+Only requests with status `SENT_TO_VENDORS` that haven't expired and have a location (`latitude`/`longitude`) are listed, newest first.
+
+> **Note:** nothing in the API moves a request from `REQUESTED` to `SENT_TO_VENDORS` yet (the broadcast step isn't wired up), so this list is empty until that is added. You can still quote on a `REQUESTED` request by its ID (4.4).
+
 **Response:** `ApiResponse<List<QuotationRequestResponse>>`
 
 ```json
@@ -532,7 +584,11 @@ GET /quotations/vendor/requests/open?vendorId=1&categoryId=3
     {
       "id": 50,
       "quotationNumber": "QR-20260425-001",
-      "serviceCategory": { "id": 3, "name": "AC Service" },
+      "serviceCategory": { "id": 5, "code": "REPAIRS_DIAGNOSTICS", "name": "Repairs & Diagnostics" },
+      "serviceId": 4,
+      "serviceCode": "AC_SERVICE",
+      "serviceName": "Air Conditioning Service",
+      "schemaVersionId": 1,
       "customerId": 100,
       "serviceLocationType": "AT_VENDOR",
       "city": "Dubai",
@@ -543,14 +599,18 @@ GET /quotations/vendor/requests/open?vendorId=1&categoryId=3
       "quotesReceivedCount": 2,
       "fieldValues": [
         {
+          "id": 1,
           "fieldCode": "vehicle_make",
-          "label": "Vehicle Make",
-          "value": "Toyota"
+          "fieldLabel": "Vehicle Make",
+          "fieldValue": "\"Toyota\"",
+          "fileUrl": null
         },
         {
+          "id": 2,
           "fieldCode": "issue_description",
-          "label": "Issue Description",
-          "value": "AC not cooling, making noise"
+          "fieldLabel": "Issue Description",
+          "fieldValue": "\"AC not cooling, making noise\"",
+          "fileUrl": null
         }
       ],
       "createdAt": "2026-04-25T14:30:00"
@@ -570,6 +630,8 @@ GET /quotations/vendor/request/{requestId}
 ```
 GET /quotations/vendor/request/{requestId}/fields
 ```
+
+`ApiResponse<List<QuotationRequestFieldValueResponse>>`: `{ id, fieldCode, fieldLabel, fieldValue, fileUrl }`. `fieldValue` is a JSON string; `JSON.parse` it.
 
 ### 4.4 Submit a Quote
 
@@ -641,7 +703,7 @@ Content-Type: application/json
 | inspectionFee      | BigDecimal      | No       | Upfront inspection fee                       |
 | estimatedDuration  | String          | No       | How long the service takes                   |
 | warrantyInfo       | String          | No       | Warranty details                             |
-| validUntil         | LocalDate       | No       | Quote validity date                          |
+| validUntil         | LocalDate       | No       | Quote validity date (default: 7 days from today) |
 | vendorNotes        | String          | No       | Additional notes for customer                |
 | lineItems          | List            | No       | Detailed line items (for BREAKUP)            |
 
@@ -658,6 +720,12 @@ Content-Type: application/json
 | discount    | BigDecimal | No       | Discount amount                  |
 | taxRate     | BigDecimal | No       | Tax percentage                   |
 | isOptional  | Boolean    | No       | Whether item is optional         |
+
+Each line's `totalPrice` is calculated by the server. `totalAmount` is stored as sent; it isn't recalculated from the lines.
+
+**Rules:** the request must be `REQUESTED`, `SENT_TO_VENDORS` or `QUOTES_RECEIVED` and not expired, and a vendor can quote once per request. The quote is created with status `SENT`, and the request moves to `QUOTES_RECEIVED`.
+
+**Response:** `ApiResponse<VendorQuotationResponse>` with `id`, `quoteNumber`, `status`, `lineItems` and the fields above.
 
 **Vendor Pricing Types:**
 | Type                  | When to Use                                |
@@ -696,6 +764,8 @@ GET /quotations/vendor/quote/{quotationId}/items
 POST /quotations/vendor/quote/{quotationId}/withdraw?vendorId=1
 ```
 
+Only your own quotes with status `SENT` or `DRAFT` can be withdrawn; they become `WITHDRAWN`.
+
 ### 4.9 Get Quotation Statistics
 
 ```
@@ -714,6 +784,8 @@ GET /quotations/vendor/stats?vendorId=1
 }
 ```
 
+`pending` counts quotes with status `SENT` (waiting for the customer).
+
 ---
 
 ## 5. Booking Management (Vendor View)
@@ -729,7 +801,7 @@ GET /bookings/vendor/{vendorId}?status=PENDING
 | Param          | Type    | Description                                    |
 |----------------|---------|------------------------------------------------|
 | vendorId | Integer | Your vendor ID                                 |
-| status         | String  | Optional filter: `REQUESTED`, `CONFIRMED`, `SCHEDULED`, `WORK_INPROGRESS`, `COMPLETED`, etc. |
+| status         | String  | Optional filter, a booking status name: `CONFIRMED`, `WORK_INPROGRESS`, `COMPLETED`, `DONE`, `CANCELLED`, ... |
 
 **Response:** `ApiResponse<List<BookingDetailResponse>>`
 
@@ -742,21 +814,30 @@ GET /bookings/vendor/{vendorId}?status=PENDING
       "scheduleDate": "2026-04-25",
       "serviceStartTime": "09:00:00",
       "serviceEndTime": "10:00:00",
-      "status": "REQUESTED",
+      "deliveryTime": null,
+      "status": "CONFIRMED",
       "comments": "Check alignment too",
       "vendor": { "id": 1, "companyBrandName": "QuickFit Tyres" },
+      "selectedServiceIds": "5",
       "servicesResponse": [
-        { "id": 1, "name": "Tyre Replacement" }
+        { "id": 3, "code": "TIRES_WHEELS", "name": "Tires & Wheels" }
       ],
+      "subscriptionPlanId": null,
       "customerId": 100,
       "vehicleId": 10,
+      "technicianId": null,
       "vehicle": {
-        "make": "Toyota",
+        "brand": "Toyota",
         "model": "Camry",
-        "year": 2022,
-        "plateNumber": "A-12345"
+        "year": "2022",
+        "code": "A",
+        "number": "12345"
       },
-      "slot": { "startTime": "09:00", "endTime": "10:00" }
+      "slot": {
+        "id": 77, "slotDate": "2026-04-25", "startTime": "09:00", "endTime": "10:00",
+        "isAvailable": true, "maxBookings": 3, "currentBookings": 1, "availableBookings": 2,
+        "vendorServiceId": 1
+      }
     }
   ]
 }
@@ -767,6 +848,8 @@ GET /bookings/vendor/{vendorId}?status=PENDING
 ```
 GET /bookings/{appointmentId}
 ```
+
+**Response:** `ApiResponse<{ appointment, services, jobcards }>`: the booking, its booked services and its job cards.
 
 ### 5.3 Update Appointment Status
 
@@ -785,33 +868,39 @@ Content-Type: application/json
 }
 ```
 
+**Response:** `ApiResponse<BookingResponse>`
+
 **Typical Vendor Status Flow:**
 ```
-REQUESTED -> CONFIRMED -> SCHEDULED -> WORK_INPROGRESS -> COMPLETED -> DELIVERED
-                                    -> WAITING_FOR_SPARES -> WORK_INPROGRESS (resume)
-            -> REJECTED (decline)
-            -> CANCELLED
+CONFIRMED -> WORK_INPROGRESS -> COMPLETED -> READY_FOR_DELIVERY -> DELIVERED (stored as DONE)
+                             -> WAITING_FOR_SPARES -> WORK_INPROGRESS (resume)
+          -> REJECTED (decline)
+          -> CANCELLED
 ```
 
-| Status              | Description                                  |
-|---------------------|----------------------------------------------|
-| REQUESTED           | New booking from customer                    |
-| CONFIRMED           | Vendor accepted the booking                  |
-| SCHEDULED           | Booking is scheduled                         |
-| ASSIGNED            | Assigned to a technician                     |
-| WORK_INPROGRESS     | Service is being performed                   |
-| WAITING_FOR_SPARES  | Paused - waiting for parts                   |
-| COMPLETED           | Service completed                            |
-| READY_FOR_DELIVERY  | Vehicle ready for pickup                     |
-| DELIVERED           | Handed back to customer                      |
-| CANCELLED           | Booking cancelled                            |
-| REJECTED            | Vendor declined the booking                  |
+Bookings start as `CONFIRMED` (direct, slot and quote bookings alike). The server doesn't check transitions, so the vendor app should only offer the next sensible statuses. Side effects:
+
+| Status              | Description                                  | Server side effect                     |
+|---------------------|----------------------------------------------|----------------------------------------|
+| CONFIRMED           | New booking (initial status)                 |                                        |
+| ASSIGNED            | Assigned to a technician (via job card)      |                                        |
+| WORK_INPROGRESS     | Service is being performed                   | Sets `serviceStartTime` to now         |
+| WAITING_FOR_SPARES  | Paused - waiting for parts                   |                                        |
+| COMPLETED           | Service completed                            | Sets `serviceEndTime` to now           |
+| READY_FOR_DELIVERY  | Vehicle ready for pickup                     |                                        |
+| DELIVERED           | Handed back to customer                      | Saved as `DONE`, sets `deliveryTime`   |
+| CANCELLED           | Booking cancelled                            |                                        |
+| REJECTED            | Vendor declined the booking                  |                                        |
+
+Every change is recorded with `memberId`, `memberType` and `comments`.
 
 ### 5.4 Get Available Slots (Manage Capacity)
 
 ```
 GET /bookings/{vendorServiceId}/available-slots?date=25/04/2026
 ```
+
+Not wrapped. Returns `{ vendorServiceId, date, availableSlots: [{ slotId, startTime, endTime, maxBookings, currentBookings, availableBookings, isAvailable }] }`. Slots are generated 60 days ahead when the service is added; changing hours or capacity (`PUT /vendors/services/{vendorServiceId}`) regenerates them.
 
 ---
 
@@ -829,22 +918,27 @@ Content-Type: multipart/form-data
 ```
 
 **Form Data:**
-- `files`: One or more files (max 10MB each)
+- `files`: One or more files. Images up to 10 MB each, videos under 20 MB (the server allows 30 MB for video but its upload limit is 20 MB per file, 50 MB per request).
 
-**Response:**
+**Response:** `ApiResponse<List<MediaFileResponse>>`
 ```json
 {
   "data": [
     {
       "id": 45,
-      "fileName": "logo.png",
+      "fileName": "8c1e...-logo.png",
+      "originalFileName": "logo.png",
+      "filePath": "...",
+      "mediaType": "image/png",
+      "size": 102400,
       "fileUrl": "https://storage.example.com/logo.png",
-      "fileType": "image/png",
-      "fileSize": 102400
+      "createdAt": "2026-04-25T10:00:00"
     }
   ]
 }
 ```
+
+Logos, VAT certificates, licences and branch photos are referenced by `id`; offering images by `fileUrl`.
 
 ### 6.2 Delete File
 
@@ -869,7 +963,9 @@ async function uploadFiles(files) {
     method: 'POST',
     body: formData
   });
-  return response.json();
+  const json = await response.json();
+  if (json.status === 'failed') throw new Error(json.message);
+  return json;
 }
 
 // Usage in offering creation
@@ -893,9 +989,10 @@ const offering = {
   /dashboard                      -- Stats overview (quotation stats, booking counts)
   /profile                        -- View/edit vendor profile
   /profile/edit                   -- Edit form
-  /services                       -- Manage linked service categories
+  /services                       -- My services (branches): hours, details, pricing
+    /new                          -- Add a service (type -> details form)
   /offerings                      -- All my offerings
-    /new                          -- Create offering (select service -> dynamic form)
+    /new                          -- Create offering (branch -> catalog service -> dynamic form)
     /:id                          -- View offering details
     /:id/edit                     -- Edit offering
   /quotations
@@ -926,12 +1023,13 @@ const offering = {
 ### Journey 2: Add a Product/Service Listing
 
 ```
-1. Get my services                GET /vendor-services/vendor/{vendorId}
-2. Pick a service -> category
-3. Load attribute definitions     GET /service-offerings/category/{categoryId}/attributes
-4. Upload product images          POST /mediafiles/upload
-5. Create offering                POST /service-offerings
-6. Verify listing                 GET /service-offerings/{id}
+1. Get my services                GET /vendors/{vendorId}/services
+2. Pick a service -> category     (serviceCategoryId)
+3. Pick the catalog service       GET /catalog/services?categoryId={categoryId}&country=AE
+4. Load attribute definitions     GET /service-offerings/category/{categoryId}/attributes?serviceId={serviceId}
+5. Upload product images          POST /mediafiles/upload
+6. Create offering                POST /service-offerings  { vendorServiceId, serviceId, filterableAttributes, ... }
+7. Verify listing                 GET /service-offerings/{id}
 ```
 
 ### Journey 3: Respond to Quotation Request
@@ -948,12 +1046,12 @@ const offering = {
 ### Journey 4: Handle a Booking
 
 ```
-1. View incoming bookings         GET /bookings/vendor/{vendorId}?status=REQUESTED
+1. View incoming bookings         GET /bookings/vendor/{vendorId}?status=CONFIRMED
 2. View booking details           GET /bookings/{appointmentId}
-3. Confirm booking                PUT /bookings/status  { status: "CONFIRMED" }
-4. Start work                     PUT /bookings/status  { status: "WORK_INPROGRESS" }
-5. Complete                       PUT /bookings/status  { status: "COMPLETED" }
-6. Deliver                        PUT /bookings/status  { status: "DELIVERED" }
+3. Start work                     PUT /bookings/status  { status: "WORK_INPROGRESS" }
+4. Complete                       PUT /bookings/status  { status: "COMPLETED" }
+5. Deliver                        PUT /bookings/status  { status: "DELIVERED" }  (stored as DONE)
+   (or decline: { status: "REJECTED" })
 ```
 
 ### Journey 5: Manage Stock & Listings
@@ -969,7 +1067,7 @@ const offering = {
 ### Frontend Code Example: Submit Quotation
 
 ```javascript
-const API = 'http://localhost:8080';
+const API = 'http://localhost:9010/api/v1';
 
 // 1. Find open requests for my category
 const { data: requests } = await fetch(
@@ -1012,13 +1110,17 @@ const quote = {
   ]
 };
 
-const { data: submitted } = await fetch(`${API}/quotations/vendor/quote`, {
+const res = await fetch(`${API}/quotations/vendor/quote`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(quote)
 }).then(r => r.json());
 
-console.log(`Quote ${submitted.quoteNumber} submitted!`);
+if (res.status === 'failed') {
+  // HTTP 201 with the error, e.g. "You have already submitted a quote for this request"
+  throw new Error(res.message);
+}
+console.log(`Quote ${res.data.quoteNumber} submitted!`);
 
 // 4. Track my stats
 const { data: stats } = await fetch(
@@ -1039,7 +1141,7 @@ console.log(`Total: ${stats.total}, Accepted: ${stats.accepted}`);
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080',
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:9010/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -1051,9 +1153,14 @@ export const setAuthHeader = (userId) => {
   api.defaults.headers.common['X-Auto-Adda-Id'] = userId;
 };
 
-// Response interceptor
+// Errors come back as HTTP 201 with status "failed", so turn them into rejections
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data?.status === 'failed') {
+      return Promise.reject({ response, message: response.data.message });
+    }
+    return response;
+  },
   (error) => {
     const message = error.response?.data?.message || error.message;
     console.error('API Error:', message);
@@ -1149,15 +1256,16 @@ export const getMyServices = (vendorId) =>
 // Add a service
 export const addService = (data) =>
   api.post(VENDOR_SERVICE_BASE, data);
-// data = { vendorId, serviceCategoryId, isActive: true } (no hours or slots; use addVendorService to onboard)
+// data = { vendorId, serviceCategoryId, active: true } (no hours or slots; use addVendorService to onboard)
 
 // Get vendor service by ID
 export const getServiceById = (id) =>
   api.get(`${VENDOR_SERVICE_BASE}/${id}`);
 
-// Update a service link
+// Update pricing (send active: true, or the service is deactivated)
 export const updateService = (id, data) =>
   api.put(`${VENDOR_SERVICE_BASE}/${id}`, data);
+// data = { vendorId, serviceCategoryId, active: true, pricingType, price, minPrice, maxPrice, currency, description }
 
 // Remove a service
 export const removeService = (id) =>
@@ -1182,10 +1290,10 @@ const OFFERING_BASE = '/service-offerings';
 export const createOffering = (data) =>
   api.post(OFFERING_BASE, data);
 // data = {
-//   vendorServiceId, offeringName, shortDescription, description,
+//   vendorServiceId, serviceId, offeringType, offeringName, shortDescription, description,
 //   sku, pricingType, price, minPrice, maxPrice, originalPrice,
-//   currency, stockStatus, quantityAvailable,
-//   filterableAttributes: { brand: "MRF", width: "185" },
+//   currency, stockStatus, quantityAvailable,       // stock fields: PRODUCT only
+//   filterableAttributes: { tire_size: "185/65 R15", tire_brand: "MRF" },
 //   specifications: { warranty: "5 years" },
 //   imageUrl, galleryImages, displayOrder, isFeatured
 // }
@@ -1240,13 +1348,13 @@ export const getOfferingsByVendorService = (vendorServiceId) =>
 export const getAllOfferingsByVendorService = (vendorServiceId) =>
   api.get(`${OFFERING_BASE}/vendor-service/${vendorServiceId}/all`);
 
-// Get attribute definitions for a category (for building offering form)
-export const getAttributeDefinitions = (categoryId) =>
-  api.get(`${OFFERING_BASE}/category/${categoryId}/attributes`);
+// Get attribute definitions for a category / catalog service (for building offering form)
+export const getAttributeDefinitions = (categoryId, serviceId) =>
+  api.get(`${OFFERING_BASE}/category/${categoryId}/attributes`, { params: { serviceId } });
 
 // Get required attribute definitions
-export const getRequiredAttributes = (categoryId) =>
-  api.get(`${OFFERING_BASE}/category/${categoryId}/attributes/required`);
+export const getRequiredAttributes = (categoryId, serviceId) =>
+  api.get(`${OFFERING_BASE}/category/${categoryId}/attributes/required`, { params: { serviceId } });
 
 // Search offerings by name
 export const searchByName = (q) =>
@@ -1341,7 +1449,7 @@ export const getMyAppointments = (vendorId, status = null) =>
     params: { status },
   });
 
-// Get appointment details
+// Get appointment details -> data: { appointment, services, jobcards }
 export const getAppointmentDetails = (appointmentId) =>
   api.get(`${BOOKING_BASE}/${appointmentId}`);
 
@@ -1371,8 +1479,9 @@ const MEDIA_BASE = '/mediafiles';
 export const uploadFiles = (files) => {
   const formData = new FormData();
   files.forEach((file) => {
-    if (file.size > 10 * 1024 * 1024) {
-      throw new Error(`File ${file.name} exceeds 10MB limit`);
+    const limit = file.type.startsWith('video/') ? 20 : 10; // MB
+    if (file.size > limit * 1024 * 1024) {
+      throw new Error(`File ${file.name} exceeds ${limit}MB limit`);
     }
     formData.append('files', file);
   });
@@ -1412,6 +1521,10 @@ export const getSubCategories = (parentId) =>
 // Get category by ID
 export const getCategoryById = (id) =>
   api.get(`${CATEGORY_BASE}/${id}`);
+
+// Catalog services in a category (to pick serviceId for an offering)
+export const getCatalogServices = (categoryId, country) =>
+  api.get('/catalog/services', { params: { categoryId, country } });
 ```
 
 ---
@@ -1471,14 +1584,14 @@ const VendorRegistration = ({ userId }) => {
       attributes: details,
     };
 
-    const res = await onboardVendor(userId, company, service);
-    // errors come back as HTTP 201 too, with status "failed"; validation errors
-    // list each failing field in body: [{ field, message }]
-    if (res.data.status === 'failed') {
-      alert('Registration failed: ' + res.data.message);
-      return;
+    try {
+      const res = await onboardVendor(userId, company, service);
+      alert(`Registered! Vendor ID: ${res.data.vendor.id}, service ID: ${res.data.service.id}`);
+    } catch (err) {
+      // the 9.1 interceptor rejects "failed" bodies; validation errors list
+      // each failing field in body: [{ field, message }]
+      alert('Registration failed: ' + err.message);
     }
-    alert(`Registered! Vendor ID: ${res.data.vendor.id}, service ID: ${res.data.service.id}`);
   };
 
   // ... render the company fields, a service type picker, and one input per entry in
@@ -1516,14 +1629,14 @@ const OfferingManagement = ({ vendorId }) => {
       getMyServices(vendorId),
     ]);
     setOfferings(offRes.data.data);
-    setServices(svcRes.data.data);
+    setServices(svcRes.data.data); // each has id (vendorServiceId) and serviceCategoryId
   };
 
-  // When vendor selects a service category, load its attribute definitions
-  const onServiceSelect = async (service) => {
-    const res = await getAttributeDefinitions(service.serviceId);
+  // When the vendor picks a branch and a catalog service, load the attribute definitions
+  const onServiceSelect = async (vendorService, catalogServiceId) => {
+    const res = await getAttributeDefinitions(vendorService.serviceCategoryId, catalogServiceId);
     setAttributes(res.data.data);
-    // Render dynamic form fields from attributes
+    // Render dynamic form fields from attributes; JSON.parse(attr.options) for selects
   };
 
   const handleCreateOffering = async (formData, imageFiles) => {
@@ -1547,6 +1660,8 @@ const OfferingManagement = ({ vendorId }) => {
 
     await createOffering({
       vendorServiceId: formData.vendorServiceId,
+      serviceId: formData.catalogServiceId,
+      offeringType: formData.offeringType,          // 'SERVICE' or 'PRODUCT'
       offeringName: formData.name,
       shortDescription: formData.shortDesc,
       description: formData.description,
@@ -1554,7 +1669,6 @@ const OfferingManagement = ({ vendorId }) => {
       price: formData.price,
       minPrice: formData.minPrice,
       maxPrice: formData.maxPrice,
-      stockStatus: 'IN_STOCK',
       filterableAttributes,
       imageUrl,
       galleryImages,
@@ -1569,7 +1683,7 @@ const OfferingManagement = ({ vendorId }) => {
   };
 
   const handleToggleActive = async (offering) => {
-    if (offering.active) {
+    if (offering.isActive) {
       await deactivateOffering(offering.id);
     } else {
       await reactivateOffering(offering.id);
@@ -1685,7 +1799,7 @@ const QuotationDashboard = ({ vendorId, categoryId }) => {
       <h3>My Submitted Quotes</h3>
       {myQuotes.map((q) => (
         <div key={q.id}>
-          <span>{q.quoteNumber} - {q.status} - {q.totalAmount} AED</span>
+          <span>{q.quoteNumber} - {q.status} - {q.totalAmount}</span>
           {q.status === 'SENT' && (
             <button onClick={() => handleWithdraw(q.id)}>Withdraw</button>
           )}
@@ -1734,10 +1848,10 @@ const BookingManagement = ({ vendorId }) => {
     }
   };
 
+  // bookings start CONFIRMED; the server doesn't check transitions, so offer only these
   const statusActions = {
-    REQUESTED: ['CONFIRMED', 'REJECTED'],
-    CONFIRMED: ['SCHEDULED', 'CANCELLED'],
-    SCHEDULED: ['WORK_INPROGRESS', 'CANCELLED'],
+    CONFIRMED: ['WORK_INPROGRESS', 'REJECTED', 'CANCELLED'],
+    ASSIGNED: ['WORK_INPROGRESS', 'CANCELLED'],
     WORK_INPROGRESS: ['COMPLETED', 'WAITING_FOR_SPARES'],
     WAITING_FOR_SPARES: ['WORK_INPROGRESS'],
     COMPLETED: ['READY_FOR_DELIVERY'],
@@ -1748,7 +1862,7 @@ const BookingManagement = ({ vendorId }) => {
     <div>
       {/* Status filter tabs */}
       <div className="tabs">
-        {['ALL', 'REQUESTED', 'CONFIRMED', 'WORK_INPROGRESS', 'COMPLETED'].map((s) => (
+        {['ALL', 'CONFIRMED', 'WORK_INPROGRESS', 'COMPLETED', 'DONE'].map((s) => (
           <button
             key={s}
             className={statusFilter === (s === 'ALL' ? null : s) ? 'active' : ''}
@@ -1765,7 +1879,7 @@ const BookingManagement = ({ vendorId }) => {
           <h4>{b.appointmentReferenceId}</h4>
           <p>Date: {b.scheduleDate} | Time: {b.serviceStartTime} - {b.serviceEndTime}</p>
           <p>Status: <strong>{b.status}</strong></p>
-          <p>Customer #{b.customerId} | Vehicle: {b.vehicle?.make} {b.vehicle?.model}</p>
+          <p>Customer #{b.customerId} | Vehicle: {b.vehicle?.brand} {b.vehicle?.model}</p>
           <p>Services: {b.servicesResponse?.map((s) => s.name).join(', ')}</p>
 
           {/* Action buttons based on current status */}

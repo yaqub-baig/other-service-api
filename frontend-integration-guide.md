@@ -1,6 +1,9 @@
 # other-service-api — Frontend Integration Guide
 
-Covers the API after the **multi-service vendor** remodel.
+Covers the API after the **multi-service vendor** remodel: media, categories, vendors and their
+services, and bookings. The catalog (services, attributes, offerings, search) and quotations are in
+`frontend-integration-guide-customer.md`, `frontend-integration-guide-vendor.md` and
+`frontend-integration-guide-admin.md`; recent changes are listed in `service-catalog-api-changes.md`.
 
 - **Base URL:** `http://<host>:9010/api/v1`  (prod: `https://otherservice.mylstech.xyz/api/v1`)
 - **Auth:** no tokens. The caller's identity is passed as header **`X-Auto-Adda-Id: <userId>`** on
@@ -31,19 +34,27 @@ type is an admin change, with no new endpoint or table.
 
 Two shapes depending on the controller:
 
-**Enveloped** (`/bookings`, `/service-categories`, `/vendor-services`, `/mediafiles`):
+**Enveloped** (`/bookings`, `/service-categories`, `/vendor-services`, `/mediafiles`, and also
+`/catalog`, `/service-offerings`, `/quotations/**` and `/admin/**`):
 ```json
 { "status": "success", "code": "200", "message": "...", "data": { ... } }
 ```
 
-**Raw** (`/vendors`): the DTO is the body directly, no wrapper.
+**Raw** (`/vendors/**`, `/search/**`, and `GET /bookings/{vendorServiceId}/available-slots`): the DTO
+is the body directly, no wrapper. `DELETE /vendors/{id}` returns `204` with no body.
 ```json
 { "id": 12, "companyBrandName": "...", "services": [ ... ] }
 ```
 
-Errors (all controllers) come from the global handler as:
+Errors (all controllers) come from the global handler with **HTTP status 201**; the real status is
+the `code` field in the body, so check `status`, not the HTTP status:
 ```json
 { "status": "failed", "code": "400", "message": "A car wash must have at least one working day", "body": null }
+```
+Attribute validation errors (e.g. vendor service `attributes`) list every failing field in `body`:
+```json
+{ "status": "failed", "code": "400", "message": "Invalid attribute values: 1 field(s) failed validation",
+  "body": [ { "field": "bay_count", "message": "Wash bays is required" } ] }
 ```
 Common codes: `400` validation / business rule, `404` not found, `409` conflict, `500` upstream
 (identity-api unreachable, etc).
@@ -58,7 +69,7 @@ Upload files, then pass the returned ids into vendor/service payloads (`logoId`,
 
 | method | path | body | notes |
 |---|---|---|---|
-| POST | `/mediafiles/upload` | `multipart/form-data`, field `files` (one or many) | images ≤ 10 MB, video ≤ 30 MB. Returns `data: [{ id, url, ... }]` |
+| POST | `/mediafiles/upload` | `multipart/form-data`, field `files` (one or many) | images ≤ 10 MB, video ≤ 20 MB (the server's per-file upload limit). Returns `data: [{ id, fileName, originalFileName, mediaType, size, fileUrl, ... }]` |
 | DELETE | `/mediafiles/delete-image/{id}` | — | |
 
 ### 3.2 `ServiceCategoryController` — `/service-categories`  · admin (manage) / everyone (read)
@@ -73,7 +84,8 @@ populate dropdowns. On onboarding, each service type is attached to its category
 | GET | `/service-categories/root` / `/service-categories/parent/{parentId}` | hierarchy |
 | POST / PUT / DELETE | `/service-categories` `/{id}` | **admin only** |
 
-`data` item: `{ id, name, description, image, isActive, price, laborPrice }`
+`data` item: `{ id, code, name, nameAr, description, descriptionAr, displayOrder, parentId, image, isActive, price, laborPrice }`.
+`name` and `description` follow `Accept-Language` (`ar` for Arabic).
 
 ### 3.3 `VendorController` — `/vendors`  · vendor owner (write) / admin + discovery (read)
 The company record, and the services a vendor adds. Raw response bodies (no envelope). Header
@@ -87,7 +99,7 @@ The company record, and the services a vendor adds. Raw response bodies (no enve
 | GET | `/vendors` | owner's own companies (header) | — |
 | GET | `/vendors/all` | admin / listing — every active vendor | — |
 | GET | `/vendors/brandname/{name}` | search by brand (contains) | — |
-| GET | `/vendors/search?city=&zip=&vendorName=&serviceCategoryIds=` | discovery search | — |
+| GET | `/vendors/search?city=&zip=&vendorName=&serviceCategoryIds=` | discovery search; returns `VendorResponse` items (company fields only, no `services`) | — |
 | DELETE | `/vendors/{id}` | soft-delete (isActive=false) | — |
 | POST | `/vendors/onboard` | vendor owner — create **company + first service** in one call | `VendorOnboardingRequest` = `{ company: VendorCompanyRequest, service: VendorServiceOnboardingRequest }` |
 | POST | `/vendors/{vendorId}/services` | vendor owner — add a service to an **existing** company | `VendorServiceOnboardingRequest` |
@@ -105,8 +117,8 @@ the other service endpoints return `VendorServiceResponse`.
 {
   "id": 12, "companyBrandName": "...", "companyArabicName": "...", "name": "...",
   "trnNumber": "...", "webSite": "...", "email": "...", "phoneNumber": "...", "mobileNumber": "...",
-  "accountStatus": "PENDING",
-  "companyLogo": { "id": 1, "url": "..." },
+  "accountStatus": "PENDING", "countryCode": "AE",
+  "companyLogo": { "id": 1, "fileUrl": "..." },
   "companyLocation": { "address": "...", "city": "...", "state": "...", "country": "...", "zip": "...", "latitude": 0, "longitude": 0 },
   "vatCertificate": [ ... ],
   "services": [ VendorServiceResponse, ... ]
@@ -122,8 +134,12 @@ endpoints above for onboarding; use this for pricing, admin/debug or generic rea
 | GET | `/vendor-services` | all |
 | GET | `/vendor-services/{id}` | one service |
 | GET | `/vendor-services/vendor/{vendorId}` | a vendor's services |
-| POST | `/vendor-services` | body `{ vendorId, serviceCategoryId, isActive }` plus optional pricing — bare link, no hours/slots |
-| PUT / DELETE | `/vendor-services/{id}` | |
+| POST | `/vendor-services` | body `{ vendorId, serviceCategoryId, isActive }` plus optional pricing — bare link, no hours/slots. Reactivates the existing row if the vendor already has that category |
+| PUT | `/vendor-services/{id}` | same body as POST; sets pricing (`pricingType` `FIXED` / `RANGE` / `QUOTE_BASED` / `NEGOTIABLE`, `price`, `minPrice`, `maxPrice`, `currency`, `description`) |
+| DELETE | `/vendor-services/{id}` | deactivates; offerings, bookings and quotes keep pointing at it |
+
+`isActive` is optional: POST defaults it to `true`, and PUT leaves it unchanged when it isn't sent
+(`active` is accepted as an alias).
 
 `VendorServiceResponse`:
 ```json
@@ -134,6 +150,8 @@ endpoints above for onboarding; use this for pricing, admin/debug or generic rea
   "concurrentAppointmentCapacity": 3, "tradeLicenceNumber": "CN-1099001",
   "accountStatus": "PENDING",
   "serviceLocation": { LocationResponse }, "serviceImages": [ ... ], "tradeLicenseAttachment": [ ... ],
+  "pricingType": "FIXED", "price": 120.00, "minPrice": null, "maxPrice": null, "currency": "AED",
+  "description": "...",
   "attributes": { "bay_count": 4, "mobile_service": false }
 }
 ```
@@ -144,7 +162,7 @@ All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
 | method | path | scope | params / body |
 |---|---|---|---|
 | GET | `/bookings/{serviceId}/available-slots?date=dd/MM/yyyy` | customer — show slots | date is **dd/MM/yyyy** |
-| POST | `/bookings/{serviceId}/book` | customer — book a slot | query: `vehicleId`, `time` (ISO `2026-09-05T09:00:00`), `selectedVendorServiceIds` (csv, optional); header `X-Auto-Adda-Id` = customer |
+| POST | `/bookings/{serviceId}/book` | customer — book a slot | query: `vehicleId`, `time` (ISO `2026-09-05T09:00:00`), `catalogServiceId` (optional), `selectedVendorServiceIds` (csv, optional); header `X-Auto-Adda-Id` = customer |
 | POST | `/bookings` | customer — direct booking (no slot) | body `CustomerBookingRequest` |
 | GET | `/bookings/{bookingId}` | booking detail (services + job cards) | — |
 | GET | `/bookings/user/bookings` | customer's own bookings | header `X-Auto-Adda-Id` |
@@ -152,6 +170,13 @@ All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
 | PUT | `/bookings/status` | vendor — change status | body `{ appointmentId, status, comments, memberId, memberType }` |
 | PUT | `/bookings/edit?bookingId=&serviceId=&vehicleId=&time=` | reschedule / move | header `X-Auto-Adda-Id` |
 | DELETE | `/bookings/{bookingId}/cancel` | cancel | header `X-Auto-Adda-Id` |
+
+`available-slots` returns `{ vendorServiceId, date, availableSlots: [{ slotId, startTime, endTime,
+maxBookings, currentBookings, availableBookings, isAvailable }] }` with no envelope.
+
+When `catalogServiceId` is sent (slot booking or `POST /bookings`), a catalog service whose
+quotation mode is `REQUIRED` is refused (book from an accepted quote instead), and the vendor must
+offer the service's category.
 
 ---
 
@@ -168,6 +193,7 @@ All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
   "email": "owner@sparkle.example.com",
   "phoneNumber": "042221111",
   "mobileNumber": "0501234567",
+  "countryCode": "AE",
   "companyLocation": {
     "streetAddress1": "Warehouse 12, Al Quoz Industrial 3",
     "streetAddress2": "",
@@ -180,7 +206,8 @@ All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
   "vatCertificateIds": [8, 9]
 }
 ```
-`logoId` / `vatCertificateIds` optional — upload via `/mediafiles/upload` first.
+`logoId` / `vatCertificateIds` optional — upload via `/mediafiles/upload` first. `countryCode`
+(ISO, e.g. `AE`) is the vendor's market and decides offering currency; defaults to `AE`.
 
 ### `VendorServiceOnboardingRequest`
 ```json
@@ -221,6 +248,7 @@ All `{serviceId}` / `{vendorServiceId}` path vars are **VendorService ids**.
 {
   "customerId": 42,
   "vendorServiceId": 5,
+  "catalogServiceId": 3,
   "vehicleId": 101,
   "serviceIds": [5],
   "scheduleDate": "2026-09-05",
@@ -286,7 +314,8 @@ Only Washing & Detailing has detail attributes in the starter seed (the eight ca
 **Booking `status`** (subset): `CONFIRMED`, `WORK_INPROGRESS`, `COMPLETED`, `DELIVERED`, `DONE`,
 `CANCELLED`, `PENDING`, `NEW`, `ASSIGNED`.
 
-**`accountStatus`**: `PENDING`, `VERIFIED`, `ACTIVE`, `SUSPENDED`, `REJECTED` (see `util/Status`).
+**`accountStatus`** (subset): `PENDING`, `VERIFIED`, `ACTIVE`, `SUSPENDED`, `REJECTED` (see `util/Status`).
+New companies and services start as `PENDING`.
 
 ---
 
