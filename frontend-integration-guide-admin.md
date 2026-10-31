@@ -152,6 +152,14 @@ DELETE /service-categories/{id}
 
 Deactivates the category (`isActive: false`).
 
+### 1.8 Reactivate Category
+
+```
+POST /service-categories/{id}/reactivate
+```
+
+Sets `isActive: true` and returns the category.
+
 ### Frontend Flow
 
 ```
