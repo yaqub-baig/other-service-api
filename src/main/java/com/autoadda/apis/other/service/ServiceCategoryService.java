@@ -119,6 +119,13 @@ public class ServiceCategoryService {
         serviceCategoryRepository.save(existing);
     }
 
+    public AvailableServiceResponse reactivate(Integer id) {
+        ServiceCategory existing = serviceCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Service category not found with id: " + id));
+        existing.setIsActive(true);
+        return serviceCategoryMapper.toResponse(serviceCategoryRepository.save(existing));
+    }
+
     public List<AvailableServiceResponse> getByParentId(Integer parentId) {
         return serviceCategoryMapper.toResponseList(serviceCategoryRepository.findByParentId(parentId));
     }

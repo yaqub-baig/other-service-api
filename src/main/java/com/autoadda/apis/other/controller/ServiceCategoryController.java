@@ -49,6 +49,11 @@ public class ServiceCategoryController {
         return ResponseEntity.ok(ApiResponse.success("Service category deactivated", null));
     }
 
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<ApiResponse<AvailableServiceResponse>> reactivate(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResponse.success("Service category reactivated", serviceCategoryService.reactivate(id)));
+    }
+
     @GetMapping("/parent/{parentId}")
     public ResponseEntity<ApiResponse<List<AvailableServiceResponse>>> getByParentId(@PathVariable Integer parentId) {
         return ResponseEntity.ok(ApiResponse.success(serviceCategoryService.getByParentId(parentId)));

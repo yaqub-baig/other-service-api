@@ -45,7 +45,7 @@ public class VendorServiceCrudService {
                             .orElseThrow(() -> new ResourceNotFoundException("Service category not found")));
                     return created;
                 });
-        vendorService.setIsActive(request.isActive());
+        vendorService.setIsActive(!Boolean.FALSE.equals(request.getIsActive()));
         applyPricing(vendorService, request);
         return vendorServiceRepository.save(vendorService);
     }
@@ -57,7 +57,9 @@ public class VendorServiceCrudService {
     @Transactional
     public VendorServiceResponse updateVendorService(Integer id, VendorServiceRequest request) {
         VendorService existing = findEntity(id);
-        existing.setIsActive(request.isActive());
+        if (request.getIsActive() != null) {
+            existing.setIsActive(request.getIsActive());
+        }
         if (request.getServiceCategoryId() != null) {
             existing.setServiceCategory(serviceCategoryRepository.findById(request.getServiceCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Service category not found")));

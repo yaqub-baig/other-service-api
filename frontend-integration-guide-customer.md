@@ -1,7 +1,8 @@
 # Frontend Integration Guide - Customer App
 
-> **Base URL:** `{API_BASE_URL}` (e.g., `http://localhost:8080`)
+> **Base URL:** `{API_BASE_URL}` (e.g., `http://localhost:9010/api/v1`)
 > **Authentication Header:** `X-Auto-Adda-Id: {userId}` (used in booking-related endpoints)
+> **Language:** send `Accept-Language: ar` to get Arabic names, labels and help text; English is used when no Arabic exists.
 > **Standard Response Wrapper:**
 > ```json
 > {
@@ -11,12 +12,19 @@
 >   "data": { ... }
 > }
 > ```
+> Not wrapped: `/search/**`, `/vendors/**` and `GET /bookings/{vendorServiceId}/available-slots` return the DTO directly.
+>
+> **Errors** come back as **HTTP 201** with `"status": "failed"` and the real status in `code`, so check the body, not the HTTP status:
+> ```json
+> { "status": "failed", "code": "400", "message": "Invalid attribute values: 1 field(s) failed validation",
+>   "body": [ { "field": "vehicle_size", "message": "Vehicle size is required" } ] }
+> ```
 
 ---
 
 ## Table of Contents
 
-1. [Browse Service Categories](#1-browse-service-categories)
+1. [Browse Categories & Services](#1-browse-categories--services)
 2. [Search & Discover Offerings](#2-search--discover-offerings)
 3. [View Vendor Profiles](#3-view-vendor-profiles)
 4. [Booking Flow](#4-booking-flow)
@@ -27,9 +35,11 @@
 
 ---
 
-## 1. Browse Service Categories
+## 1. Browse Categories & Services
 
-**Base Path:** `/service-categories`
+The catalog has three levels: **category** (Washing & Detailing) → **service** (Car Wash) → **offering** (a vendor's priced listing for that service). A customer picks a category, then a service, then either books an offering or asks for quotes, depending on the service's quotation mode.
+
+**Base Paths:** `/service-categories`, `/catalog/services`
 
 ### 1.1 Get Root Categories (Homepage)
 
@@ -44,21 +54,29 @@ GET /service-categories/root
   "data": [
     {
       "id": 1,
-      "name": "Tyres",
-      "description": "Tyre sales and fitting",
-      "imageId": 45,
-      "parentId": null
+      "code": "MAINTENANCE",
+      "name": "Routine Maintenance",
+      "nameAr": "الصيانة الدورية",
+      "description": null,
+      "displayOrder": 10,
+      "parentId": null,
+      "image": null,
+      "isActive": true
     },
     {
       "id": 2,
-      "name": "Car Wash",
-      "description": "Professional car wash services",
-      "imageId": 46,
-      "parentId": null
+      "code": "CLEANING_DETAILING",
+      "name": "Washing & Detailing",
+      "nameAr": "الغسيل والتلميع",
+      "displayOrder": 20,
+      "parentId": null,
+      "isActive": true
     }
   ]
 }
 ```
+
+The starter catalog has 10 categories, all at the root (no sub-categories). Sort by `displayOrder`.
 
 ### 1.2 Get Sub-Categories
 
@@ -72,12 +90,72 @@ GET /service-categories/parent/{parentId}
 GET /service-categories/{id}
 ```
 
+### 1.4 Get Services in a Category
+
+```
+GET /catalog/services?categoryId=2&country=AE
+```
+
+| Param      | Type    | Required | Description                                          |
+|------------|---------|----------|------------------------------------------------------|
+| categoryId | Integer | No       | Only services in this category                       |
+| country    | String  | No       | ISO country; only services available in that market  |
+
+**Response:** `ApiResponse<List<CatalogServiceResponse>>`
+
+```json
+{
+  "data": [
+    {
+      "id": 3,
+      "serviceCategoryId": 2,
+      "serviceCategoryName": "Washing & Detailing",
+      "code": "CAR_WASH",
+      "name": "Car Wash",
+      "nameAr": "غسيل السيارة",
+      "description": null,
+      "quotationMode": null,
+      "effectiveQuotationMode": "DIRECT",
+      "fulfillmentMode": "BOTH",
+      "estimatedDurationMinutes": 45,
+      "displayOrder": 10,
+      "isActive": true
+    }
+  ]
+}
+```
+
+### 1.5 Get a Service
+
+```
+GET /catalog/services/{id}
+```
+
+### 1.6 Get a Service's Attributes
+
+```
+GET /catalog/services/{id}/attributes
+```
+
+The live form for the service: its published attributes plus the category defaults. Each item has `attributeCode`, `attributeName`, `dataType` (`STRING`, `INTEGER`, `DECIMAL`, `BOOLEAN`, `DATE`, `SINGLE_SELECT`, `MULTI_SELECT`, ...), `inputContext`, `isRequired`, `isFilterable`, `unit` and `options` (`[{ "value", "label", "labelAr" }]`). Attributes with `inputContext` `CUSTOMER` or `BOTH` are the ones a customer chooses, such as `vehicle_size` for a car wash; use them as search filters.
+
+### Quotation Mode: Book or Quote?
+
+`effectiveQuotationMode` decides which flow a service uses:
+
+| Mode       | Customer can                                   | Flow                                    |
+|------------|------------------------------------------------|-----------------------------------------|
+| `DIRECT`   | Book an offering directly                      | Section 2 → Section 4                   |
+| `OPTIONAL` | Book directly, or ask for quotes first         | Either                                  |
+| `REQUIRED` | Only ask for quotes; direct booking is refused | Section 5, then book from the accepted quote |
+
 ### Frontend Usage
 
 ```
-Homepage -> Category grid (icons + names from root categories)
-  -> Click category -> Show sub-categories if any
-  -> Click leaf category -> Go to search/listings page
+Homepage -> Category grid (root categories)
+  -> Click category -> Service list (GET /catalog/services?categoryId=&country=)
+  -> Click service  -> DIRECT / OPTIONAL: offerings for that service (search with serviceId)
+                    -> REQUIRED / OPTIONAL: quotation request form
 ```
 
 ---
@@ -91,7 +169,7 @@ This is the primary discovery mechanism for customers to find services and produ
 ### 2.1 Quick Search (GET - Simple)
 
 ```
-GET /search/offerings?categoryId=1&q=MRF&minPrice=2000&maxPrice=10000&city=Dubai&sortBy=price&sortDir=asc&page=0&size=20
+GET /search/offerings?categoryId=3&serviceId=5&country=AE&q=MRF&minPrice=200&maxPrice=1000&city=Dubai&sortBy=price&sortDir=asc&page=0&size=20
 ```
 
 | Param      | Type    | Default    | Description                          |
@@ -102,6 +180,8 @@ GET /search/offerings?categoryId=1&q=MRF&minPrice=2000&maxPrice=10000&city=Dubai
 | maxPrice   | Double  | -          | Maximum price filter                 |
 | city       | String  | -          | Filter by city                       |
 | area       | String  | -          | Filter by area within city           |
+| country    | String  | -          | ISO country of the vendor's market   |
+| serviceId  | Integer | -          | Catalog service (from 1.4)           |
 | lat        | Double  | -          | User latitude (for distance sort)    |
 | lng        | Double  | -          | User longitude (for distance sort)   |
 | radius     | Double  | -          | Max distance in km                   |
@@ -120,16 +200,17 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "categoryId": 1,
+  "categoryId": 3,
+  "serviceId": 5,
+  "countryCode": "AE",
   "query": "MRF tyre",
-  "minPrice": 2000,
-  "maxPrice": 10000,
+  "minPrice": 200,
+  "maxPrice": 1000,
   "pricingTypes": ["FIXED", "RANGE"],
   "stockStatuses": ["IN_STOCK", "LIMITED_STOCK"],
   "attributes": {
-    "brand": "MRF",
-    "width": ["185", "195"],
-    "rim_size": "15"
+    "tyre_brand": "MRF",
+    "rim_size": ["15", "16"]
   },
   "latitude": 25.2048,
   "longitude": 55.2708,
@@ -147,6 +228,15 @@ Content-Type: application/json
 }
 ```
 
+| Field        | Description                                                                 |
+|--------------|-----------------------------------------------------------------------------|
+| serviceId    | Catalog service; narrows results to offerings for that service             |
+| countryCode  | ISO country of the vendor's market                                         |
+| attributes   | Attribute code → value, or a list of values for "any of". Codes come from 1.6 or `GET /search/filters/{categoryId}`; an unknown code is refused with `code: "400"` |
+| offeringType | `SERVICE` or `PRODUCT`                                                       |
+| vendorId, skus, featuredOnly | Further optional filters                                    |
+| sortBy       | `relevance` (default), `price`, `rating`, `popularity`, `distance`, `newest`, `name` |
+
 **Response:** `OfferingSearchResponse`
 
 ```json
@@ -154,35 +244,51 @@ Content-Type: application/json
   "results": [
     {
       "id": 101,
+      "sku": "TIR-0001-8F2A11C3",
       "offeringName": "MRF ZLX 185/65 R15",
       "shortDescription": "Tubeless Car Tyre",
-      "price": 3500.00,
-      "originalPrice": 4000.00,
+      "pricingType": "FIXED",
+      "price": 350.00,
+      "minPrice": null,
+      "maxPrice": null,
       "currency": "AED",
+      "stockStatus": "IN_STOCK",
       "imageUrl": "https://...",
-      "vendorName": "QuickFit Tyres",
-      "vendorId": 1,
-      "distance": 2.5,
-      "rating": 4.5,
-      "stockStatus": "IN_STOCK"
+      "averageRating": 4.5,
+      "totalRatings": 12,
+      "totalOrders": 40,
+      "isFeatured": false,
+      "attributes": { "tyre_brand": "MRF", "rim_size": "15" },
+      "vendor": {
+        "id": 1,
+        "companyBrandName": "QuickFit Tyres",
+        "companyLogoUrl": "https://...",
+        "city": "Dubai",
+        "area": "Al Quoz",
+        "averageRating": 4.6,
+        "totalRatings": 80
+      },
+      "distanceKm": 2.5,
+      "score": 1.0
     }
   ],
+  "totalResults": 45,
+  "totalPages": 3,
+  "currentPage": 0,
+  "pageSize": 20,
+  "hasMore": true,
   "facets": {
-    "brand": [
-      { "value": "MRF", "count": 15 },
-      { "value": "Bridgestone", "count": 10 }
-    ],
-    "width": [
-      { "value": "185", "count": 8 },
-      { "value": "195", "count": 12 }
+    "tyre_brand": [
+      { "value": "MRF", "label": "MRF", "count": 15, "selected": true },
+      { "value": "Bridgestone", "label": "Bridgestone", "count": 10, "selected": false }
     ]
   },
-  "totalResults": 45,
-  "page": 0,
-  "size": 20,
-  "totalPages": 3
+  "priceRange": { "min": 180.00, "max": 950.00 },
+  "metadata": { "executionTimeMs": 35, "query": "MRF tyre", "categoryId": 3, "geoSearchApplied": true, "searchRadiusKm": 10 }
 }
 ```
+
+Search results don't include the `vendorServiceId` needed to book. Get it from the offering: `GET /service-offerings/{id}` returns `vendorServiceId` and `serviceId`.
 
 ### 2.3 Search by Category
 
@@ -219,13 +325,13 @@ Returns `Map<String, List<FacetValue>>` - use this to build the filter sidebar d
 
 ```json
 {
-  "brand": [
-    { "value": "MRF", "count": 15 },
-    { "value": "Bridgestone", "count": 10 }
+  "tyre_brand": [
+    { "value": "MRF", "label": "MRF", "count": 15, "selected": false },
+    { "value": "Bridgestone", "label": "Bridgestone", "count": 10, "selected": false }
   ],
-  "width": [
-    { "value": "185", "count": 8 },
-    { "value": "195", "count": 12 }
+  "rim_size": [
+    { "value": "15", "label": "15", "count": 8, "selected": false },
+    { "value": "16", "label": "16", "count": 12, "selected": false }
   ]
 }
 ```
@@ -263,14 +369,16 @@ Returns `Map<Integer, OfferingSearchResponse>` keyed by category ID.
 const filterOptions = await fetch(`/search/filters/${categoryId}`).then(r => r.json());
 
 // Step 2: Render filter UI based on response
-// filterOptions = { "brand": [...], "width": [...], "price_range": [...] }
+// filterOptions = { "tyre_brand": [...], "rim_size": [...] }
 
 // Step 3: When user applies filters, build search request
 const searchRequest = {
   categoryId: categoryId,
+  serviceId: serviceId,        // the service picked in section 1.4
+  countryCode: 'AE',
   attributes: {
-    brand: selectedBrands,     // from MULTI_SELECT
-    width: selectedWidths      // from MULTI_SELECT
+    tyre_brand: selectedBrands,  // list = any of these
+    rim_size: selectedRimSizes
   },
   minPrice: priceRange[0],     // from RANGE slider
   maxPrice: priceRange[1],
@@ -299,32 +407,45 @@ const results = await fetch('/search/offerings', {
 GET /vendors/{id}
 ```
 
-**Response:** `VendorProfileResponse`
+**Response:** `VendorProfileResponse` (not wrapped)
 ```json
 {
   "id": 1,
   "companyBrandName": "QuickFit Tyres",
+  "companyArabicName": "كويك فيت",
+  "name": "QuickFit Tyres LLC",
   "webSite": "https://quickfit.ae",
   "email": "info@quickfit.ae",
-  "phoneNumber": "+971501234567",
-  "openingTime": "08:00",
-  "closingTime": "20:00",
-  "workingDays": "Mon-Sat",
-  "companyLogo": {
-    "id": 10,
-    "fileUrl": "https://..."
-  },
+  "phoneNumber": "+971-4-1234567",
+  "mobileNumber": "+971501234567",
+  "accountStatus": "ACTIVE",
+  "countryCode": "AE",
+  "companyLogo": { "id": 10, "fileUrl": "https://..." },
   "companyLocation": {
     "address": "Al Quoz Industrial Area",
     "city": "Dubai",
+    "country": "AE",
     "latitude": 25.2048,
     "longitude": 55.2708
   },
-  "companyImages": [
-    { "id": 13, "fileUrl": "https://..." }
+  "services": [
+    {
+      "id": 5,
+      "serviceType": "TYRE_AND_BALANCING",
+      "serviceCategoryId": 3,
+      "serviceCategoryName": "Tires & Wheels",
+      "openingTime": "08:00",
+      "closingTime": "20:00",
+      "workingDays": "MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY",
+      "serviceLocation": { "address": "Shop 4", "city": "Dubai" },
+      "serviceImages": [ { "id": 13, "fileUrl": "https://..." } ],
+      "attributes": {}
+    }
   ]
 }
 ```
+
+A vendor can run several services (branches), each with its own hours, address, photos and booking slots. `services[].id` is the **`vendorServiceId`** used for slots and bookings.
 
 ### 3.2 Search Vendors
 
@@ -361,7 +482,7 @@ GET /bookings/{vendorServiceId}/available-slots?date=25/04/2026
 | vendorServiceId | Integer   | path        | Vendor service (branch) ID |
 | date           | LocalDate | dd/MM/yyyy  | Date to check      |
 
-**Response:**
+**Response** (not wrapped):
 ```json
 {
   "vendorServiceId": 1,
@@ -371,15 +492,19 @@ GET /bookings/{vendorServiceId}/available-slots?date=25/04/2026
       "slotId": 1,
       "startTime": "09:00",
       "endTime": "10:00",
-      "available": true,
-      "technicianId": 5
+      "maxBookings": 3,
+      "currentBookings": 1,
+      "availableBookings": 2,
+      "isAvailable": true
     },
     {
       "slotId": 2,
       "startTime": "10:00",
       "endTime": "11:00",
-      "available": true,
-      "technicianId": 5
+      "maxBookings": 3,
+      "currentBookings": 0,
+      "availableBookings": 3,
+      "isAvailable": true
     }
   ]
 }
@@ -388,20 +513,23 @@ GET /bookings/{vendorServiceId}/available-slots?date=25/04/2026
 ### 4.2 Book Appointment (Slot-Based)
 
 ```
-POST /bookings/{vendorServiceId}/book?vehicleId=10&time=2026-04-25T09:00:00&selectedVendorServiceIds=1,3
+POST /bookings/{vendorServiceId}/book?vehicleId=10&time=2026-04-25T09:00:00&catalogServiceId=3
 X-Auto-Adda-Id: {userId}
 ```
 
 | Param                   | Type          | Description                         |
 |-------------------------|---------------|-------------------------------------|
-| serviceId               | Integer       | path - Vendor service ID            |
-| vehicleId               | Integer       | query - Customer's vehicle ID       |
-| time                    | LocalDateTime | query - ISO datetime                |
-| selectedVendorServiceIds | String        | query - Comma-separated vendor service IDs |
+| vendorServiceId          | Integer       | path - Vendor service (branch) ID   |
+| vehicleId                | Integer       | query - Customer's vehicle ID       |
+| time                     | LocalDateTime | query - ISO datetime of the slot start |
+| catalogServiceId         | Integer       | query, optional - the catalog service being booked (from 1.4) |
+| selectedVendorServiceIds | String        | query, optional - comma-separated extra vendor service IDs |
 
 **Header:** `X-Auto-Adda-Id: {userId}`
 
 **Response:** `ApiResponse<BookingDetailResponse>`
+
+When `catalogServiceId` is sent, the booking is checked against the catalog: a service whose mode is `REQUIRED` can't be booked directly (book from an accepted quote instead), and the vendor must offer the service's category.
 
 ### 4.3 Create Appointment (Direct)
 
@@ -415,6 +543,7 @@ Content-Type: application/json
 {
   "customerId": 100,
   "vendorServiceId": 1,
+  "catalogServiceId": 3,
   "vehicleId": 10,
   "serviceIds": [1, 3],
   "scheduleDate": "2026-04-25",
@@ -426,6 +555,8 @@ Content-Type: application/json
   "memberType": "CUSTOMER"
 }
 ```
+
+`catalogServiceId` is optional and follows the same rules as in 4.2.
 
 ### 4.4 Edit Appointment
 
@@ -454,10 +585,14 @@ X-Auto-Adda-Id: {userId}
 
 This is a multi-step flow where a customer requests quotes from vendors.
 
+Use this flow when the service's `effectiveQuotationMode` (section 1.4) is `REQUIRED` or `OPTIONAL`. Requests for a `DIRECT` service are refused.
+
+Pass `serviceId` on steps 1–3: a service can have its own quotation scope and fields, which override the category's.
+
 ### Step 1: Check if Quotation is Available
 
 ```
-GET /quotations/customer/check/category/{categoryId}
+GET /quotations/customer/check/category/{categoryId}?serviceId={serviceId}
 ```
 
 **Response:** `ApiResponse<Boolean>`
@@ -465,10 +600,12 @@ GET /quotations/customer/check/category/{categoryId}
 ### Step 2: Get Quotation Form Fields
 
 ```
-GET /quotations/customer/form/category/{categoryId}
+GET /quotations/customer/form/category/{categoryId}?serviceId={serviceId}
 ```
 
 **Response:** `ApiResponse<List<QuotationFieldDefinitionResponse>>`
+
+`options`, `validationRules` and `dependsOnCondition` are **JSON strings**; parse them with `JSON.parse`. `options` is a list of plain values or of `{ "value", "label", "labelAr" }` objects. `label`, `placeholder` and `helpText` follow `Accept-Language`.
 
 ```json
 {
@@ -482,8 +619,8 @@ GET /quotations/customer/form/category/{categoryId}
       "displayOrder": 1,
       "placeholder": "Select make",
       "helpText": "Select your vehicle manufacturer",
-      "options": ["Toyota", "Honda", "BMW"],
-      "validationRules": {},
+      "options": "[\"Toyota\", \"Honda\", \"BMW\"]",
+      "validationRules": null,
       "dependsOnFieldId": null,
       "dependsOnCondition": null
     },
@@ -495,7 +632,7 @@ GET /quotations/customer/form/category/{categoryId}
       "isRequired": true,
       "displayOrder": 2,
       "dependsOnFieldId": 1,
-      "dependsOnCondition": { "hasValue": true }
+      "dependsOnCondition": "{\"hasValue\": true}"
     },
     {
       "id": 3,
@@ -528,6 +665,7 @@ Content-Type: application/json
 ```json
 {
   "serviceCategoryId": 1,
+  "serviceId": 4,
   "customerId": 100,
   "serviceLocationType": "AT_VENDOR",
   "city": "Dubai",
@@ -547,7 +685,8 @@ Content-Type: application/json
 
 | Field               | Type    | Required | Description                                        |
 |---------------------|---------|----------|----------------------------------------------------|
-| serviceCategoryId   | Integer | Yes      | Category for the quotation                         |
+| serviceCategoryId   | Integer | Yes*     | Category for the quotation (*taken from the service when `serviceId` is sent) |
+| serviceId           | Integer | No       | Catalog service; recommended                       |
 | customerId          | Integer | Yes      | Customer ID                                        |
 | serviceLocationType | Enum    | Yes      | `AT_VENDOR`, `AT_CUSTOMER`, `EITHER`               |
 | city                | String  | No       | Customer's city                                    |
@@ -556,7 +695,7 @@ Content-Type: application/json
 | latitude            | Double  | No       | Location lat                                       |
 | longitude           | Double  | No       | Location lng                                       |
 | customerNotes       | String  | No       | Additional notes                                   |
-| fieldValues         | Map     | Yes      | Dynamic field values matching form field codes      |
+| fieldValues         | Map     | Yes      | Field code → value. Required fields, types and options are checked; unknown codes are refused |
 
 **Response:** `ApiResponse<QuotationRequestResponse>`
 
@@ -565,7 +704,11 @@ Content-Type: application/json
   "data": {
     "id": 50,
     "quotationNumber": "QR-20260425-001",
-    "serviceCategory": { "id": 1, "name": "AC Service" },
+    "serviceCategory": { "id": 5, "code": "REPAIRS_DIAGNOSTICS", "name": "Repairs & Diagnostics" },
+    "serviceId": 4,
+    "serviceCode": "AC_SERVICE",
+    "serviceName": "Air Conditioning Service",
+    "schemaVersionId": 1,
     "customerId": 100,
     "serviceLocationType": "AT_VENDOR",
     "status": "REQUESTED",
@@ -630,6 +773,8 @@ GET /quotations/customer/request/{requestId}/quotes
       },
       "pricingType": "BREAKUP",
       "totalAmount": 1500.00,
+      "minAmount": null,
+      "maxAmount": null,
       "inspectionFee": 0,
       "estimatedDuration": "2-3 hours",
       "warrantyInfo": "6 months warranty",
@@ -642,14 +787,17 @@ GET /quotations/customer/request/{requestId}/quotes
           "title": "AC Gas Refill",
           "quantity": 1,
           "unitPrice": 800.00,
-          "total": 800.00
+          "discount": 0,
+          "taxRate": 5,
+          "totalPrice": 800.00,
+          "isOptional": false
         },
         {
           "itemType": "PART",
           "title": "AC Filter",
           "quantity": 1,
           "unitPrice": 700.00,
-          "total": 700.00
+          "totalPrice": 700.00
         }
       ],
       "createdAt": "2026-04-25T16:00:00"
@@ -719,6 +867,10 @@ Content-Type: application/json
 }
 ```
 
+Booking from a quote doesn't need a slot or vendor service id; they come from the accepted quote. Each quote can be booked once.
+
+**Vendor quote `pricingType`:** `FIXED`, `RANGE` (`minAmount`–`maxAmount`), `BREAKUP` (line items), `INSPECTION_REQUIRED` (`inspectionFee`, final price after inspection).
+
 **Quotation Request Statuses:**
 | Status           | Description                              |
 |------------------|------------------------------------------|
@@ -726,7 +878,7 @@ Content-Type: application/json
 | SENT_TO_VENDORS  | Broadcast to matching vendors            |
 | QUOTES_RECEIVED  | At least one vendor has responded        |
 | ACCEPTED         | Customer accepted a vendor's quote       |
-| EXPIRED          | Auto-expired without acceptance          |
+| EXPIRED          | Auto-expired without acceptance (checked hourly) |
 | CANCELLED        | Customer cancelled                       |
 
 **Vendor Quotation Statuses:**
@@ -763,17 +915,20 @@ X-Auto-Adda-Id: {userId}
       "scheduleDate": "2026-04-25",
       "serviceStartTime": "09:00:00",
       "serviceEndTime": "10:00:00",
+      "deliveryTime": "11:00:00",
       "status": "CONFIRMED",
       "comments": "Check alignment too",
       "vendor": {
         "id": 1,
         "companyBrandName": "QuickFit Tyres"
       },
+      "selectedServiceIds": "5",
       "servicesResponse": [
-        { "id": 1, "name": "Tyre Replacement" }
+        { "id": 3, "code": "TIRES_WHEELS", "name": "Tires & Wheels" }
       ],
       "customerId": 100,
       "vehicleId": 10,
+      "technicianId": null,
       "vehicle": {
         "make": "Toyota",
         "model": "Camry"
@@ -814,16 +969,17 @@ X-Auto-Adda-Id: {userId}
 ```
 /
   /home                         -- Root categories + featured offerings
-  /category/:id                 -- Sub-categories or offerings listing
+  /category/:id                 -- Services in the category
+  /service/:id                  -- Offerings for the service, or the quote form (by quotation mode)
   /search                       -- Search results with filters
   /offering/:id                 -- Offering detail page
   /vendor/:id                   -- Vendor profile page
   /vendor/:id/offerings         -- Vendor's offerings
   /booking
-    /select-slot/:vendorId      -- Slot selection calendar
+    /select-slot/:vendorServiceId -- Slot selection calendar
     /confirm                    -- Booking confirmation
   /quotation
-    /request/:categoryId        -- Quotation request form
+    /request/:serviceId         -- Quotation request form
     /my-requests                -- List of my quotation requests
     /request/:requestId         -- Request detail + received quotes
     /quote/:quotationId         -- Quote detail + accept/reject
@@ -839,29 +995,32 @@ X-Auto-Adda-Id: {userId}
 
 ```
 1. Browse categories            GET /service-categories/root
-2. Select category              GET /service-categories/parent/{id}
-3. Load filter options           GET /search/filters/{categoryId}
-4. Search offerings             POST /search/offerings
-5. View offering details         GET /service-offerings/{id}
-6. View vendor profile           GET /vendors/{vendorId}
-7. Check available slots         GET /bookings/{vendorServiceId}/available-slots?date=...
-8. Book slot                     POST /bookings/{vendorServiceId}/book?vehicleId=...&time=...
-9. View my bookings              GET /bookings/user/bookings
+2. Pick a service               GET /catalog/services?categoryId={id}&country=AE
+   (effectiveQuotationMode is DIRECT or OPTIONAL)
+3. Load filter options          GET /catalog/services/{serviceId}/attributes  or  GET /search/filters/{categoryId}
+4. Search offerings             POST /search/offerings  { categoryId, serviceId, countryCode, attributes }
+5. View offering details        GET /service-offerings/{id}  -> vendorServiceId
+6. View vendor profile          GET /vendors/{vendorId}
+7. Check available slots        GET /bookings/{vendorServiceId}/available-slots?date=...
+8. Book slot                    POST /bookings/{vendorServiceId}/book?vehicleId=...&time=...&catalogServiceId={serviceId}
+9. View my bookings             GET /bookings/user/bookings
 ```
 
 ### Journey 2: Request Quote & Book
 
 ```
 1. Browse categories             GET /service-categories/root
-2. Check quotation available     GET /quotations/customer/check/category/{id}
-3. Load quotation form           GET /quotations/customer/form/category/{id}
-4. Submit quotation request      POST /quotations/customer/request
-5. Wait for vendor quotes...
-6. View received quotes          GET /quotations/customer/request/{id}/quotes
-7. Compare quotes (view items)   GET /quotations/customer/quote/{id}/items
-8. Accept best quote             POST /quotations/customer/quote/{id}/accept
-9. Book from accepted quote      POST /quotations/customer/quote/{id}/book
-10. View my bookings             GET /bookings/user/bookings
+2. Pick a service                GET /catalog/services?categoryId={id}&country=AE
+   (effectiveQuotationMode is REQUIRED or OPTIONAL)
+3. Check quotation available     GET /quotations/customer/check/category/{categoryId}?serviceId={serviceId}
+4. Load quotation form           GET /quotations/customer/form/category/{categoryId}?serviceId={serviceId}
+5. Submit quotation request      POST /quotations/customer/request  { serviceId, fieldValues, ... }
+6. Wait for vendor quotes...
+7. View received quotes          GET /quotations/customer/request/{id}/quotes
+8. Compare quotes (view items)   GET /quotations/customer/quote/{id}/items
+9. Accept best quote             POST /quotations/customer/quote/{id}/accept
+10. Book from accepted quote     POST /quotations/customer/quote/{id}/book
+11. View my bookings             GET /bookings/user/bookings
 ```
 
 ### Journey 3: Nearby Search
@@ -876,11 +1035,14 @@ X-Auto-Adda-Id: {userId}
 ### Frontend Code Example: Complete Quotation Flow
 
 ```javascript
-const API = 'http://localhost:8080';
+const API = 'http://localhost:9010/api/v1';
+
+// 0. The service the customer picked (GET /catalog/services?categoryId=...)
+//    has effectiveQuotationMode REQUIRED or OPTIONAL
 
 // 1. Check if quotation is available
 const { data: enabled } = await fetch(
-  `${API}/quotations/customer/check/category/${categoryId}`
+  `${API}/quotations/customer/check/category/${categoryId}?serviceId=${serviceId}`
 ).then(r => r.json());
 
 if (!enabled) {
@@ -890,8 +1052,9 @@ if (!enabled) {
 
 // 2. Load form fields
 const { data: fields } = await fetch(
-  `${API}/quotations/customer/form/category/${categoryId}`
+  `${API}/quotations/customer/form/category/${categoryId}?serviceId=${serviceId}`
 ).then(r => r.json());
+// options / validationRules / dependsOnCondition are JSON strings: JSON.parse them
 
 // 3. Render dynamic form based on fields
 // Handle field types: TEXT, NUMBER, DROPDOWN, MULTI_SELECT, BOOLEAN, 
@@ -899,11 +1062,12 @@ const { data: fields } = await fetch(
 // Handle conditional fields: check dependsOnFieldId + dependsOnCondition
 
 // 4. Submit request
-const { data: request } = await fetch(`${API}/quotations/customer/request`, {
+const submitted = await fetch(`${API}/quotations/customer/request`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     serviceCategoryId: categoryId,
+    serviceId,
     customerId: currentUser.id,
     serviceLocationType: 'AT_VENDOR',
     city: 'Dubai',
@@ -911,6 +1075,12 @@ const { data: request } = await fetch(`${API}/quotations/customer/request`, {
     fieldValues: formValues  // { field_code: value, ... }
   })
 }).then(r => r.json());
+if (submitted.status === 'failed') {
+  // errors are HTTP 201 too; body lists each failing field: [{ field, message }]
+  showErrors(submitted.body);
+  return;
+}
+const request = submitted.data;
 
 // 5. Poll for quotes or use push notification
 const { data: quotes } = await fetch(
@@ -947,7 +1117,7 @@ await fetch(`${API}/quotations/customer/quote/${selectedQuoteId}/book`, {
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080',
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:9010/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -959,9 +1129,14 @@ export const setAuthHeader = (userId) => {
   api.defaults.headers.common['X-Auto-Adda-Id'] = userId;
 };
 
-// Response interceptor
+// Errors come back as HTTP 201 with status "failed", so turn them into rejections
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data?.status === 'failed') {
+      return Promise.reject({ response, message: response.data.message });
+    }
+    return response;
+  },
   (error) => {
     const message = error.response?.data?.message || error.message;
     console.error('API Error:', message);
@@ -997,6 +1172,22 @@ export const getCategoryById = (id) =>
 // Get all categories
 export const getAllCategories = () =>
   api.get(CATEGORY_BASE);
+
+// --- Catalog services ---
+const CATALOG_BASE = '/catalog/services';
+
+// Services in a category (optionally only those available in a country)
+export const getCatalogServices = ({ categoryId, country } = {}) =>
+  api.get(CATALOG_BASE, { params: { categoryId, country } });
+// each item has effectiveQuotationMode: DIRECT | OPTIONAL | REQUIRED
+
+// One service
+export const getCatalogService = (id) =>
+  api.get(`${CATALOG_BASE}/${id}`);
+
+// A service's attributes (filters / form fields)
+export const getCatalogServiceAttributes = (id) =>
+  api.get(`${CATALOG_BASE}/${id}/attributes`);
 ```
 
 ---
@@ -1011,20 +1202,21 @@ const SEARCH_BASE = '/search';
 
 // Quick search (GET with query params)
 export const quickSearch = ({
-  categoryId, q, minPrice, maxPrice, city, area,
+  categoryId, serviceId, country, q, minPrice, maxPrice, city, area,
   lat, lng, radius, sortBy = 'relevance', sortDir = 'asc',
   page = 0, size = 20,
 } = {}) =>
   api.get(`${SEARCH_BASE}/offerings`, {
-    params: { categoryId, q, minPrice, maxPrice, city, area, lat, lng, radius, sortBy, sortDir, page, size },
+    params: { categoryId, serviceId, country, q, minPrice, maxPrice, city, area, lat, lng, radius, sortBy, sortDir, page, size },
   });
 
 // Advanced search (POST with full body)
 export const advancedSearch = (searchRequest) =>
   api.post(`${SEARCH_BASE}/offerings`, searchRequest);
 // searchRequest = {
-//   categoryId, query, minPrice, maxPrice, pricingTypes, stockStatuses,
-//   attributes: { brand: "MRF", width: ["185","195"] },
+//   categoryId, serviceId, countryCode, offeringType, query,
+//   minPrice, maxPrice, pricingTypes, stockStatuses,
+//   attributes: { tyre_brand: "MRF", rim_size: ["15","16"] },
 //   latitude, longitude, radiusKm, city, area, minRating,
 //   sortBy, sortDirection, page, size,
 //   includeVendorDetails, includeDistance, includeFacets
@@ -1172,9 +1364,13 @@ export const searchVendors = ({ city, zip, vendorName, serviceCategoryIds } = {}
 export const searchByBrandName = (name) =>
   api.get(`${VENDOR_BASE}/brandname/${name}`);
 
-// Get vendors by service type
-export const getVendorsByServiceType = (serviceType) =>
-  api.get(`${VENDOR_BASE}/service/${serviceType}`);
+// Vendor services (branches) of one type, e.g. CAR_WASH
+export const getVendorServicesByType = (serviceType) =>
+  api.get(`${VENDOR_BASE}/services/all`, { params: { serviceType } });
+
+// A vendor's services (branches)
+export const getVendorServices = (vendorId) =>
+  api.get(`${VENDOR_BASE}/${vendorId}/services`);
 ```
 
 ---
@@ -1194,9 +1390,9 @@ export const getAvailableSlots = (vendorServiceId, date) =>
   });
 
 // Book appointment (slot-based)
-export const bookSlot = (vendorServiceId, vehicleId, time, userId, selectedVendorServiceIds = null) =>
+export const bookSlot = (vendorServiceId, vehicleId, time, userId, { catalogServiceId, selectedVendorServiceIds } = {}) =>
   api.post(`${BOOKING_BASE}/${vendorServiceId}/book`, null, {
-    params: { vehicleId, time, selectedVendorServiceIds },
+    params: { vehicleId, time, catalogServiceId, selectedVendorServiceIds },
     headers: { 'X-Auto-Adda-Id': userId },
   });
 
@@ -1204,7 +1400,7 @@ export const bookSlot = (vendorServiceId, vehicleId, time, userId, selectedVendo
 export const createAppointment = (data) =>
   api.post(BOOKING_BASE, data);
 // data = {
-//   customerId, vendorServiceId, vehicleId, serviceIds,
+//   customerId, vendorServiceId, catalogServiceId, vehicleId, serviceIds,
 //   scheduleDate, serviceStartTime, serviceEndTime,
 //   deliveryTime, comments, memberId, memberType
 // }
@@ -1245,13 +1441,13 @@ const QUOTATION_BASE = '/quotations/customer';
 
 // --- Check & Form ---
 
-// Check if quotation is available for a category
-export const checkQuotationAvailable = (categoryId) =>
-  api.get(`${QUOTATION_BASE}/check/category/${categoryId}`);
+// Check if quotation is available for a category / service
+export const checkQuotationAvailable = (categoryId, serviceId) =>
+  api.get(`${QUOTATION_BASE}/check/category/${categoryId}`, { params: { serviceId } });
 
-// Get quotation form fields for a category
-export const getQuotationFormFields = (categoryId) =>
-  api.get(`${QUOTATION_BASE}/form/category/${categoryId}`);
+// Get quotation form fields for a category / service
+export const getQuotationFormFields = (categoryId, serviceId) =>
+  api.get(`${QUOTATION_BASE}/form/category/${categoryId}`, { params: { serviceId } });
 
 // --- Submit & Track Requests ---
 
@@ -1259,7 +1455,7 @@ export const getQuotationFormFields = (categoryId) =>
 export const submitQuotationRequest = (data) =>
   api.post(`${QUOTATION_BASE}/request`, data);
 // data = {
-//   serviceCategoryId, customerId, serviceLocationType,
+//   serviceCategoryId, serviceId, customerId, serviceLocationType,
 //   city, area, address, latitude, longitude,
 //   customerNotes, fieldValues: { field_code: value }
 // }
@@ -1464,21 +1660,22 @@ const SearchPage = ({ categoryId }) => {
 import React, { useEffect, useState } from 'react';
 import { getAvailableSlots, bookSlot } from '../api/customer/bookingApi';
 
-const BookingSlotPicker = ({ vendorId, serviceId, userId, vehicleId }) => {
+// vendorServiceId comes from GET /service-offerings/{id}; catalogServiceId is the service picked in 1.4
+const BookingSlotPicker = ({ vendorServiceId, catalogServiceId, userId, vehicleId }) => {
   const [date, setDate] = useState('');
   const [slots, setSlots] = useState([]);
 
   const loadSlots = async (selectedDate) => {
     // API expects dd/MM/yyyy
     const formatted = selectedDate.split('-').reverse().join('/');
-    const res = await getAvailableSlots(vendorId, formatted);
+    const res = await getAvailableSlots(vendorServiceId, formatted);
     setSlots(res.data.availableSlots || []);
   };
 
   const handleBook = async (slot) => {
-    const isoTime = `${date}T${slot.startTime}:00`;
+    const isoTime = `${date}T${slot.startTime.slice(0, 5)}:00`;
     try {
-      const res = await bookSlot(serviceId, vehicleId, isoTime, userId);
+      await bookSlot(vendorServiceId, vehicleId, isoTime, userId, { catalogServiceId });
       alert('Booked successfully!');
     } catch (err) {
       alert('Booking failed: ' + err.response?.data?.message);
@@ -1493,7 +1690,7 @@ const BookingSlotPicker = ({ vendorId, serviceId, userId, vehicleId }) => {
         onChange={(e) => { setDate(e.target.value); loadSlots(e.target.value); }}
       />
       <div className="slots">
-        {slots.filter((s) => s.available).map((s) => (
+        {slots.filter((s) => s.isAvailable).map((s) => (
           <button key={s.slotId} onClick={() => handleBook(s)}>
             {s.startTime} - {s.endTime}
           </button>
@@ -1518,22 +1715,25 @@ import {
 } from '../api/customer/quotationApi';
 import { uploadFiles } from '../api/customer/mediaApi';
 
-const QuotationRequestForm = ({ categoryId, customerId }) => {
+const parseOptions = (json) =>
+  (json ? JSON.parse(json) : []).map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+
+const QuotationRequestForm = ({ categoryId, serviceId, customerId }) => {
   const [enabled, setEnabled] = useState(false);
   const [fields, setFields] = useState([]);
   const [formValues, setFormValues] = useState({});
 
   useEffect(() => {
     const init = async () => {
-      const checkRes = await checkQuotationAvailable(categoryId);
+      const checkRes = await checkQuotationAvailable(categoryId, serviceId);
       setEnabled(checkRes.data.data);
       if (checkRes.data.data) {
-        const fieldRes = await getQuotationFormFields(categoryId);
+        const fieldRes = await getQuotationFormFields(categoryId, serviceId);
         setFields(fieldRes.data.data);
       }
     };
     init();
-  }, [categoryId]);
+  }, [categoryId, serviceId]);
 
   const handleSubmit = async () => {
     // Handle file uploads first
@@ -1547,6 +1747,7 @@ const QuotationRequestForm = ({ categoryId, customerId }) => {
 
     const res = await submitQuotationRequest({
       serviceCategoryId: categoryId,
+      serviceId,
       customerId,
       serviceLocationType: 'AT_VENDOR',
       city: 'Dubai',
@@ -1586,8 +1787,8 @@ const QuotationRequestForm = ({ categoryId, customerId }) => {
                 onChange={(e) => setFormValues((v) => ({ ...v, [field.fieldCode]: e.target.value }))}
               >
                 <option value="">{field.placeholder || 'Select...'}</option>
-                {field.options?.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
+                {parseOptions(field.options).map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
             )}

@@ -1,10 +1,10 @@
 # Service catalog: API changes for frontends
 
-Branch `feature/service-catalog-evolution`. Everything below is additive unless marked **changed** or **removed**. Existing category-only calls keep working.
+From branch `feature/service-catalog-evolution`, merged into `main` (PR #6). Everything below is additive unless marked **changed** or **removed**. Existing category-only calls keep working.
 
 ## Error responses
 
-Errors still return HTTP 201 with the real status in `code` (existing convention).
+Errors still return HTTP 201 with `"status": "failed"` and the real status in `code` (existing convention). Check the body, not the HTTP status.
 
 - Attribute and form validation failures now return `code: "400"` with every failing field in `body`:
 
@@ -30,7 +30,7 @@ A service sits between a category and an offering, for example Tires & Wheels â†
 | GET | `/catalog/services/{id}` | Includes `effectiveQuotationMode` |
 | GET | `/catalog/services/{id}/attributes` | Live form: published schema plus category defaults |
 | POST | `/admin/services` | `serviceCategoryId`, `code`, `name`, `nameAr`, `fulfillmentMode` (WORKSHOP / MOBILE / BOTH), `estimatedDurationMinutes`, `quotationMode` |
-| GET / PUT | `/admin/services`, `/admin/services/{id}`, `/admin/services/code/{code}` | |
+| GET / PUT | `/admin/services?categoryId=&activeOnly=`, `/admin/services/{id}`, `/admin/services/code/{code}` | PUT on `/{id}` only |
 | POST | `/admin/services/{id}/deactivate`, `/reactivate` | There is no delete |
 | POST | `/admin/services/{id}/quotation-mode/reset` | Go back to following the category |
 
@@ -62,12 +62,12 @@ A service's attributes are versioned. Only the **published** version is live.
 
 ## Attributes (**changed**)
 
-New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`), `inputContext` (CUSTOMER / PROVIDER / BOTH, default BOTH, or VENDOR; see below), `isIndexed`, `attributeNameAr`, `descriptionAr`.
+New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`), `inputContext` (CUSTOMER / PROVIDER / BOTH, default BOTH, or VENDOR; see "Vendor onboarding"), `isIndexed`, `attributeNameAr`, `descriptionAr`.
 
 - New `dataType` values: `INTEGER`, `DECIMAL`, `SINGLE_SELECT`, `MULTI_SELECT`. Select types must have options.
 - Codes must be 1â€“50 lowercase letters, digits or underscores, starting with a letter.
 - `validationRules` must be a JSON object. Supported keys: `minimum` / `maximum` (or `min` / `max`), `minLength`, `maxLength`, `pattern`, `minItems`, `maxItems`.
-- **Changed:** `GET /admin/service-attributes/category/{id}` returns category defaults only. Service attributes come from `/admin/service-attributes/service/{serviceId}`.
+- **Changed:** `GET /admin/service-attributes/category/{id}` returns category-level attributes only (defaults and VENDOR attributes). Service attributes come from `/admin/service-attributes/service/{serviceId}`.
 - **Removed:** `DELETE /admin/service-attributes/{id}/hard`.
 
 ## Offerings (**changed**)
@@ -75,14 +75,15 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 - New request fields: `serviceId`, `offeringType` (SERVICE default, or PRODUCT).
 - Attributes are always validated, including when none are sent, so required attributes can't be skipped. Unknown codes are refused, where they used to be stored with a warning. CUSTOMER-only attributes are never required on an offering.
 - Stock status and quantity are refused on SERVICE offerings.
-- `GET /service-offerings/category/{id}/attributes` accepts `?serviceId=`.
+- `GET /service-offerings/category/{id}/attributes` and `/attributes/required` accept `?serviceId=`. VENDOR attributes are never included.
 - **Removed:** `DELETE /service-offerings/{id}/hard`.
 
 ## Quotations (**changed**)
 
 - Scope, field and request bodies accept `serviceId`. A service's own scope and fields override the category's.
 - `GET /quotations/customer/form/category/{id}` and `/check/category/{id}` accept `?serviceId=`.
-- A request for a service whose effective mode is DIRECT is refused.
+- A request whose effective mode is DIRECT is refused. That includes a category with no enabled quotation scope.
+- **New:** an hourly job (`quotation.expiry.cron`) marks requests and vendor quotes past their expiry as EXPIRED.
 - `quotation_scope_definitions` is no longer unique per category, because services can have their own scope.
 
 ## Bookings (**changed**)
@@ -99,10 +100,10 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 
   Slots and bookings belong to a vendor service (one service or branch of a vendor), so these paths take a vendor service id.
   The other booking paths (`/status`, `/{appointmentId}`, `/{appointmentId}/cancel`, `/user/bookings`) only change the base.
-- **Changed:** booking responses return `selectedVendorServiceIds` instead of `selectedOtherServiceIds`, and the available-slots response returns `vendorServiceId` instead of `garageId`.
+- **Changed:** `BookingResponse` (returned by `POST /bookings`, `PUT /bookings/status` and `PUT /bookings/edit`) has `selectedVendorServiceIds` instead of `selectedOtherServiceIds`. The list and slot-booking responses (`BookingDetailResponse`) use `selectedServiceIds`. The available-slots response returns `vendorServiceId` instead of `garageId`.
 - **Changed:** booking responses return `subscriptionPlanId` instead of `osSubscriptionPlanId`.
-- **Changed (job cards):** the assign request takes `vendorId` instead of `otherServiceId`. Job card responses return `vendorId`, which is now filled in; `otherServiceId` was always `null`.
-- `POST /bookings` accepts `catalogServiceId`. `POST /bookings/{vendorServiceId}/book` accepts `?catalogServiceId=`.
+- **Changed (job cards):** job cards record the vendor (`vendorId`) instead of `otherServiceId`, which was always `null`. No endpoint creates or assigns job cards yet; they only appear in `GET /bookings/{bookingId}` as `jobcards`.
+- `POST /bookings` accepts `catalogServiceId`. `POST /bookings/{vendorServiceId}/book` accepts `?catalogServiceId=`. `BookingResponse` returns `serviceId`, `serviceCode` and `schemaVersionId`.
 - A service whose effective mode is REQUIRED can't be booked directly; book from the accepted quote instead. The vendor must offer the service's category.
 
 ## Vendor onboarding (**changed**)
@@ -128,8 +129,9 @@ New request fields: `serviceId`, `options` (`[{ "value", "label", "labelAr" }]`)
 - Filters accept `attributeDefinitionId`. The filter code then follows the attribute's code.
 - **Removed:** `DELETE /admin/service-filters/{id}/hard`.
 - `DELETE /admin/service-filters/options/{id}` and `DELETE /service-categories/{id}` now deactivate instead of deleting.
-- Categories accept and return `code`, `nameAr`, `descriptionAr`, `displayOrder`, `isActive` and `parentId`.
+- Categories accept and return `code`, `nameAr`, `descriptionAr`, `displayOrder` and `parentId`; responses also return `isActive`.
 - **Changed:** `/vendor-service-bridges` is now `/vendor-services`. The body uses `vendorId` and `serviceCategoryId` instead of `garageId` and `serviceId` (`serviceId` is still accepted). `PUT` takes the same body as `POST` (plus optional `pricingType`, `price`, `minPrice`, `maxPrice`, `currency`, `description`), and `DELETE` deactivates.
+- `isActive` in that body is optional: `POST` defaults it to `true` and `PUT` leaves it unchanged when it isn't sent. (It used to be read only as `active`, and an update without it deactivated the service.)
 
 ## Starter data
 
